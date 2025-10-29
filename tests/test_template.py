@@ -1,17 +1,22 @@
 # tests/test_thermo_merge.py
 from pathlib import Path
+import pytest
+import yaml
 from simuglue.template import template_function
 
-def test_template(tmp_path: Path):
+CASES = Path(__file__).parent / "cases" / "template"
 
-    # paths to test data in the repo
-    gold_dir = Path(__file__).parent / "data" / "template"
-    gold_file = gold_dir / "gold"
+def discover():
+    return [p for p in CASES.iterdir() if (p / "case.yaml").exists()]
 
-    # run code under test
-    new_data = template_function()
+@pytest.mark.parametrize("case_dir", discover(), ids=lambda p: p.name)
+def test_template(case_dir: Path):
 
-    # compare new output with reference output
-    gold_data = gold_file.read_text().strip()
+    cfg = yaml.safe_load((case_dir / "case.yaml").read_text())
 
-    assert new_data == gold_data
+    input_msg = cfg.get("input_msg")
+    gold_msg = cfg.get("gold_msg")
+
+    output_msg = template_function(input_msg)
+
+    assert output_msg == gold_msg

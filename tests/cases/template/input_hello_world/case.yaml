@@ -1,0 +1,3 @@
+runner: template_function
+input_msg: "Hello World!"
+gold_msg: "Hello World!"
