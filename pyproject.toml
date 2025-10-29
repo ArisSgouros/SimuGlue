@@ -21,10 +21,12 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
+  "pyyaml>=6.0",
 ]
 
 [project.scripts]
 sglue-hello = "simuglue.cli.template_cli:main"
+sglue-qe-pwo2json = "simuglue.cli.pwo2json_cli:main"
 
 [tool.pytest.ini_options]
 addopts = "-q"
