@@ -41,11 +41,6 @@ def main(argv: list[str] | None = None) -> int:
              "If omitted, prints to stdout.",
     )
     p.add_argument(
-        "--ndjson",
-        action="store_true",
-        help="For multiple inputs, stream one JSON object per line to stdout.",
-    )
-    p.add_argument(
         "--pretty",
         action="store_true",
         help="Pretty-print JSON (indent=2).",
@@ -71,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
 
     indent = 2 if args.pretty else None
 
-    if len(inputs) == 1 and not args.ndjson:
+    if len(inputs) == 1:
         # Single file mode
         data = pwo2json(inputs[0])
         if data is None:
@@ -91,43 +86,34 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     # Multiple files
-    if args.ndjson:
+    if len(inputs) > 1 and not args.out:
         # Stream to stdout
         for path in inputs:
             data = pwo2json(path)
             if data is None:
                 print(f'{{"file":"{path}","error":"parse_failed"}}')
             else:
-                obj = {"file": str(path), "data": data}
+                obj = {"file": path.name, "data": data}
                 sys.stdout.write(json.dumps(obj, ensure_ascii=False) + "\n")
         return 0
 
     # Write to directory or stdout as a combined JSON list
-    if args.out:
-        out_dir = Path(args.out)
-        out_dir.mkdir(parents=True, exist_ok=True)
-        for path in inputs:
-            data = pwo2json(path)
-            if data is None:
-                print(f"Warning: skipping '{path}' due to parse error.", file=sys.stderr)
-                continue
-            out_path = out_dir / (path.stem + ".json")
-            with open(out_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=indent)
-        return 0
-    else:
-        # Combined JSON array to stdout
+    if len(inputs) > 1 and args.out:
         all_objs = []
         for path in inputs:
             data = pwo2json(path)
             if data is None:
                 continue
-            all_objs.append({"file": str(path), "data": data})
-        json.dump(all_objs, sys.stdout, ensure_ascii=False, indent=indent)
-        if indent is not None:
-            sys.stdout.write("\n")
-        return 0
+            all_objs.append({"file": path.name, "data": data})
 
+        # Write to specified output file instead of stdout
+        out_path = Path(args.out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with out_path.open("w", encoding="utf-8") as f:
+            json.dump(all_objs, f, ensure_ascii=False, indent=indent)
+            if indent is not None:
+                f.write("\n")
+        return 0
 
 if __name__ == "__main__":
     raise SystemExit(main())
