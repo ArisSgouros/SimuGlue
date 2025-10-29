@@ -16,3 +16,9 @@ launch jobs, and extract physical quantities.
 - Minimal dependencies, easy to extend
 
 **SIMUGLUE:** the glue that keeps your simulation workflows together.
+
+### Installation in conda environment
+conda create -n simuglue python=3.11
+conda activate simuglue
+
+pip install -e ".[dev]"
