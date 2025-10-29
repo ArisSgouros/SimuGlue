@@ -1,0 +1,4 @@
+pattern: "MoSSe.scf_0*.in"
+output: merged.json
+gold: merged.json
+pretty: true

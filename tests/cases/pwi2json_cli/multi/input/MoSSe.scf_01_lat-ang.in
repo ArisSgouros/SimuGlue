@@ -1,0 +1,38 @@
+ &control
+    calculation = 'scf'
+    restart_mode='from_scratch',
+    wf_collect=.true.
+    prefix='MoSSe_0.000',
+    tstress = .true.
+    tprnfor = .true.
+    etot_conv_thr=1d-6, 
+    forc_conv_thr=1.d-5
+    pseudo_dir = '/cyclonas_users/asgouros/projects/PhononQE/qe_psextra//',
+    outdir='/scratch/asgouros//MoSSe_biaxial_phonon_0.000/'
+ /
+ &system
+    ibrav=  0, celldm(1) =6.0336772, nat=  3, ntyp= 3,
+    ecutwfc =80.0, ecutrho=400.0
+    occupations='fixed'
+ /
+ &electrons
+    diagonalization='david'
+    electron_maxstep = 100
+    mixing_mode = 'plain'
+    mixing_beta = 0.7
+    conv_thr = 1d-10
+ /
+ATOMIC_SPECIES
+ S  32.065   S.pz-hgh.UPF
+ Mo  95.94   Mo.pz-hgh.UPF
+ Se  78.96   Se.pz-hgh.UPF
+CELL_PARAMETERS {alat}
+   1.001895780000    -.000000001000   0.000000000
+   .500947887000    .867667172000   0.000000000
+   0.000000000   0.000000000   3.987305081
+ATOMIC_POSITIONS {angstrom}
+Mo              -0.0009633159        0.0048898363        0.0544696442
+S                1.5985054156        0.9283436032        1.5842898107
+Se               1.5985054156        0.9283436032       -1.6387594550
+K_POINTS automatic
+24 24 1 0 0 0
