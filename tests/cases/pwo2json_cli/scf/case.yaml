@@ -1,0 +1,4 @@
+input: MoSSe.scf.out
+output: o.json
+gold: o.json
+pretty: true
