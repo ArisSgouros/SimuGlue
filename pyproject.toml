@@ -26,6 +26,7 @@ dev = [
 
 [project.scripts]
 sglue-hello = "simuglue.cli.template_cli:main"
+sglue-qe-pwi2json = "simuglue.cli.pwi2json_cli:main"
 sglue-qe-pwo2json = "simuglue.cli.pwo2json_cli:main"
 
 [tool.pytest.ini_options]
