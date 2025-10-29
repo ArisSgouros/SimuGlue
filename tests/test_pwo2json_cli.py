@@ -15,7 +15,7 @@ def discover():
 def test_pwo2json_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     """
     Expects case.yaml like:
-      input:  log.out
+      input:  log.out | pattern: log*.out
       output: o.json
       gold:   o.json
       pretty: true
@@ -26,18 +26,29 @@ def test_pwo2json_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     if shutil.which(cli) is None:
         pytest.skip(f"CLI '{cli}' not found in PATH — is it installed in the environment?")
 
-    # Stage input in sandbox
-    src = (case_dir / "input" / cfg["input"])
-    dst = tmp_path_cwd / cfg["input"]
-    shutil.copy(src, dst)
+    # Stage inputs
+    pattern = cfg.get("pattern")
+    input_dir = case_dir / "input"
 
-    out_path = tmp_path_cwd / cfg.get("output", "o.json")
+    if pattern:
+        # Copy all matching input files to tmp_path
+        for src in input_dir.glob(pattern):
+            shutil.copy(src, tmp_path_cwd / src.name)
+        # We'll pass an expanded glob to the CLI (portable)
+        files = sorted(tmp_path_cwd.glob(pattern))
+        args = [cli, *map(str, files)]
+    else: # single input
+        src = (case_dir / "input" / cfg["input"])
+        dst = tmp_path_cwd / cfg["input"]
+        shutil.copy(src, dst)
+        shutil.copy(src, dst)
+        args = [cli, str(dst)]
 
     # Build CLI args
-    args = [cli, str(dst)]
+    out_path = tmp_path_cwd / cfg.get("output", "o.json")
+    args += ["-o", str(out_path)]
     if cfg.get("pretty", False):
         args.append("--pretty")
-    args += ["-o", str(out_path)]
 
     # Run CLI; on failure, show stdout/stderr
     try:
