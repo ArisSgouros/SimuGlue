@@ -1,0 +1,4 @@
+pattern: "MoSSe*.out"
+output: merged.json
+gold: merged.json
+pretty: true
