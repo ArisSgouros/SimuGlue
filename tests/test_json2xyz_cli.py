@@ -11,7 +11,7 @@ def discover():
     return [p for p in CASES.iterdir() if (p / "case.yaml").exists()]
 
 @pytest.mark.parametrize("case_dir", discover(), ids=lambda p: p.name)
-def test_pwi2json_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
+def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     """
     Expects case.yaml like:
       input:     file.json
