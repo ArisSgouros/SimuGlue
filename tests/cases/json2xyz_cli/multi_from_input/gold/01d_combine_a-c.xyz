@@ -1,0 +1,15 @@
+3
+Lattice="3.1989362041128957 -3.1928832e-09 0.0 1.5994680924777984 2.77035993667031 0.0 0.0 0.0 12.730999406399539" Properties=species:S:1:pos:R:3 source=qe_input cell_unit=alat positions_unit=angstrom pbc="T T T"
+Mo      -0.00096332       0.00488984       0.05446964
+S        1.59850542       0.92834360       1.58428981
+Se       1.59850542       0.92834360      -1.63875945
+3
+Lattice="0.7013270459999998 -7e-10 0.0 0.3506635209 0.6073670203999999 0.0 0.0 0.0 2.7911135567" Properties=species:S:1:pos:R:3 source=qe_input cell_unit=alat positions_unit=angstrom pbc="T T T"
+Mo      -0.00096332       0.00488984       0.05446964
+S        1.59850542       0.92834360       1.58428981
+Se       1.59850542       0.92834360      -1.63875945
+3
+Lattice="3.1989362 0.0 0.0 1.59946809 2.77035994 0.0 0.0 0.0 12.73099941" Properties=species:S:1:pos:R:3 source=qe_input cell_unit=angstrom positions_unit=alat pbc="T T T"
+Mo      -0.00096332       0.00488984       0.05446963
+S        1.59850542       0.92834359       1.58428981
+Se       1.59850542       0.92834359      -1.63875947

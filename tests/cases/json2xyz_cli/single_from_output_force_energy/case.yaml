@@ -1,0 +1,7 @@
+input: MoSSe.vcrelax.json
+output: o.xyz
+gold: MoSSe.vcrelax.xyz
+
+# Optional flags:
+no_forces: true
+info_keys: [energy]
