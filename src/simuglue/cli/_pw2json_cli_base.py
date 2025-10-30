@@ -23,8 +23,8 @@ def _write_json(path: Path, obj, indent: int | None):
         json.dump(obj, f, ensure_ascii=False, indent=indent)
         if indent: f.write("\n")
 
-def run(parse_fn: Callable[[Path], dict | None], argv: Optional[list[str]] = None, prog: Optional[str] = None) -> int:
-    ap = argparse.ArgumentParser(prog=prog, description="Parse QE files to JSON.")
+def run(parse_fn: Callable[[Path], dict | None], argv: Optional[list[str]] = None) -> int:
+    ap = argparse.ArgumentParser(description="Parse QE files to JSON.")
     ap.add_argument("input", nargs="+", help="Files or globs")
     ap.add_argument("-o","--out", default=None,
                     help="Output file. With many inputs: JSON array to file; "
