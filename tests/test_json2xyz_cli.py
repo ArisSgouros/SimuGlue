@@ -22,7 +22,7 @@ def test_pwi2json_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     """
     cfg = yaml.safe_load((case_dir / "case.yaml").read_text(encoding="utf-8"))
 
-    cli = "sglue-qe-json2xyz"
+    cli = "sgl-json2xyz"
     if shutil.which(cli) is None:
         pytest.skip(f"CLI '{cli}' not found in PATH — is it installed in the environment?")
 
