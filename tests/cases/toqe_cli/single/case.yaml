@@ -1,0 +1,8 @@
+prefix: pref_single
+inputs:
+  - header.in
+  - single.xyz
+outputs:
+  - pref_single.in
+gold:
+  - pref_single.in

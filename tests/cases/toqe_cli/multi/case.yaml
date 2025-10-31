@@ -1,0 +1,11 @@
+prefix: pref_multi
+frames: all
+inputs:
+  - header.in
+  - multi.xyz
+outputs:
+  - pref_multi_00000.in
+  - pref_multi_00001.in
+gold: 
+  - pref_multi_00000.in
+  - pref_multi_00001.in
