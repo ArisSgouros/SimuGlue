@@ -5,7 +5,7 @@ import shutil
 import yaml
 import pytest
 
-CASES = Path(__file__).parent / "cases" / "toqe_cli"
+CASES = Path(__file__).parent / "cases" / "xyz2qe_cli"
 
 def discover():
     return [p for p in CASES.iterdir() if (p / "case.yaml").exists()]
@@ -23,7 +23,7 @@ def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
 
     input_list = cfg["inputs"]
 
-    cli = "sgl-toqe"
+    cli = "sgl-xyz2qe"
     if shutil.which(cli) is None:
         pytest.skip(f"CLI '{cli}' not found in PATH — is it installed in the environment?")
 

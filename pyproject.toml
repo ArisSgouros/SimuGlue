@@ -30,7 +30,7 @@ sgl-hello = "simuglue.cli.template_cli:main"
 sgl-pwi2json = "simuglue.cli.pwi2json_cli:main"
 sgl-pwo2json = "simuglue.cli.pwo2json_cli:main"
 sgl-json2xyz = "simuglue.cli.json2xyz_cli:main"
-sgl-toqe = "simuglue.cli.toqe_cli:main"
+sgl-xyz2qe = "simuglue.cli.xyz2qe_cli:main"
 
 [tool.pytest.ini_options]
 addopts = "-q"
