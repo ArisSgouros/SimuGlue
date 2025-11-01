@@ -131,9 +131,14 @@ def _parse_cell(lines: list[str]) -> tuple[list[float], str] | None:
     elif unit == "alat":
         alat_bohr = parse_qe_numeric(lines, "celldm(1)")
         alat_angstrom = parse_qe_numeric(lines, "A")
-        if alat_bohr is not None:
+        if (alat_bohr is not None) and (alat_angstrom is not None):
+            raise ValueError(
+                f"CELL_PARAMETERS (alat): ambiguous scale — both celldm(1)={alat_bohr} (bohr) "
+                f"and A={alat_angstrom} (angstrom) are set. Specify only one."
+            )
+        elif alat_bohr is not None:
             scale = alat_bohr * C.BOHR_TO_ANGSTROM
-        if alat_angstrom is not None:
+        elif alat_angstrom is not None:
             scale = alat_angstrom
         else:
             raise ValueError("CELL_PARAMETERS (alat): missing celldm(1) or A to resolve alat")
@@ -174,7 +179,12 @@ def _parse_positions(lines: list[str], lattice_A: list[float] | None) -> tuple[l
 
     alat_bohr = parse_qe_numeric(lines, "celldm(1)")
     alat_angstrom = parse_qe_numeric(lines, "A")
-    if alat_bohr is not None:
+    if (alat_bohr is not None) and (alat_angstrom is not None):
+        raise ValueError(
+            f"CELL_PARAMETERS (alat): ambiguous scale — both celldm(1)={alat_bohr} (bohr) "
+            f"and A={alat_angstrom} (angstrom) are set. Specify only one."
+        )
+    elif alat_bohr is not None:
         alat_scale_A = alat_bohr * C.BOHR_TO_ANGSTROM
     elif alat_angstrom is not None:
         alat_scale_A = alat_angstrom
