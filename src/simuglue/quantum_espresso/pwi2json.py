@@ -67,34 +67,29 @@ def _block_iter(lines: list[str], start_idx: int):
 
 import re
 
-_NUM_RE = r'([+-]?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)'
+_number = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eEdD][+-]?\d+)?"
 
 def _var_pattern(var: str) -> re.Pattern:
-    """
-    Build a regex for keys like 'ecutwfc' or 'celldm(1)', allowing spaces.
-    """
-    m = re.fullmatch(r'\s*([A-Za-z_]\w*)\s*(?:\(\s*(\d+)\s*\))?\s*', var)
-    if not m:
-        # Fallback: literal match for odd keys
-        key = re.escape(var).replace(r'\ ', r'\s*')
-    else:
-        base, idx = m.group(1), m.group(2)
-        key = rf'{base}' if idx is None else rf'{base}\s*\(\s*{idx}\s*\)'
-    return re.compile(rf'{key}\s*=\s*{_NUM_RE}', re.IGNORECASE)
+    name = re.escape(var)
+    # Token boundaries: no [A-Za-z0-9_] just before or after the var name.
+    # Works for names like "A", "ecutwfc", and "celldm(1)".
+    return re.compile(
+        rf"(?<![A-Za-z0-9_]){name}(?![A-Za-z0-9_])\s*=\s*({_number})"
+    )
 
 def parse_qe_numeric(lines, var: str):
     """
-    Parse the first numeric value assigned to `var` from a list of strings.
-    Examples: var='celldm(1)', var='ecutwfc', var='ntyp'
-    Returns int if integer-like, else float; None if not found.
+    Parse first numeric assigned to `var`. Returns int if integer-like, else float; None if not found.
+    Handles Fortran 'D' exponents.
     """
     pat = _var_pattern(var)
     for ln in lines:
         m = pat.search(ln)
         if m:
-            s = m.group(1)
-            return int(s) if re.fullmatch(r'[+-]?\d+', s) else float(s)
+            s = m.group(1).replace("D", "E").replace("d", "e")
+            return int(s) if re.fullmatch(r"[+-]?\d+", s) else float(s)
     return None
+
 
 def _parse_units(header_line: str) -> str:
     if 'alat' in header_line:
