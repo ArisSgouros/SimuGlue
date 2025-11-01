@@ -1,4 +1,4 @@
-input: MoSSe.scf_ang-lat.in
+input: input.in
 output: o.json
 gold: o.json
 pretty: true

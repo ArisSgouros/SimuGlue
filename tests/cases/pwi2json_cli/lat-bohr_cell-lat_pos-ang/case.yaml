@@ -1,4 +1,4 @@
-pattern: "input_*.in"
+input: input.in
 output: o.json
 gold: o.json
 pretty: true
