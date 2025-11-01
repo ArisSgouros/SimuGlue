@@ -1,18 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+from simuglue import C
 
 import sys
 import re
 import json
-
-kRyToEv = 13.6057039763
-kRyToJoule = 2.1798741E-18
-kBohrToAngstrom = 0.529177
-kEvToJoule = 1.60218e-19
-kPaToAtm = 1.0 / 101325
-kAngstromToMeter = 1e-10
-kRy_Bohr3ToPa = kRyToJoule / (kBohrToAngstrom * kAngstromToMeter) ** 3
-kRy_Bohr3ToAtm = kRy_Bohr3ToPa * kPaToAtm
 
 def pwo2json(file_path: str | Path) -> dict | None:
     """Parse a Quantum ESPRESSO *.out file into a Python dict."""
@@ -80,7 +72,7 @@ def pwo2json(file_path: str | Path) -> dict | None:
         try:
             lsplit = lines[line_energy].split()
             energy_ry = float(lsplit[4])
-            data["info"]["energy"] = energy_ry * kRyToEv
+            data["info"]["energy"] = energy_ry * C.RY_TO_EV
         except Exception:
             print("Warning: error parsing total energy", file=sys.stderr)
 
@@ -106,7 +98,7 @@ def pwo2json(file_path: str | Path) -> dict | None:
         cx, cy, cz = float(lsplit[0]), float(lsplit[1]), float(lsplit[2])
         lattice_vectors = [ax, ay, az, bx, by, bz, cx, cy, cz]
         if "alat" in lines[line_cell_parameters]:
-            lattice_vectors = [val * alat_bohr * kBohrToAngstrom for val in lattice_vectors]
+            lattice_vectors = [val * alat_bohr * C.BOHR_TO_ANGSTROM for val in lattice_vectors]
     elif line_crystal_axes is not None and alat_bohr is not None:
         # Fallback: initial crystal axes, convert from alat to Å
         offset = 3
@@ -117,7 +109,7 @@ def pwo2json(file_path: str | Path) -> dict | None:
         lsplit = lines[line_crystal_axes + 2].split()
         cx, cy, cz = [float(lsplit[offset + i]) for i in range(3)]
         lattice_vectors_bohr = [ax, ay, az, bx, by, bz, cx, cy, cz]
-        lattice_vectors = [val * alat_bohr * kBohrToAngstrom for val in lattice_vectors_bohr]
+        lattice_vectors = [val * alat_bohr * C.BOHR_TO_ANGSTROM for val in lattice_vectors_bohr]
     else:
         print("Warning: could not determine lattice vectors", file=sys.stderr)
 
@@ -134,8 +126,8 @@ def pwo2json(file_path: str | Path) -> dict | None:
         szx, szy, szz = float(lsplit[0]), float(lsplit[1]), float(lsplit[2])
 
         stress_tensor_Ry_bohr3 = [sxx, sxy, sxz, syx, syy, syz, szx, szy, szz]
-        virial_tensor_ev = [sij * unit_cell_volume_bohr3 * kRyToEv for sij in stress_tensor_Ry_bohr3]
-        stress_tensor_atm = [sij * kRy_Bohr3ToAtm for sij in stress_tensor_Ry_bohr3]
+        virial_tensor_ev = [sij * unit_cell_volume_bohr3 * C.RY_TO_EV for sij in stress_tensor_Ry_bohr3]
+        stress_tensor_atm = [sij * C.RY_BOHR3_TO_ATM for sij in stress_tensor_Ry_bohr3]
 
         data["info"]["virial"] = virial_tensor_ev
         data["info"]["stress"] = stress_tensor_atm
@@ -165,7 +157,7 @@ def pwo2json(file_path: str | Path) -> dict | None:
             if alat_bohr is None:
                 print("Warning: missing alat for Cartesian axes conversion", file=sys.stderr)
                 break
-            pos_angstrom = [coord * alat_bohr * kBohrToAngstrom for coord in (x, y, z)]
+            pos_angstrom = [coord * alat_bohr * C.BOHR_TO_ANGSTROM for coord in (x, y, z)]
             data["atoms_data"].append({"symbols": symbols, "positions": pos_angstrom})
 
     # Number of atoms
@@ -176,7 +168,7 @@ def pwo2json(file_path: str | Path) -> dict | None:
         for ii in range(data["num_atoms"]):
             lsplit = lines[line_forces + ii].split()
             fx, fy, fz = float(lsplit[6]), float(lsplit[7]), float(lsplit[8])
-            ff_eV_angstrom = [fi * kRyToEv / kBohrToAngstrom for fi in (fx, fy, fz)]
+            ff_eV_angstrom = [fi * C.RY_TO_EV / C.BOHR_TO_ANGSTROM for fi in (fx, fy, fz)]
             data["atoms_data"][ii]["forces"] = ff_eV_angstrom
 
     data["info"]["job_done"] = is_job_done

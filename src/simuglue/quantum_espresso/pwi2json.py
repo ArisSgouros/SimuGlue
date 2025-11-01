@@ -4,9 +4,7 @@ import sys, re, json, argparse
 from pathlib import Path
 from glob import glob
 from typing import Iterator
-
-# ---- constants (same as your out-parser) ----
-kBohrToAngstrom = 0.529177
+from simuglue import C
 
 # -------------------- utils --------------------
 _CAPS_LINE = re.compile(r"^[A-Z][A-Z0-9_]*(\s|$)")
@@ -134,12 +132,12 @@ def _parse_cell(lines: list[str]) -> tuple[list[float], str] | None:
     if unit == "angstrom" or unit == "ang":
         pass  # already Angstrom
     elif unit == "bohr" or unit == "a.u.":
-        rows = [[v * kBohrToAngstrom for v in r] for r in rows]
+        rows = [[v * C.BOHR_TO_ANGSTROM for v in r] for r in rows]
     elif unit == "alat":
         alat_bohr = parse_qe_numeric(lines, "celldm(1)")
         alat_angstrom = parse_qe_numeric(lines, "A")
         if alat_bohr is not None:
-            scale = alat_bohr * kBohrToAngstrom
+            scale = alat_bohr * C.BOHR_TO_ANGSTROM
         if alat_angstrom is not None:
             scale = alat_angstrom
         else:
@@ -182,7 +180,7 @@ def _parse_positions(lines: list[str], lattice_A: list[float] | None) -> tuple[l
     alat_bohr = parse_qe_numeric(lines, "celldm(1)")
     alat_angstrom = parse_qe_numeric(lines, "A")
     if alat_bohr is not None:
-        alat_scale_A = alat_bohr * kBohrToAngstrom
+        alat_scale_A = alat_bohr * C.BOHR_TO_ANGSTROM
     elif alat_angstrom is not None:
         alat_scale_A = alat_angstrom
 
@@ -202,7 +200,7 @@ def _parse_positions(lines: list[str], lattice_A: list[float] | None) -> tuple[l
         if unit in ("angstrom", "ang"):
             posA = [x, y, z]
         elif unit in ("bohr", "a.u."):
-            posA = [x * kBohrToAngstrom, y * kBohrToAngstrom, z * kBohrToAngstrom]
+            posA = [x * C.BOHR_TO_ANGSTROM, y * C.BOHR_TO_ANGSTROM, z * C.BOHR_TO_ANGSTROM]
         elif unit == "alat":
             if alat_scale_A is None:
                 raise ValueError("ATOMIC_POSITIONS (alat): missing celldm(1) or A to resolve alat")
