@@ -1,4 +1,4 @@
-pattern: "MoSSe*.out"
-output: merged.json
-gold: merged.json
+pattern: "log*.out"
+output: o.json
+gold: o.json
 pretty: true

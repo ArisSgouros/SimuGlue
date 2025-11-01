@@ -1,4 +1,4 @@
-input: MoSSe.scf.out
+input: log.out
 output: o.json
 gold: o.json
 pretty: true
