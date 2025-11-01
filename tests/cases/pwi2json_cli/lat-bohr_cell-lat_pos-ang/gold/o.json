@@ -1,5 +1,30 @@
 {
-  "num_atoms": 3,
+  "atoms_data": [
+    {
+      "positions": [
+        0.11,
+        0.12,
+        0.13
+      ],
+      "symbols": "T1"
+    },
+    {
+      "positions": [
+        0.21,
+        0.22,
+        0.23
+      ],
+      "symbols": "T2"
+    },
+    {
+      "positions": [
+        0.31,
+        0.32,
+        0.33
+      ],
+      "symbols": "T3"
+    }
+  ],
   "cell_data": [
     0.9999999999999989,
     0.0,
@@ -12,34 +37,9 @@
     9.99999999999999
   ],
   "info": {
-    "source": "qe_input",
-    "cell_unit": "alat",
-    "positions_unit": "angstrom"
+    "cell_unit": "angstrom",
+    "positions_unit": "angstrom",
+    "source": "qe_input"
   },
-  "atoms_data": [
-    {
-      "symbols": "T1",
-      "positions": [
-        0.11,
-        0.12,
-        0.13
-      ]
-    },
-    {
-      "symbols": "T2",
-      "positions": [
-        0.21,
-        0.22,
-        0.23
-      ]
-    },
-    {
-      "symbols": "T3",
-      "positions": [
-        0.31,
-        0.32,
-        0.33
-      ]
-    }
-  ]
+  "num_atoms": 3
 }

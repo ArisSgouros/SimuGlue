@@ -1,8 +1,32 @@
 [
   {
-    "file": "input_1.in",
     "data": {
-      "num_atoms": 3,
+      "atoms_data": [
+        {
+          "positions": [
+            0.11,
+            0.12,
+            0.13
+          ],
+          "symbols": "T1"
+        },
+        {
+          "positions": [
+            0.21,
+            0.22,
+            0.23
+          ],
+          "symbols": "T2"
+        },
+        {
+          "positions": [
+            0.31,
+            0.32,
+            0.33
+          ],
+          "symbols": "T3"
+        }
+      ],
       "cell_data": [
         1.0,
         0.0,
@@ -15,42 +39,42 @@
         10.0
       ],
       "info": {
-        "source": "qe_input",
         "cell_unit": "angstrom",
-        "positions_unit": "alat"
+        "positions_unit": "angstrom",
+        "source": "qe_input"
       },
+      "num_atoms": 3
+    },
+    "file": "input_1.in"
+  },
+  {
+    "data": {
       "atoms_data": [
         {
-          "symbols": "T1",
           "positions": [
             0.11,
             0.12,
             0.13
-          ]
+          ],
+          "symbols": "T1"
         },
         {
-          "symbols": "T2",
           "positions": [
             0.21,
             0.22,
             0.23
-          ]
+          ],
+          "symbols": "T2"
         },
         {
-          "symbols": "T3",
           "positions": [
             0.31,
             0.32,
             0.33
-          ]
+          ],
+          "symbols": "T3"
         }
-      ]
-    }
-  },
-  {
-    "file": "input_2.in",
-    "data": {
-      "num_atoms": 3,
+      ],
       "cell_data": [
         0.9999999999999989,
         0.0,
@@ -63,42 +87,42 @@
         9.99999999999999
       ],
       "info": {
-        "source": "qe_input",
-        "cell_unit": "alat",
-        "positions_unit": "angstrom"
+        "cell_unit": "angstrom",
+        "positions_unit": "angstrom",
+        "source": "qe_input"
       },
-      "atoms_data": [
-        {
-          "symbols": "T1",
-          "positions": [
-            0.11,
-            0.12,
-            0.13
-          ]
-        },
-        {
-          "symbols": "T2",
-          "positions": [
-            0.21,
-            0.22,
-            0.23
-          ]
-        },
-        {
-          "symbols": "T3",
-          "positions": [
-            0.31,
-            0.32,
-            0.33
-          ]
-        }
-      ]
-    }
+      "num_atoms": 3
+    },
+    "file": "input_2.in"
   },
   {
-    "file": "input_3.in",
     "data": {
-      "num_atoms": 3,
+      "atoms_data": [
+        {
+          "positions": [
+            0.10999999999999988,
+            0.11999999999999986,
+            0.12999999999999987
+          ],
+          "symbols": "T1"
+        },
+        {
+          "positions": [
+            0.20999999999999977,
+            0.21999999999999975,
+            0.22999999999999976
+          ],
+          "symbols": "T2"
+        },
+        {
+          "positions": [
+            0.30999999999999966,
+            0.3199999999999997,
+            0.3299999999999996
+          ],
+          "symbols": "T3"
+        }
+      ],
       "cell_data": [
         1.0,
         0.0,
@@ -111,36 +135,12 @@
         10.0
       ],
       "info": {
-        "source": "qe_input",
         "cell_unit": "angstrom",
-        "positions_unit": "alat"
+        "positions_unit": "angstrom",
+        "source": "qe_input"
       },
-      "atoms_data": [
-        {
-          "symbols": "T1",
-          "positions": [
-            0.10999999999999988,
-            0.11999999999999986,
-            0.12999999999999987
-          ]
-        },
-        {
-          "symbols": "T2",
-          "positions": [
-            0.20999999999999977,
-            0.21999999999999975,
-            0.22999999999999976
-          ]
-        },
-        {
-          "symbols": "T3",
-          "positions": [
-            0.30999999999999966,
-            0.3199999999999997,
-            0.3299999999999996
-          ]
-        }
-      ]
-    }
+      "num_atoms": 3
+    },
+    "file": "input_3.in"
   }
 ]
