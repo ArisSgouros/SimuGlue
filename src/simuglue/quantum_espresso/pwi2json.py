@@ -7,9 +7,6 @@ from typing import Iterator
 from simuglue import C
 
 # -------------------- utils --------------------
-_CAPS_LINE = re.compile(r"^[A-Z][A-Z0-9_]*(\s|$)")
-_WS_ONLY = re.compile(r"^\s*$")
-
 def _strip_comment(line: str) -> str:
     # QE treats '!' as comment; keep content before the first unquoted '!'
     # (inputs are simple—ignore quoted edge cases for brevity)
@@ -32,7 +29,7 @@ def _find_block_start(lines: list[str], key: str) -> int | None:
             return i
     return None
 
-# --- Replace the old card detection with this ---
+# --- card detection ---
 _QE_CARD_NAMES = {
     # sections / cards commonly appearing in pw.x inputs
     "K_POINTS", "CELL_PARAMETERS", "ATOMIC_POSITIONS", "ATOMIC_SPECIES",
