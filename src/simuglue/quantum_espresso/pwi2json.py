@@ -106,8 +106,10 @@ def _parse_units(header_line: str) -> str:
 def _parse_cell(lines: list[str]) -> tuple[list[float], str] | None:
     """
     Return ([ax,ay,az, bx,by,bz, cx,cy,cz] in Å, unit_tag_used)
-    Supported units: angstrom, bohr, alat
+    Supported input units: angstrom, bohr, alat
+    Supported output unit: angstrom
     """
+    unit_out = "angstrom"
     i = _find_block_start(lines, "CELL_PARAMETERS")
     if i is None:
         return None
@@ -149,7 +151,7 @@ def _parse_cell(lines: list[str]) -> tuple[list[float], str] | None:
     flat = [rows[0][0], rows[0][1], rows[0][2],
             rows[1][0], rows[1][1], rows[1][2],
             rows[2][0], rows[2][1], rows[2][2]]
-    return flat, unit
+    return flat, unit_out
 
 def _matmul3(M: list[list[float]], v: list[float]) -> list[float]:
     return [
@@ -162,8 +164,10 @@ def _matmul3(M: list[list[float]], v: list[float]) -> list[float]:
 def _parse_positions(lines: list[str], lattice_A: list[float] | None) -> tuple[list[dict], str] | None:
     """
     Return (atoms_data, unit_tag_used). Positions converted to Å.
-    Supports units: angstrom, bohr, alat, crystal
+    Supports input units: angstrom, bohr, alat, crystal
+    Supported output unit: angstrom
     """
+    unit_out = "angstrom"
     i = _find_block_start(lines, "ATOMIC_POSITIONS")
     if i is None:
         return None
@@ -221,7 +225,7 @@ def _parse_positions(lines: list[str], lattice_A: list[float] | None) -> tuple[l
 
     if not atoms:
         return None
-    return atoms, unit
+    return atoms, unit_out
 
 # ---------------- top-level parse ----------------
 def pwi2json(file_path: str | Path) -> dict:
