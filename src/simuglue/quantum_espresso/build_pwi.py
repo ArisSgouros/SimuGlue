@@ -50,10 +50,10 @@ def build_pwi_from_header(
     header_text = Path(header_path).read_text(encoding="utf-8").rstrip()
     parts = [
         header_text,
-        "",
+        #"",
         _format_cell_parameters(atoms),
-        "",
+        #"",
         _format_atomic_positions(atoms),
-        "",
+        #"",
     ]
     return "\n".join(parts)

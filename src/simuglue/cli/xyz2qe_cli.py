@@ -23,11 +23,7 @@ def main():
         help="Frame index (int) or 'all'. Default: first frame only."
     )
     p.add_argument("--outdir", default=".", help="Directory for output .in files. Default: current directory.")
-    p.add_argument(
-        "--prefix",
-        default=None,
-        help="Optional prefix for output file names. If omitted, the xyz stem is used.",
-    )
+    p.add_argument("-o", "--output", help="Path to output (default: stem of xyz file).")
     args = p.parse_args()
 
     header = Path(args.header)
@@ -51,13 +47,13 @@ def main():
     generated = 0
     for i, atoms in _iter_frames(xyz_path, frames_arg):
         # Decide base filename
-        base = args.prefix if args.prefix else xyz_path.stem
-        if frames_arg: base += f"_{i:05d}"
-        infile = outdir / f"{base}.in"
-        outfile = outdir / f"{base}.out"
+        outfile = args.output if args.output else xyz_path.stem
+        if frames_arg:
+            outfile += f"_{i:05d}.in"
+        outpath = outdir / f"{outfile}"
 
         qe_text = build_pwi_from_header(header, atoms)
-        infile.write_text(qe_text, encoding="utf-8")
+        outpath.write_text(qe_text, encoding="utf-8")
         generated += 1
 
     # Friendly summary
