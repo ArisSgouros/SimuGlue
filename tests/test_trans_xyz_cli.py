@@ -41,8 +41,8 @@ def test_transf_xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
 
     args = [
         cli,
-        "--xyz", str(dst_xyz),
-        "--transformer", str(cfg["transformer"]),
+        str(dst_xyz),
+        str(cfg["transformer"]),
         "--output", str(out_path),
     ]
 

@@ -1,5 +1,0 @@
-3
-Lattice="2.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0" Properties=species:S:1:pos:R:3 source=qe_input cell_unit=alat positions_unit=angstrom pbc="T T T"
-Mo              nan              nan              nan
-S               nan              nan              nan
-Se              nan              nan              nan
