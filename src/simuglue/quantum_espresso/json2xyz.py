@@ -39,7 +39,6 @@ def build_atoms_from_json(
     positions = np.array([a["positions"] for a in atoms_data], dtype=float)
     kwargs["positions"] = positions
     if include_symbols:
-        print("BUILD_ATOMS: INCLUDE SYMBOLS = TRUE")
         symbols = [a["symbols"] for a in atoms_data]
         kwargs["symbols"] = symbols
 
