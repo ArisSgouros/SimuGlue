@@ -26,6 +26,7 @@ def build_atoms_from_json(
     include_cell: bool = True,
     include_forces: bool = True,
     include_info: bool = True,
+    include_symbols: bool = True,
     info_keys: Optional[List[str]] = None,
     pbc_mode: str = "auto",   # "auto" | "on" | "off"
     source: Optional[str] = None,  # optional label, e.g. entry["file"]
@@ -34,10 +35,13 @@ def build_atoms_from_json(
     if not isinstance(atoms_data, list) or len(atoms_data) == 0:
         raise ValueError("JSON must contain a non-empty 'atoms_data' list.")
 
-    symbols = [a["symbols"] for a in atoms_data]
+    kwargs = {}
     positions = np.array([a["positions"] for a in atoms_data], dtype=float)
-
-    kwargs: Dict[str, Any] = {"symbols": symbols, "positions": positions}
+    kwargs["positions"] = positions
+    if include_symbols:
+        print("BUILD_ATOMS: INCLUDE SYMBOLS = TRUE")
+        symbols = [a["symbols"] for a in atoms_data]
+        kwargs["symbols"] = symbols
 
     # Cell + PBC
     if include_cell and ("cell_data" in data) and data["cell_data"] is not None:

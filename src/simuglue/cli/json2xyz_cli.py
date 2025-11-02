@@ -15,6 +15,7 @@ def main() -> None:
     p.add_argument("-o", "--output", help="Path to output .xyz (default: stdout).")
     p.add_argument("--no-cell", action="store_true", help="Exclude cell (no Lattice in header).")
     p.add_argument("--no-forces", action="store_true", help="Exclude per-atom forces array.")
+    p.add_argument("--no-symbols", action="store_true", help="Exclude per-atom symbols.")
     p.add_argument("--no-info", action="store_true", help="Exclude global info tags.")
     p.add_argument("--info-keys", nargs="+", help="Only include these info keys (e.g., energy stress virial).")
     p.add_argument("--pbc", choices=["auto", "on", "off"], default="auto",
@@ -34,6 +35,7 @@ def main() -> None:
                     d,
                     include_cell=not args.no_cell,
                     include_forces=not args.no_forces,
+                    include_symbols=not args.no_symbols,
                     include_info=not args.no_info,
                     info_keys=args.info_keys,
                     pbc_mode=args.pbc,
@@ -47,6 +49,7 @@ def main() -> None:
                 obj,
                 include_cell=not args.no_cell,
                 include_forces=not args.no_forces,
+                include_symbols=not args.no_symbols,
                 include_info=not args.no_info,
                 info_keys=args.info_keys,
                 pbc_mode=args.pbc,
