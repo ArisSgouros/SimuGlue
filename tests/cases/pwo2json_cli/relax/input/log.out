@@ -539,7 +539,7 @@
 
      highest occupied level (ev):     1.2124
 
-!    total energy              =     -55.74322234 Ry
+!    total energy              =     -90.6972547800191 Ry # TEST/[eV] = 1234
      estimated scf accuracy    <          6.4E-11 Ry
 
      The total energy is the sum of the following terms:
