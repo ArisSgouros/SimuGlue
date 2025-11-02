@@ -1,0 +1,36 @@
+ &control
+    calculation = 'scf'
+    restart_mode='from_scratch',
+    prefix='myprefix',
+    tstress = .true.
+    tprnfor = .true.
+    etot_conv_thr=0.1, 
+    forc_conv_thr=0.2
+    pseudo_dir = '/psuedo_path/',
+    outdir='/outdir_path/'
+ /
+ &system
+    ibrav=  0, A=2, nat=  3, ntyp= 3,
+    ecutwfc = 100.0, ecutrho=200.0
+ /
+ &electrons
+    diagonalization='david'
+    electron_maxstep = 100
+    mixing_mode = 'plain'
+    mixing_beta = 0.7
+    conv_thr = 1d-10
+ /
+K_POINTS automatic
+24 24 1 0 0 0
+ATOMIC_SPECIES
+ Mo  1.0     Mo.UPF
+ S   2.0     S .UPF
+ Se  3.0     Se.UPF
+CELL_PARAMETERS {angstrom}
+11.0000000000000000 12.0000000000000000 13.0000000000000000
+21.0000000000000000 22.0000000000000000 23.0000000000000000
+31.0000000000000000 32.0000000000000000 33.0000000000000000
+ATOMIC_POSITIONS {angstrom}
+Mo 11.0000000000000000 12.0000000000000000 13.0000000000000000 
+S 21.0000000000000000 22.0000000000000000 23.0000000000000000 
+Se 31.0000000000000000 32.0000000000000000 33.0000000000000000 

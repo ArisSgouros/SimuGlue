@@ -1,0 +1,76 @@
+# tests/test_pwi2json.py
+from pathlib import Path
+import subprocess
+import shutil
+import yaml
+import pytest
+
+CASES = Path(__file__).parent / "cases" / "cycle_pwi-json-xyz"
+
+def discover():
+    return [p for p in CASES.iterdir() if (p / "case.yaml").exists()]
+
+@pytest.mark.parametrize("case_dir", discover(), ids=lambda p: p.name)
+def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
+    """
+    Expects case.yaml like:
+      header:    *.in
+      xyz:       *.xyz
+      gold:      *.in
+      frames:    None|"all"|int
+    """
+    cfg = yaml.safe_load((case_dir / "case.yaml").read_text(encoding="utf-8"))
+
+    input_list = cfg["inputs"]
+
+    # Stage inputs
+    for input_ in input_list:
+        src = case_dir / "input" / input_
+        dst = tmp_path_cwd / input_
+        shutil.copy(src, dst)
+ 
+    clis = ["sgl-pwi2json", "sgl-json2xyz", "sgl-xyz2qe"]
+    for cli in clis:
+        if shutil.which(cli) is None:
+            pytest.skip(f"CLI '{cli}' not found in PATH — is it installed in the environment?")
+
+    args1 = [clis[0], "i.01.in", "--pretty", "-o", "o.02.json"]
+    args2 = [clis[1], "o.02.json", "-o", "o.03.xyz"]
+    args3 = [clis[2], "--header", "i.01.header", "--xyz", "o.03.xyz", "-o", "o.04.in"]
+
+    #sgl-pwi2json i.01.in --pretty -o o.02.json
+    #sgl-json2xyz o.02.json -o o.03.xyz
+    #sgl-xyz2qe --header i.01.header --xyz o.03.xyz -o o.04.in
+    #cp o.04.in ../gold/.
+
+    # Run CLI; on failure, show stdout/stderr
+    for args in [args1, args2, args3]:
+        try:
+            result = subprocess.run(args, text=True, capture_output=True, check=True)
+        except subprocess.CalledProcessError as e:
+            pytest.fail(
+                f"CLI failed (code {e.returncode}).\n"
+                f"CMD: {' '.join(args)}\n"
+                f"STDOUT:\n{e.stdout}\n\nSTDERR:\n{e.stderr}"
+            )
+
+    output_list = cfg["outputs"]
+    gold_list = cfg["gold"]
+    for output_file, gold_file in zip(output_list, gold_list):
+        out_path = tmp_path_cwd / output_file
+
+        assert out_path.exists(), f"Expected output file not found: {out_path}"
+
+        gold_path = case_dir / "gold" / gold_file
+
+        if update_gold:
+            gold_path.parent.mkdir(parents=True, exist_ok=True)
+            existed = gold_path.exists()
+            shutil.copy(out_path, gold_path)
+            print(f"[{'UPDATED' if existed else 'CREATED'} GOLD] {gold_path}")
+            return
+
+        # Compare to gold (as text)
+        new_txt = out_path.read_text(encoding="utf-8")
+        gold_txt = gold_path.read_text(encoding="utf-8")
+        assert new_txt == gold_txt, f"XYZ mismatch for case {case_dir.name}"
