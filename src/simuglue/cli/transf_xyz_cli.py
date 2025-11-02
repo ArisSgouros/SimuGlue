@@ -45,11 +45,10 @@ def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Apply a linear deformation gradient to an extxyz (single or multi-frame).")
-    p.add_argument("--xyz", required=True, help="Input extxyz file.")
-    p.add_argument("--transformer", required=True,
-                   help="Either 'a b c; d e f; g h i' (semicolon-separated rows) or 6 nums with --voigt.")
+    p.add_argument("xyz", help="Input extxyz file.")
+    p.add_argument("transformer", help="Either 'a b c; d e f; g h i' (semicolon-separated rows) or 6 nums with --voigt.")
     p.add_argument("--frames", default=None, help="Frame index (int) or 'all'. Default: first frame only.")
-    p.add_argument("--output", default="o.xyz", help="Output extxyz file (single or multi-frame).")
+    p.add_argument("--output", "-o", default="o.xyz", help="Output extxyz file (single or multi-frame).")
     p.add_argument("--voigt", action="store_true",
                    help="Interpret --transformer as Voigt [xx yy zz yz xz xy].")
     args = p.parse_args()
