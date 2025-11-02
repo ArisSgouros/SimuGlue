@@ -45,9 +45,9 @@ def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     if frames:
         args += ["--frames", str(frames)]
 
-    prefix = cfg.get("prefix", None)
-    if prefix:
-        args += ["--prefix", str(prefix)]
+    output = cfg.get("output", None)
+    if output:
+        args += ["--output", str(output)]
 
     # Run CLI; on failure, show stdout/stderr
     try:

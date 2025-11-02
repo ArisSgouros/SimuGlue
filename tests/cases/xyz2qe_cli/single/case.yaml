@@ -1,4 +1,4 @@
-prefix: pref_single
+output: pref_single.in
 inputs:
   - header.in
   - single.xyz

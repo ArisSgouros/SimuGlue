@@ -1,4 +1,4 @@
-prefix: pref_multi
+output: pref_multi
 frames: all
 inputs:
   - header.in
