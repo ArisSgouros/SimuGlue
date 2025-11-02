@@ -1,6 +1,6 @@
-input: MoSSe.vcrelax.json
+input: in.json
 output: o.xyz
-gold: MoSSe.vcrelax.xyz
+gold: o.xyz
 
 # Optional flags:
 no_forces: true

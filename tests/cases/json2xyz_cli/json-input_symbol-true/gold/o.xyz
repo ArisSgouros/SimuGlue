@@ -1,0 +1,5 @@
+3
+Lattice="1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 10.0" Properties=species:S:1:pos:R:3 cell_unit=angstrom positions_unit=angstrom source=qe_input pbc="T T T"
+Mo       0.11000000       0.12000000       0.13000000
+S        0.21000000       0.22000000       0.23000000
+Se       0.31000000       0.32000000       0.33000000

@@ -1,0 +1,4 @@
+input: in.json
+output: o.xyz
+gold: o.xyz
+no_symbols: True

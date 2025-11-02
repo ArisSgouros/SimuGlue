@@ -1,0 +1,3 @@
+input: in.json
+output: o.xyz
+gold: o.xyz
