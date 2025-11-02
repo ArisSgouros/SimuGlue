@@ -18,6 +18,7 @@ def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
       output:    o.xyz
       gold:      o.xyz
       no_forces: true                # optional, default false
+      no_symbols: false               # optional, default false
       info_keys: [energy, virial]    # optional, default []
     """
     cfg = yaml.safe_load((case_dir / "case.yaml").read_text(encoding="utf-8"))
@@ -38,6 +39,9 @@ def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     if cfg.get("no_forces", False):
         args.append("--no-forces")
 
+    if cfg.get("no_symbols", False):
+        args.append("--no-symbols")
+
     info_keys = cfg.get("info_keys", [])
     if info_keys:
         # Supports multiple values: --info-keys energy virial ...
@@ -45,11 +49,6 @@ def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
 
     out_path = tmp_path_cwd / cfg.get("output", "o.xyz")
     args += ["-o", str(out_path)]
-
-    print(args)
-    print(args)
-    print(args)
-    print(args)
 
     # Run CLI; on failure, show stdout/stderr
     try:
