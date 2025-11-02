@@ -1,9 +1,10 @@
 # simuglue/qe_cli.py
 from __future__ import annotations
-import sys, json, argparse
+import sys, json, argparse, math
 from pathlib import Path
 from glob import glob
 from typing import Iterable, Callable, Optional
+from simuglue.io.util_json import sanitize_json, write_json
 
 def _resolve_inputs(specs: Iterable[str]) -> list[Path]:
     files: list[Path] = []
@@ -17,12 +18,6 @@ def _resolve_inputs(specs: Iterable[str]) -> list[Path]:
             seen.add(rp); out.append(p)
     return out
 
-def _write_json(path: Path, obj, indent: int | None):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(obj, f, ensure_ascii=False, indent=indent)
-        if indent: f.write("\n")
-
 def run(parse_fn: Callable[[Path], dict | None], argv: Optional[list[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Parse QE files to JSON.")
     ap.add_argument("input", nargs="+", help="Files or globs")
@@ -30,6 +25,8 @@ def run(parse_fn: Callable[[Path], dict | None], argv: Optional[list[str]] = Non
                     help="Output file. With many inputs: JSON array to file; "
                          "otherwise NDJSON to stdout if omitted.")
     ap.add_argument("--pretty", action="store_true", help="Pretty-print JSON (indent=2).")
+    ap.add_argument("--round-digits", type=int, default=10)
+    ap.add_argument("--snap-tol", type=float, default=1e-8)
     args = ap.parse_args(argv)
 
     inputs = _resolve_inputs(args.input)
@@ -40,10 +37,11 @@ def run(parse_fn: Callable[[Path], dict | None], argv: Optional[list[str]] = Non
     if len(inputs) == 1:
         data = parse_fn(inputs[0])
         if data is None: return 1
+        data = sanitize_json(data, ndigits=args.round_digits, snap_tol=args.snap_tol)
         if args.out:
             outp = Path(args.out)
             if outp.is_dir(): outp = outp / f"{inputs[0].stem}.json"
-            _write_json(outp, data, indent)
+            write_json(outp, data, indent)
         else:
             json.dump(data, sys.stdout, ensure_ascii=False, indent=indent)
             if indent: sys.stdout.write("\n")
@@ -51,14 +49,15 @@ def run(parse_fn: Callable[[Path], dict | None], argv: Optional[list[str]] = Non
 
     frames, status = [], 0
     for p in inputs:
-        obj = parse_fn(p)
-        if obj is None:
+        data = parse_fn(p)
+        if data is None:
             status = 1; frames.append({"file": p.name, "error": "parse_failed"})
         else:
-            frames.append({"file": p.name, "data": obj})
+            data = sanitize_json(data, ndigits=args.round_digits, snap_tol=args.snap_tol)
+            frames.append({"file": p.name, "data": data})
 
     if args.out:
-        _write_json(Path(args.out), frames, indent)
+        write_json(Path(args.out), frames, indent)
     else:
         for fr in frames:
             sys.stdout.write(json.dumps(fr, ensure_ascii=False) + "\n")
