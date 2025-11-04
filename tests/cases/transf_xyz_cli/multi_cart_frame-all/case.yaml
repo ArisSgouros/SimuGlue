@@ -1,6 +1,6 @@
 inputs:
   - multi.xyz
-transformer: "2 0 0; 0 1 0; 0 0 1"
+transformer: "1 0 0; 0 0 0; 0 0 0"
 voigt: false
 frames: "all"
 output: transf.xyz
