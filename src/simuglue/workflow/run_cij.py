@@ -51,6 +51,8 @@ def normalize_components_to_voigt1(components: Iterable[Union[int, str]]) -> lis
     return out
 
 def stress_tensor_to_voigt6(S: np.ndarray) -> np.ndarray:
+    # symmetrize to be safe
+    S = 0.5 * (S + S.T)
     return np.array([S[0,0], S[1,1], S[2,2], S[1,2], S[0,2], S[0,1]], float)
 
 def deformation_gradient(dir_idx: int, s: float) -> np.ndarray:
@@ -176,6 +178,7 @@ def run_cij(config_path: str):
     cfg = _load_config(config_path)
 
     components = normalize_components_to_voigt1(cfg.components)   # e.g. [1,2,6]
+    strains = [float(eps) for eps in cfg.strains]
 
     cfg.workdir.mkdir(parents=True, exist_ok=True)
     if cfg.file_type == "lammps":
@@ -198,7 +201,7 @@ def run_cij(config_path: str):
     s6_ref = stress_tensor_to_voigt6(res.stress)
 
     # For each requested Voigt component, deform the system and estimate the strain energy
-    for eps in cfg.strains:
+    for eps in strains:
         for i in components:
             print(i, eps)
             eid = f"c{i}_eps{eps:g}"
@@ -229,11 +232,14 @@ def run_cij(config_path: str):
         """Map Voigt 1..6 → 0..5 for s6 indexing."""
         return j_1based - 1
 
-    for row in rows:
-        i, eps, s6_def = row[:3]
+    for (i, eps, s6_def, energy, case_dir) in rows:
+        if not np.isfinite(s6).all():
+            print(f"[cij] Non-finite stress for i={i}, eps={eps} in {case_dir}")
         for j in components:
            jpos = _vpos(j)  # 0..5
            # C_{ij} = (S_j(def) - S_j(ref)) / ε_i, where i=direction, j=stress component
+           if abs(eps) < 1e-12:
+               raise ValueError(f"Zero or tiny strain for component {i}: eps={eps}")
            CC_eps = (s6_def[jpos] - s6_ref[jpos]) / eps
            CC_all[i, j].append(CC_eps)
 
@@ -245,34 +251,31 @@ def run_cij(config_path: str):
         for j in components:
             arr = np.array(CC_all[i, j])
             if arr.size == 0:
-                print(f"Warning: no samples for {comp}", file=sys.stderr)
+                print(f"Warning: no samples for component {i}{j}", file=sys.stderr)
                 CC_mean[i, j] = float("nan")
                 CC_sem[i, j] = float("nan")
                 continue
             CC_mean[i, j] = float(np.mean(arr))
             CC_sem[i, j] = float(np.std(arr, ddof=1) / np.sqrt(arr.size)) if arr.size > 1 else 0.0
 
+    # Check whether the cij matrix is symmetric
+    for i in components:
+        for j in components:
+            if (j, i) in CC_mean:
+                diff = abs(CC_mean[(i,j)] - CC_mean[(j,i)])
+                if diff > 1e-3:  # GPa tolerance, tweak as you like
+                    print(f"[cij] Note: C[{i},{j}] != C[{j},{i}] (diff={diff:.3f} GPa)")
 
     for key in CC_all:
         print(key, CC_mean[key], CC_sem[key])
 
-            
-#
-    ## Persist outputs
-    #out_csv = cfg.output.get("csv", "results.csv")
-    #with open(cfg.workdir / out_csv, "w", encoding="utf-8") as f:
-        #f.write("i_component,eps,case_dir," + ",".join([f"s{j}" for j in range(6)]) + ",energy\n")
-        #for i, e, s6, E, d in rows:
-            #f.write(f"{i},{e},{d}," + ",".join(f"{x:.8g}" for x in s6) + f",{E:.8g}\n")
-#
-    #out_json = cfg.output.get("cij_json", "C_partial.json")
-    #payload = {
-        #"components": cfg.components,
-        #"C_shape": [6, len(cfg.components)],
-        #"C_rows": ["xx","yy","zz","yz","xz","xy"],
-        #"C_cols": [int(i) for i in cfg.components],
-        #"C": C.tolist(),  # GPa
-        #"note": "Rows are stress Voigt components (6). Columns follow requested epsilon components.",
-    #}
-    #(cfg.workdir / out_json).write_text(json.dumps(payload, indent=2), encoding="utf-8")
-#
+    out = {
+        "components": cfg.components,     # still 1-based
+        "strains": strains,
+        "C_mean": {f"{i}-{j}": CC_mean[(i,j)] for i in components for j in components},
+        "C_sem":  {f"{i}-{j}": CC_sem[(i,j)]  for i in components for j in components},
+        "units": {"stress":"GPa","strain":"-"},
+    }
+    (cfg.workdir / "cij.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
+
+    return out
