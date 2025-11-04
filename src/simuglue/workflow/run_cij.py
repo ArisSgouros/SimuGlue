@@ -233,7 +233,7 @@ def run_cij(config_path: str):
         return j_1based - 1
 
     for (i, eps, s6_def, energy, case_dir) in rows:
-        if not np.isfinite(s6).all():
+        if not np.isfinite(s6_def).all():
             print(f"[cij] Non-finite stress for i={i}, eps={eps} in {case_dir}")
         for j in components:
            jpos = _vpos(j)  # 0..5
