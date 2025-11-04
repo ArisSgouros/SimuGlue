@@ -10,6 +10,46 @@ from ase.io import read, write
 from simuglue.io.util_ase_lammps import read_lammps, write_lammps
 from simuglue.transform.linear import apply_transform, voigt_to_cart
 
+
+# Internal 1-based Voigt mapping:
+# 1=xx, 2=yy, 3=zz, 4=yz, 5=xz, 6=xy
+_NAME_TO_VOIGT1 = {
+    "xx": 1, "yy": 2, "zz": 3,
+    "yz": 4, "xz": 5, "xy": 6,
+}
+
+def normalize_components_to_voigt1(components: Iterable[Union[int, str]]) -> list[int]:
+    """
+    Accepts user-supplied components as ints (1..6) or strings ('xx','yy','zz','xy','xz','yz')
+    and returns a validated list of 1-based Voigt indices following:
+      1=xx, 2=yy, 3=zz, 4=yz, 5=xz, 6=xy
+    Preserves user order, removes accidental whitespace, and is case-insensitive for names.
+    """
+    out: list[int] = []
+    for c in components:
+        if isinstance(c, int):
+            if 1 <= c <= 6:
+                out.append(c)
+            else:
+                raise ValueError(f"Voigt index out of range (must be 1..6): {c}")
+        else:
+            s = str(c).strip().lower()
+            if s.isdigit():
+                # If user passed "1","2",... as strings, honor them (still 1-based)
+                v = int(s)
+                if 1 <= v <= 6:
+                    out.append(v)
+                else:
+                    raise ValueError(f"Voigt index (string) out of range 1..6: {c}")
+            else:
+                if s not in _NAME_TO_VOIGT1:
+                    raise ValueError(
+                        f"Unknown component name '{c}'. "
+                        f"Allowed: xx, yy, zz, xy, xz, yz (case-insensitive), or 1..6."
+                    )
+                out.append(_NAME_TO_VOIGT1[s])
+    return out
+
 def stress_tensor_to_voigt6(S: np.ndarray) -> np.ndarray:
     return np.array([S[0,0], S[1,1], S[2,2], S[1,2], S[0,2], S[0,1]], float)
 
@@ -135,6 +175,8 @@ def run_cij(config_path: str):
     print("Hello from cij")
     cfg = _load_config(config_path)
 
+    components = normalize_components_to_voigt1(cfg.components)   # e.g. [1,2,6]
+
     cfg.workdir.mkdir(parents=True, exist_ok=True)
     if cfg.file_type == "lammps":
         atoms_ref = read_lammps(cfg.data_file)
@@ -157,7 +199,7 @@ def run_cij(config_path: str):
 
     # For each requested Voigt component, deform the system and estimate the strain energy
     for eps in cfg.strains:
-        for i in cfg.components:
+        for i in components:
             print(i, eps)
             eid = f"c{i}_eps{eps:g}"
             case_dir = cfg.workdir / eid
@@ -179,22 +221,28 @@ def run_cij(config_path: str):
             rows.append((i, eps, s6, res.energy, str(case_dir)))
 
     CC_all = {}
-    for i in cfg.components:
-        for j in cfg.components:
+    for i in components:
+        for j in components:
             CC_all[i, j] = []
+
+    def _vpos(j_1based: int) -> int:
+        """Map Voigt 1..6 → 0..5 for s6 indexing."""
+        return j_1based - 1
+
     for row in rows:
         i, eps, s6_def = row[:3]
-        for j in cfg.components:
+        for j in components:
+           jpos = _vpos(j)  # 0..5
            # C_{ij} = (S_j(def) - S_j(ref)) / ε_i, where i=direction, j=stress component
-           CC_eps = (s6_def[j-1] - s6_ref[j-1]) / eps
+           CC_eps = (s6_def[jpos] - s6_ref[jpos]) / eps
            CC_all[i, j].append(CC_eps)
 
 
     # Statistics: mean and SEM per component
     CC_mean = {}
     CC_sem = {}
-    for i in cfg.components:
-        for j in cfg.components:
+    for i in components:
+        for j in components:
             arr = np.array(CC_all[i, j])
             if arr.size == 0:
                 print(f"Warning: no samples for {comp}", file=sys.stderr)
