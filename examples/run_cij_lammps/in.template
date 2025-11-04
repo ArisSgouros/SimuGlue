@@ -1,0 +1,22 @@
+#
+# Evaluate deformed conformation
+#
+units    metal
+variable cfac equal 1.0e-4 # atom to GPa
+variable cunits string GPa
+
+variable etol equal 0.0 
+variable ftol equal 1.0e-10
+variable maxiter equal 100
+variable maxeval equal 1000
+variable dmax equal 1.0e-2
+
+box tilt large
+read_data ${datafile}
+mass 1 1.0e-20
+include potential.mod
+
+thermo_style custom pxx pyy pzz pxy pxz pyz pe
+minimize ${etol} ${ftol} ${maxiter} ${maxeval}
+#write_data ${data_file}.debug
+print '{"xx":$(pxx*v_cfac), "yy":$(pyy*v_cfac),"zz":$(pzz*v_cfac),"yz":$(pyz*v_cfac),"xz":$(pxz*v_cfac),"xy":$(pxy*v_cfac)}' file press.json
