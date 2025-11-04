@@ -10,7 +10,7 @@ from ase.io import read, write
 from simuglue.transform.linear import apply_transform, voigt_to_cart
 from simuglue.cli._xyz_io import _iter_frames
 
-def _parse_transformer(s: str, voigt: bool) -> np.ndarray:
+def _parse_strain(s: str, voigt: bool) -> np.ndarray:
     """
     Minimal parser.
 
@@ -20,10 +20,15 @@ def _parse_transformer(s: str, voigt: bool) -> np.ndarray:
     """
     s = s.strip()
     if voigt:
-        nums = [float(x) for x in s.replace(",", " ").split()]
-        if len(nums) != 6:
+        strain = [float(x) for x in s.replace(",", " ").split()]
+        if len(strain) != 6:
             raise ValueError("With --voigt, provide exactly 6 numbers: 'xx yy zz yz xz xy'.")
-        return voigt_to_cart(nums)
+
+        # convert strain to linear transformer
+        I_voigt = np.array([1, 1, 1, 0, 0, 0], dtype=float)
+        F = strain + I_voigt
+
+        return voigt_to_cart(F)
 
     # Non-voigt: strictly 'a b c; d e f; g h i'
     rows = [r.strip() for r in s.split(";") if r.strip()]
@@ -35,7 +40,10 @@ def _parse_transformer(s: str, voigt: bool) -> np.ndarray:
         if len(parts) != 3:
             raise ValueError("Each row must contain exactly 3 numbers.")
         mat.extend(parts)
-    return np.asarray(mat, dtype=float).reshape(3, 3)
+
+    strain = np.asarray(mat, dtype=float).reshape(3, 3)
+    F = strain + np.eye(3)
+    return F
 
 def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
     if frames_arg is None:
@@ -46,18 +54,18 @@ def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
 def main() -> None:
     p = argparse.ArgumentParser(description="Apply a linear deformation gradient to an extxyz (single or multi-frame).")
     p.add_argument("xyz", help="Input extxyz file.")
-    p.add_argument("transformer", help="Either 'a b c; d e f; g h i' (semicolon-separated rows) or 6 nums with --voigt.")
+    p.add_argument("strain", help="Either 'a b c; d e f; g h i' (semicolon-separated rows) or 6 nums with --voigt.")
     p.add_argument("--frames", default=None, help="Frame index (int) or 'all'. Default: first frame only.")
     p.add_argument("--output", "-o", default="o.xyz", help="Output extxyz file (single or multi-frame).")
     p.add_argument("--voigt", action="store_true",
-                   help="Interpret --transformer as Voigt [xx yy zz yz xz xy].")
+                   help="Interpret --strain tensor in Voigt notation [xx yy zz yz xz xy].")
     args = p.parse_args()
 
     xyz_path = Path(args.xyz)
     if not xyz_path.exists():
         raise FileNotFoundError(f"XYZ not found: {xyz_path}")
 
-    F = _parse_transformer(args.transformer, voigt=args.voigt)
+    F = _parse_strain(args.strain, voigt=args.voigt)
     if F.shape != (3, 3):
         raise ValueError(f"Transformer must be 3x3, got {F.shape}")
 
