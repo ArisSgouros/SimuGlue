@@ -1,4 +1,4 @@
-workdir: o.demo
+workdir: .
 
 backend: lammps
 
@@ -7,7 +7,7 @@ file_type: lammps
 
 # which stiffness components to build (Voigt indices)
 # 3D example (6 components): xx,yy,zz,yz,xz,xy → 0,1,2,3,4,5
-components: [1, 2, 3, 4, 5, 6]    # e.g., only C11,C22,C12,C66 (orthorhombic/2D-like)
+components: [1, 'yy', 3, 'yz', 5, 6]    # e.g., only C11,C22,C12,C66 (orthorhombic/2D-like)
 #ZZcomponents: [1, 2]    # e.g., only C11,C22,C12,C66 (orthorhombic/2D-like)
 
 # strain magnitudes used for finite differences
