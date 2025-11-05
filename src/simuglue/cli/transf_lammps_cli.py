@@ -11,6 +11,7 @@ from simuglue.mechanics.voigt import voigt_to_cart
 from simuglue.io.util_ase_lammps import read_lammps, write_lammps
 from simuglue.cli._transf_util import parse_F_from_voigt_str
 
+
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Apply a linear deformation gradient to a lammps data file.")
     p.add_argument("data_in", help="Input lammps data file.")
