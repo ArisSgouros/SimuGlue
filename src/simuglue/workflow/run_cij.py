@@ -10,6 +10,8 @@ import yaml
 from ase.io import read, write
 from simuglue.io.util_ase_lammps import read_lammps, write_lammps
 from simuglue.transform.linear import apply_transform
+from ase.calculators.lammps.unitconvert import convert
+from ase import units
 
 # Internal 1-based Voigt mapping:
 # 1=xx, 2=yy, 3=zz, 4=yz, 5=xz, 6=xy
@@ -168,22 +170,20 @@ class LAMMPSBackend(Backend):
 
         data = json.loads((case_dir / "thermo.json").read_text())
 
-        pe = data["pe"]
+        # convert lammps units to ase
+        lammps_units = cfg.lammps.get("units", "metal")
+        p_evA3 = convert(1.0, "pressure", lammps_units, "ASE")
+        p_GPa  = p_evA3 / units.GPa
+        e_eV = convert(10.0, "energy", lammps_units, "ASE")
 
-        def pressure_to_GPa_factor(units: str) -> float:
-            # LAMMPS: metal → bar, real → atm
-            if units == "metal": return 1e-4          # bar → GPa
-            if units == "real":  return 1.01325e-4    # atm → GPa
-            raise ValueError(f"Unsupported LAMMPS units: {units}")
-
-        fac = pressure_to_GPa_factor(cfg.lammps.get("units", "metal"))
+        pe = data["pe"]*e_eV
 
         # LAMMPS pressure tensor is +p (compression positive) = -σ
         S = -np.array([
             [data["pxx"], data["pxy"], data["pxz"]],
             [data["pxy"], data["pyy"], data["pyz"]],
             [data["pxz"], data["pyz"], data["pzz"]],
-        ], dtype=float) * fac
+        ], dtype=float) * p_GPa
 
         return RelaxResult(atoms, pe, S)
 
