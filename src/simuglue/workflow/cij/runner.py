@@ -10,75 +10,10 @@ import yaml
 from ase.io import read, write
 from simuglue.io.util_ase_lammps import read_lammps, write_lammps
 from simuglue.transform.linear import apply_transform
+from simuglue.mechanics.voigt import normalize_components_to_voigt1, stress_tensor_to_voigt6
+from simuglue.mechanics.kinematics import deformation_gradient_from_voigt as deformation_gradient
 from ase.calculators.lammps.unitconvert import convert
 from ase import units
-
-# Internal 1-based Voigt mapping:
-# 1=xx, 2=yy, 3=zz, 4=yz, 5=xz, 6=xy
-_NAME_TO_VOIGT1 = {
-    "xx": 1, "yy": 2, "zz": 3,
-    "yz": 4, "xz": 5, "xy": 6,
-}
-
-def normalize_components_to_voigt1(components: Iterable[Union[int, str]]) -> list[int]:
-    """
-    Accepts user-supplied components as ints (1..6) or strings ('xx','yy','zz','xy','xz','yz')
-    and returns a validated list of 1-based Voigt indices following:
-      1=xx, 2=yy, 3=zz, 4=yz, 5=xz, 6=xy
-    Preserves user order, removes accidental whitespace, and is case-insensitive for names.
-    """
-    out: list[int] = []
-    for c in components:
-        if isinstance(c, int):
-            if 1 <= c <= 6:
-                out.append(c)
-            else:
-                raise ValueError(f"Voigt index out of range (must be 1..6): {c}")
-        else:
-            s = str(c).strip().lower()
-            if s.isdigit():
-                # If user passed "1","2",... as strings, honor them (still 1-based)
-                v = int(s)
-                if 1 <= v <= 6:
-                    out.append(v)
-                else:
-                    raise ValueError(f"Voigt index (string) out of range 1..6: {c}")
-            else:
-                if s not in _NAME_TO_VOIGT1:
-                    raise ValueError(
-                        f"Unknown component name '{c}'. "
-                        f"Allowed: xx, yy, zz, xy, xz, yz (case-insensitive), or 1..6."
-                    )
-                out.append(_NAME_TO_VOIGT1[s])
-    return out
-
-def stress_tensor_to_voigt6(S: np.ndarray) -> np.ndarray:
-    # symmetrize to be safe
-    S = 0.5 * (S + S.T)
-    return np.array([S[0,0], S[1,1], S[2,2], S[1,2], S[0,2], S[0,1]], float)
-
-def deformation_gradient(dir_idx: int, s: float) -> np.ndarray:
-    """
-    Build F for Voigt dir: 1=xx, 2=yy, 3=zz, 4=yz, 5=xz, 6=xy.
-    s = ±up (engineering strain / shear).
-    """
-    F = np.eye(3)
-    if   dir_idx == 1:  # xx
-        F[0, 0] += s
-    elif dir_idx == 2:  # yy
-        F[1, 1] += s
-    elif dir_idx == 3:  # zz
-        F[2, 2] += s
-    elif dir_idx == 4:  # yz: y' += s * z
-        F[1, 2] += s
-    elif dir_idx == 5:  # xz: x' += s * z
-        F[0, 2] += s
-    elif dir_idx == 6:  # xy: x' += s * y
-        F[0, 1] += s
-    else:
-        raise ValueError("dir_idx must be 1..6")
-    return F
-
 
 # ---------- config ----------
 @dataclass
