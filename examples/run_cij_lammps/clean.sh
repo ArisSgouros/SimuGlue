@@ -1,2 +1,2 @@
 #!/bin/bash
-rm -r o.*
+rm -r o.* c1* c2* c3* c4* c5* c6* ref*

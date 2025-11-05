@@ -16,6 +16,7 @@ strains: [0.00001, -0.00001]
 # LAMMPS-specific settings
 lammps:
   exe: lmp_mpi
+  units: metal
   input_template: in.template
   include_files: [potential.mod, Si.sw]
 
