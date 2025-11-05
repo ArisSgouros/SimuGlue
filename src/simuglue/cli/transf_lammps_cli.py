@@ -29,12 +29,16 @@ def _parse_transformer(s: str) -> np.ndarray:
 
     return voigt_to_cart(F)
 
-def main() -> None:
+def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Apply a linear deformation gradient to a lammps data file.")
     p.add_argument("data_in", help="Input lammps data file.")
     p.add_argument("strain", help="Voigt notation: 'xx yy zz yz xz xy'.")
     p.add_argument("--output", "-o", default="o.lammps", help="Output lammps file.")
-    args = p.parse_args()
+    return p
+
+def main(argv=None, prog: str | None = None) -> int:
+    parser = build_parser(prog=prog)
+    args = parser.parse_args(argv)
 
     data_in_path = Path(args.data_in)
     if not data_in_path.exists():

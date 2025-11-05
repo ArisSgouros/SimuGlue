@@ -8,7 +8,7 @@ from ase.io import read
 from simuglue.quantum_espresso.build_pwi import build_pwi_from_header
 from simuglue.cli._xyz_io import _iter_frames
 
-def main():
+def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description=(
             "Generate Quantum ESPRESSO input file(s) by combining a header "
@@ -24,7 +24,11 @@ def main():
     )
     p.add_argument("--outdir", default=".", help="Directory for output .in files. Default: current directory.")
     p.add_argument("-o", "--output", help="Path to output (default: stem of xyz file).")
-    args = p.parse_args()
+    return p
+
+def main(argv=None, prog: str | None = None) -> int:
+    parser = build_parser(prog=prog)
+    args = parser.parse_args(argv)
 
     header = Path(args.header)
     xyz_path = Path(args.xyz)
@@ -61,8 +65,7 @@ def main():
         print(f"Generated 1 QE input in {outdir.resolve()}")
     else:
         print(f"Generated {generated} QE inputs in {outdir.resolve()}")
-
+    return 0
 
 if __name__ == "__main__":
-    main()
-
+    raise SystemExit(main())

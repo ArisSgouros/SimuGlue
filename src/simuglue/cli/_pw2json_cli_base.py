@@ -18,16 +18,31 @@ def _resolve_inputs(specs: Iterable[str]) -> list[Path]:
             seen.add(rp); out.append(p)
     return out
 
-def run(parse_fn: Callable[[Path], dict | None], argv: Optional[list[str]] = None) -> int:
-    ap = argparse.ArgumentParser(description="Parse QE files to JSON.")
+def build_parser(prog: Optional[str] = None) -> argparse.ArgumentParser:
+    ap = argparse.ArgumentParser(prog=prog, description="Parse QE files to JSON.")
     ap.add_argument("input", nargs="+", help="Files or globs")
-    ap.add_argument("-o","--out", default=None,
-                    help="Output file. With many inputs: JSON array to file; "
-                         "otherwise NDJSON to stdout if omitted.")
+    ap.add_argument(
+        "-o", "--out", default=None,
+        help=("Output file. With many inputs: JSON array to file; "
+              "otherwise NDJSON to stdout if omitted.")
+    )
     ap.add_argument("--pretty", action="store_true", help="Pretty-print JSON (indent=2).")
     ap.add_argument("--round-digits", type=int, default=10)
     ap.add_argument("--snap-tol", type=float, default=1e-8)
-    args = ap.parse_args(argv)
+    return ap
+
+def run(parse_fn: Callable[[Path], dict | None],
+        argv: Optional[list[str]] = None,
+        prog: Optional[str] = None) -> int:
+    """
+    parse_fn: function that parses a single QE file -> dict
+    argv:     list of CLI args (None => sys.argv[1:])
+    prog:     program name to show in help/usage (optional)
+    """
+    if argv is None:
+        argv = sys.argv[1:]
+    parser = build_parser(prog=prog)
+    args = parser.parse_args(argv)
 
     inputs = _resolve_inputs(args.input)
     if not inputs:

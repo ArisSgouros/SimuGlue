@@ -9,8 +9,11 @@ from ase import Atoms
 from ase.io import write
 from simuglue.quantum_espresso.json2xyz import build_atoms_from_json
 
-def main() -> None:
-    p = argparse.ArgumentParser(description="Convert JSON (single or multi-snapshot) to EXTXYZ using ASE.")
+def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog=prog,
+        description="Convert JSON (single or multi-snapshot) to EXTXYZ using ASE."
+    )
     p.add_argument("input", help="Path to input JSON file.")
     p.add_argument("-o", "--output", help="Path to output .xyz (default: stdout).")
     p.add_argument("--no-cell", action="store_true", help="Exclude cell (no Lattice in header).")
@@ -18,9 +21,15 @@ def main() -> None:
     p.add_argument("--no-symbols", action="store_true", help="Exclude per-atom symbols.")
     p.add_argument("--no-info", action="store_true", help="Exclude global info tags.")
     p.add_argument("--info-keys", nargs="+", help="Only include these info keys (e.g., energy stress virial).")
-    p.add_argument("--pbc", choices=["auto", "on", "off"], default="auto",
-                   help="Periodic boundary conditions. 'auto' uses PBC if cell is present.")
-    args = p.parse_args()
+    p.add_argument(
+        "--pbc", choices=["auto", "on", "off"], default="auto",
+        help="Periodic boundary conditions. 'auto' uses PBC if cell is present."
+    )
+    return p
+
+def main(argv=None, prog: str | None = None) -> int:
+    parser = build_parser(prog=prog)
+    args = parser.parse_args(argv)
 
     obj = json.loads(Path(args.input).read_text(encoding="utf-8"))
 
@@ -63,7 +72,7 @@ def main() -> None:
     else:
         from sys import stdout
         write(stdout, frames if len(frames) > 1 else frames[0], format="extxyz")
+    return 0
 
 if __name__ == "__main__":
-    main()
-
+    raise SystemExit(main())

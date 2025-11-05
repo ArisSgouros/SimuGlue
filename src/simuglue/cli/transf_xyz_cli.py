@@ -52,7 +52,7 @@ def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
     s = frames_arg.strip().lower()
     return "all" if s == "all" else int(s)
 
-def main() -> None:
+def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Apply a linear deformation gradient to an extxyz (single or multi-frame).")
     p.add_argument("xyz", help="Input extxyz file.")
     p.add_argument("strain", help="Either 'a b c; d e f; g h i' (semicolon-separated rows) or 6 nums with --voigt.")
@@ -60,7 +60,11 @@ def main() -> None:
     p.add_argument("--output", "-o", default="o.xyz", help="Output extxyz file (single or multi-frame).")
     p.add_argument("--voigt", action="store_true",
                    help="Interpret --strain tensor in Voigt notation [xx yy zz yz xz xy].")
-    args = p.parse_args()
+    return p
+
+def main(argv=None, prog: str | None = None) -> int:
+    parser = build_parser(prog=prog)
+    args = parser.parse_args(argv)
 
     xyz_path = Path(args.xyz)
     if not xyz_path.exists():
@@ -81,5 +85,7 @@ def main() -> None:
     write(args.output, out_frames if len(out_frames) > 1 else out_frames[0], format="extxyz")
     print(f"Wrote {len(out_frames)} frame(s) to {Path(args.output).resolve()}")
 
+    return 0
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

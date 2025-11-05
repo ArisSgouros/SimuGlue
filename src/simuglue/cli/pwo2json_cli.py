@@ -1,4 +1,9 @@
+# src/simuglue/cli/pwo2json_cli.py
 from simuglue.quantum_espresso import pwo2json
 from ._pw2json_cli_base import run
-def main():  # console_script
-    raise SystemExit(run(pwo2json))
+
+def main(argv=None, prog: str | None = None) -> int:
+    return run(pwo2json, argv=argv, prog=prog)
+
+if __name__ == "__main__":
+    raise SystemExit(main())
