@@ -1,15 +1,15 @@
 # src/simuglue/workflows/cij_run.py
 from __future__ import annotations
+import sys
 import json, shutil, subprocess, re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple, Dict
+from typing import Iterable, List, Tuple, Dict
 import numpy as np
 import yaml
 from ase.io import read, write
 from simuglue.io.util_ase_lammps import read_lammps, write_lammps
-from simuglue.transform.linear import apply_transform, voigt_to_cart
-
+from simuglue.transform.linear import apply_transform
 
 # Internal 1-based Voigt mapping:
 # 1=xx, 2=yy, 3=zz, 4=yz, 5=xz, 6=xy
