@@ -133,16 +133,25 @@ def get_backend(name: str) -> Backend:
 # ---------- LAMMPS backend (skeleton) ----------
 @register_backend("lammps")
 class LAMMPSBackend(Backend):
+
     def prepare_case(self, case_dir: Path, atoms, cfg: Config):
+
         print("Preparing case!")
         # Minimal: write a data file with ASE; let template refer to it.
         write_lammps(atoms, case_dir / "str.data", style="atomic", units="metal", force_skew="False")
  
         # Render the user template (keep it simple: {datafile} placeholder)
         tpl = Path(cfg.lammps["input_template"]).read_text()
+
+        # set datafile
         tpl = tpl.replace("${datafile}", "str.data")
+
+        # append json thermo to end of file
+        print_line = "print '{\"pxx\":$(pxx), \"pyy\":$(pyy), \"pzz\":$(pzz), \"pyz\":$(pyz), \"pxz\":$(pxz), \"pxy\":$(pxy), \"pe\":$(pe)}' file thermo.json"
+        tpl = tpl.rstrip() + "\n" + print_line + "\n"
+
+        # write file
         (case_dir / "in.min").write_text(tpl, encoding="utf-8")
-        #(case_dir / "in.min").write_text("ASDF", encoding="utf-8")
 
         # Copy include files if listed
         for p in cfg.lammps.get("include_files", []):
@@ -156,20 +165,26 @@ class LAMMPSBackend(Backend):
         log = (case_dir / "log.lammps")
         subprocess.run([exe, "-in", "in.min"], cwd=case_dir, check=True, stdout=log.open("w"), stderr=subprocess.STDOUT)
         text = log.read_text(errors="ignore")
-        # Parse per-box stress (bar) triplet and shear components if printed.
-        # Recommend user prints "thermo_style custom pxx pyy pzz pxy pxz pyz pe"
-        # Example quick parser:
-        p = re.findall(r"^\s*([-+0-9.eE]+)\s+([-+0-9.eE]+)\s+([-+0-9.eE]+)\s+([-+0-9.eE]+)\s+([-+0-9.eE]+)\s+([-+0-9.eE]+)\s+([-+0-9.eE]+)\s*$",
-                       text, flags=re.M)
-        if not p:
-            raise RuntimeError("Could not parse pressures from LAMMPS log; ensure thermo outputs pxx pyy pzz pxy pxz pyz pe")
-        pxx, pyy, pzz, pxy, pxz, pyz, pe = map(float, p[-1])
-        print("pxx:", pxx)
-        ## LAMMPS pressures are in bar by default → GPa
-        fac = 1e-4  # 1 bar = 0.0001 GPa
-        S = -np.array([[pxx, pxy, pxz],
-                      [pxy, pyy, pyz],
-                      [pxz, pyz, pzz]], float) * fac
+
+        data = json.loads((case_dir / "thermo.json").read_text())
+
+        pe = data["pe"]
+
+        def pressure_to_GPa_factor(units: str) -> float:
+            # LAMMPS: metal → bar, real → atm
+            if units == "metal": return 1e-4          # bar → GPa
+            if units == "real":  return 1.01325e-4    # atm → GPa
+            raise ValueError(f"Unsupported LAMMPS units: {units}")
+
+        fac = pressure_to_GPa_factor(cfg.lammps.get("units", "metal"))
+
+        # LAMMPS pressure tensor is +p (compression positive) = -σ
+        S = -np.array([
+            [data["pxx"], data["pxy"], data["pxz"]],
+            [data["pxy"], data["pyy"], data["pyz"]],
+            [data["pxz"], data["pyz"], data["pzz"]],
+        ], dtype=float) * fac
+
         return RelaxResult(atoms, pe, S)
 
 # ---------- main workflow ----------
