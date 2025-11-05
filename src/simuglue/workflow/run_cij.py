@@ -118,7 +118,8 @@ class RelaxResult:
 
 class Backend:
     def prepare_case(self, case_dir: Path, atoms, cfg: Config): ...
-    def relax_and_stress(self, case_dir: Path, atoms, cfg: Config) -> RelaxResult: ...
+    def run_case(self, case_dir: Path, atoms, cfg: Config): ...
+    def parse_case(self, case_dir: Path, atoms, cfg: Config) -> RelaxResult: ...
 
 _BACKENDS = {}
 def register_backend(name):
@@ -172,33 +173,22 @@ class LAMMPSBackend(Backend):
             if src.resolve() != dst.resolve():
                 shutil.copy(src, dst)
 
-    def relax_and_stress(self, case_dir: Path, atoms, cfg: Config) -> RelaxResult:
-
+    def run_case(self, case_dir: Path, atoms, cfg: Config) -> RelaxResult:
         if is_done(case_dir):
-            # Do not run; only parse existing outputs.
-            data = json.loads((case_dir / "thermo.json").read_text())
-
-            # convert lammps units to ase
-            lammps_units = cfg.lammps.get("units", "metal")
-            p_evA3 = convert(1.0, "pressure", lammps_units, "ASE")
-            p_GPa  = p_evA3 / units.GPa
-            e_eV = convert(10.0, "energy", lammps_units, "ASE")
-
-            pe = data["pe"]*e_eV
-
-            # LAMMPS pressure tensor is +p (compression positive) = -σ
-            S = -np.array([
-                [data["pxx"], data["pxy"], data["pxz"]],
-                [data["pxy"], data["pyy"], data["pyz"]],
-                [data["pxz"], data["pyz"], data["pzz"]],
-            ], dtype=float) * p_GPa
-
-            return RelaxResult(atoms, pe, S)
-
+            return
         exe = cfg.lammps.get("exe", "lmp")
         log = (case_dir / "log.lammps")
         subprocess.run([exe, "-in", "in.min"], cwd=case_dir, check=True, stdout=log.open("w"), stderr=subprocess.STDOUT)
         text = log.read_text(errors="ignore")
+        status = (Path(case_dir) / "thermo.json").is_file()
+        if status:
+            mark_done(case_dir)
+        return status
+
+    def parse_case(self, case_dir: Path, atoms, cfg: Config) -> RelaxResult:
+
+        if not is_done(case_dir):
+            raise ValueError(f"Attempted to parse a running/not done case")
 
         data = json.loads((case_dir / "thermo.json").read_text())
 
@@ -216,8 +206,6 @@ class LAMMPSBackend(Backend):
             [data["pxy"], data["pyy"], data["pyz"]],
             [data["pxz"], data["pyz"], data["pzz"]],
         ], dtype=float) * p_GPa
-
-        mark_done(case_dir)
 
         return RelaxResult(atoms, pe, S)
 
@@ -246,7 +234,8 @@ def run_cij(config_path: str):
 
     # backend prep & run
     backend.prepare_case(case_dir, atoms_ref, cfg)
-    res = backend.relax_and_stress(case_dir, atoms_ref, cfg)
+    status = backend.run_case(case_dir, atoms_ref, cfg)
+    res = backend.parse_case(case_dir, atoms_ref, cfg)
     s6_ref = stress_tensor_to_voigt6(res.stress)
 
     # For each requested Voigt component, deform the system and estimate the strain energy
@@ -267,7 +256,8 @@ def run_cij(config_path: str):
 
             ## backend prep & run
             backend.prepare_case(case_dir, atoms_def, cfg)
-            res = backend.relax_and_stress(case_dir, atoms_def, cfg)
+            status = backend.run_case(case_dir, atoms_def, cfg)
+            res = backend.parse_case(case_dir, atoms_def, cfg)
 
             s6 = stress_tensor_to_voigt6(res.stress)
             rows.append((i, eps, s6, res.energy, str(case_dir)))
