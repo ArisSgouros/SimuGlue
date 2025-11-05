@@ -7,7 +7,8 @@ from typing import Iterable, List, Tuple, Union
 import numpy as np
 from ase import Atoms
 from ase.io import read, write
-from simuglue.transform.linear import apply_transform, voigt_to_cart
+from simuglue.transform.linear import apply_transform
+from simuglue.mechanics.voigt import voigt_to_cart
 from simuglue.cli._xyz_io import _iter_frames
 
 def _parse_strain(s: str, voigt: bool) -> np.ndarray:

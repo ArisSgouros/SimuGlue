@@ -6,7 +6,8 @@ from typing import Iterable, List, Tuple, Union
 
 import numpy as np
 from ase import Atoms
-from simuglue.transform.linear import apply_transform, voigt_to_cart
+from simuglue.transform.linear import apply_transform
+from simuglue.mechanics.voigt import voigt_to_cart
 from simuglue.io.util_ase_lammps import read_lammps, write_lammps
 
 def _parse_transformer(s: str) -> np.ndarray:

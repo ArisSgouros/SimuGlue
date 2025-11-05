@@ -14,20 +14,3 @@ def apply_transform(atoms_ref, F: np.ndarray, scale_atoms=True):
     C_new = C @ F.T                         # right-multiply by F^T
     atoms_transformed.set_cell(C_new, scale_atoms=scale_atoms)
     return atoms_transformed
-
-
-def voigt_to_cart(v: Sequence[float]) -> np.ndarray:
-    """
-    Convert a 6×1 array [xx, yy, zz, yz, xz, xy] to a 3×3 matrix:
-        [[xx, xy, xz],
-         [0 , yy, yz],
-         [0 , 0 , zz]]
-    """
-    if len(v) != 6:
-        raise ValueError("Expected 6 elements: [xx, yy, zz, yz, xz, xy].")
-    xx, yy, zz, yz, xz, xy = map(float, v)
-    return np.array([
-        [xx, xy, xz],
-        [0.0, yy, yz],
-        [0.0, 0.0, zz],
-    ], dtype=float)

@@ -11,6 +11,7 @@ __all__ = [
     "stress_tensor_to_voigt6",
     "voigt1_to_name",
     "name_to_voigt1",
+    "voigt_to_cart",
 ]
 
 def name_to_voigt1(name: str) -> int:
@@ -44,3 +45,19 @@ def stress_tensor_to_voigt6(S: np.ndarray) -> np.ndarray:
     S = 0.5 * (S + S.T)
     return np.array([S[0,0], S[1,1], S[2,2], S[1,2], S[0,2], S[0,1]], float)
 
+# FIXIT: rm redudant functions
+def voigt_to_cart(v: Sequence[float]) -> np.ndarray:
+    """
+    Convert a 6×1 array [xx, yy, zz, yz, xz, xy] to a 3×3 matrix:
+        [[xx, xy, xz],
+         [0 , yy, yz],
+         [0 , 0 , zz]]
+    """
+    if len(v) != 6:
+        raise ValueError("Expected 6 elements: [xx, yy, zz, yz, xz, xy].")
+    xx, yy, zz, yz, xz, xy = map(float, v)
+    return np.array([
+        [xx, xy, xz],
+        [0.0, yy, yz],
+        [0.0, 0.0, zz],
+    ], dtype=float)
