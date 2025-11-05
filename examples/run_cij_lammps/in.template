@@ -18,6 +18,3 @@ thermo_style custom step pxx pyy pzz pxy pxz pyz pe
 
 # energy minimization
 minimize ${etol} ${ftol} ${maxiter} ${maxeval}
-
-# after the final minimize, print a single labeled line
-print '{"pxx":$(pxx), "pyy":$(pyy),"pzz":$(pzz),"pyz":$(pyz),"pxz":$(pxz),"pxy":$(pxy), "pe":$(pe)}' file thermo.json
