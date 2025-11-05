@@ -151,7 +151,7 @@ class LAMMPSBackend(Backend):
 
         print("Preparing case!")
         # Minimal: write a data file with ASE; let template refer to it.
-        write_lammps(atoms, case_dir / "str.data", style="atomic", units="metal", force_skew=False)
+        write_lammps(atoms, case_dir / "str.data", style="atomic", units="metal", force_skew="False")
  
         # Render the user template (keep it simple: {datafile} placeholder)
         tpl = Path(cfg.lammps["input_template"]).read_text()
