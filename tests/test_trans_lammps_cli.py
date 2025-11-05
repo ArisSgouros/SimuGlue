@@ -1,5 +1,6 @@
 # tests/test_transf_lammps_cli.py
 from pathlib import Path
+from _utils import check_cli_or_skip
 import subprocess
 import shutil
 import yaml
@@ -26,20 +27,8 @@ def test_transf_lammps_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool
 
     exe = "sgl"
     cli = [exe, "transform","lammps"]
+    check_cli_or_skip(cli)
 
-    # launcher on PATH
-    if shutil.which(exe) is None:
-        pytest.skip(f"'{exe}' not found on PATH")
-
-    # subcommand exists
-    probe = subprocess.run(
-        cli + ["--help"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    if probe.returncode != 0:
-        command_str = " ".join(cli)
-        pytest.skip(f"Subcommand '{command_str}' not available")
 
     args = cli
 

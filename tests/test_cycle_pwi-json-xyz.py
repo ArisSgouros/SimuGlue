@@ -1,5 +1,6 @@
 # tests/test_pwi2json.py
 from pathlib import Path
+from _utils import check_cli_or_skip
 import subprocess
 import shutil
 import yaml
@@ -34,20 +35,8 @@ def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     cli_json2xyz = [exe, "qe", "json2xyz"]
     cli_xyz2qe   = [exe, "qe", "xyz2qe"]
  
-    # launcher on PATH
-    if shutil.which(exe) is None:
-        pytest.skip(f"'{exe}' not found on PATH")
-
     for cli in [cli_pwi2json, cli_json2xyz, cli_xyz2qe]:
-        # subcommand exists
-        probe = subprocess.run(
-            cli + ["--help"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        if probe.returncode != 0:
-            command_str = " ".join(cli)
-            pytest.skip(f"Subcommand '{command_str}' not available")
+        check_cli_or_skip(cli)
 
     args1 = cli_pwi2json + ["i.01.in", "--pretty", "-o", "o.02.json"]
     args2 = cli_json2xyz + ["o.02.json", "-o", "o.03.xyz"]
