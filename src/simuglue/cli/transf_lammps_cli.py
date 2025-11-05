@@ -9,25 +9,7 @@ from ase import Atoms
 from simuglue.transform.linear import apply_transform
 from simuglue.mechanics.voigt import voigt_to_cart
 from simuglue.io.util_ase_lammps import read_lammps, write_lammps
-
-def _parse_transformer(s: str) -> np.ndarray:
-    """
-    Minimal parser.
-
-    - If voigt=True: expect 6 numbers: 'xx yy zz yz xz xy'.
-    - Else: expect exactly 3 rows separated by ';', each with 3 numbers:
-            'a b c; d e f; g h i'.
-    """
-    s = s.strip()
-    strain = [float(x) for x in s.replace(",", " ").split()]
-    if len(strain) != 6:
-        raise ValueError("With --voigt, provide exactly 6 numbers: 'xx yy zz yz xz xy'.")
-
-    # convert strain to linear transformer
-    I_voigt = np.array([1, 1, 1, 0, 0, 0], dtype=float)
-    F = strain + I_voigt
-
-    return voigt_to_cart(F)
+from simuglue.cli._transf_util import parse_F_from_voigt_str
 
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Apply a linear deformation gradient to a lammps data file.")
@@ -46,7 +28,7 @@ def main(argv=None, prog: str | None = None) -> int:
 
     atoms_ref = read_lammps(data_in_path, style="atomic")
 
-    F = _parse_transformer(args.strain)
+    F = parse_F_from_voigt_str(args.strain)
     if F.shape != (3, 3):
         raise ValueError(f"Transformer must be 3x3, got {F.shape}")
 

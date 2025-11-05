@@ -10,41 +10,7 @@ from ase.io import read, write
 from simuglue.transform.linear import apply_transform
 from simuglue.mechanics.voigt import voigt_to_cart
 from simuglue.cli._xyz_io import _iter_frames
-
-def _parse_strain(s: str, voigt: bool) -> np.ndarray:
-    """
-    Minimal parser.
-
-    - If voigt=True: expect 6 numbers: 'xx yy zz yz xz xy'.
-    - Else: expect exactly 3 rows separated by ';', each with 3 numbers:
-            'a b c; d e f; g h i'.
-    """
-    s = s.strip()
-    if voigt:
-        strain = [float(x) for x in s.replace(",", " ").split()]
-        if len(strain) != 6:
-            raise ValueError("With --voigt, provide exactly 6 numbers: 'xx yy zz yz xz xy'.")
-
-        # convert strain to linear transformer
-        I_voigt = np.array([1, 1, 1, 0, 0, 0], dtype=float)
-        F = strain + I_voigt
-
-        return voigt_to_cart(F)
-
-    # Non-voigt: strictly 'a b c; d e f; g h i'
-    rows = [r.strip() for r in s.split(";") if r.strip()]
-    if len(rows) != 3:
-        raise ValueError("Provide exactly 3 rows separated by ';', e.g. '1 0 0; 0 1 0; 0 0 1'.")
-    mat: list[float] = []
-    for r in rows:
-        parts = [float(x) for x in r.replace(",", " ").split()]
-        if len(parts) != 3:
-            raise ValueError("Each row must contain exactly 3 numbers.")
-        mat.extend(parts)
-
-    strain = np.asarray(mat, dtype=float).reshape(3, 3)
-    F = strain + np.eye(3)
-    return F
+from simuglue.cli._transf_util import parse_F_from_voigt_str, parse_F_from_tensor_str
 
 def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
     if frames_arg is None:
@@ -70,7 +36,10 @@ def main(argv=None, prog: str | None = None) -> int:
     if not xyz_path.exists():
         raise FileNotFoundError(f"XYZ not found: {xyz_path}")
 
-    F = _parse_strain(args.strain, voigt=args.voigt)
+    if args.voigt:
+        F = parse_F_from_voigt_str(args.strain)
+    else: # voigt = false
+        F = parse_F_from_tensor_str(args.strain)
     if F.shape != (3, 3):
         raise ValueError(f"Transformer must be 3x3, got {F.shape}")
 
