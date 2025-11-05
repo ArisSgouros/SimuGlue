@@ -151,7 +151,7 @@ class LAMMPSBackend(Backend):
 
         print("Preparing case!")
         # Minimal: write a data file with ASE; let template refer to it.
-        write_lammps(atoms, case_dir / "str.data", style="atomic", units="metal", force_skew="False")
+        write_lammps(atoms, case_dir / "str.data", style="atomic", units="metal", force_skew=False)
  
         # Render the user template (keep it simple: {datafile} placeholder)
         tpl = Path(cfg.lammps["input_template"]).read_text()
@@ -161,10 +161,13 @@ class LAMMPSBackend(Backend):
 
         # append json thermo to end of file
         print_line = "print '{\"pxx\":$(pxx), \"pyy\":$(pyy), \"pzz\":$(pzz), \"pyz\":$(pyz), \"pxz\":$(pxz), \"pxy\":$(pxy), \"pe\":$(pe)}' file thermo.json"
-        tpl = tpl.rstrip() + "\n" + print_line + "\n"
+        if "thermo.json" not in tpl:               # only append once
+            tpl = tpl.rstrip() + "\n" + print_line + "\n"
 
         # write file
-        (case_dir / "in.min").write_text(tpl, encoding="utf-8")
+        dst = case_dir / "in.min"
+        if not is_done(case_dir) and not dst.exists():
+            dst.write_text(tpl, encoding="utf-8")
 
         # Copy include files if listed
         for p in cfg.lammps.get("include_files", []):
@@ -180,10 +183,11 @@ class LAMMPSBackend(Backend):
         log = (case_dir / "log.lammps")
         subprocess.run([exe, "-in", "in.min"], cwd=case_dir, check=True, stdout=log.open("w"), stderr=subprocess.STDOUT)
         text = log.read_text(errors="ignore")
-        status = (Path(case_dir) / "thermo.json").is_file()
-        if status:
-            mark_done(case_dir)
-        return status
+        status = (case_dir / "thermo.json").is_file()
+        if not status:
+            raise RuntimeError("LAMMPS finished but thermo.json missing; check template/thermo line.")
+        mark_done(case_dir)
+        return
 
     def parse_case(self, case_dir: Path, atoms, cfg: Config) -> RelaxResult:
 
@@ -234,7 +238,7 @@ def run_cij(config_path: str):
 
     # backend prep & run
     backend.prepare_case(case_dir, atoms_ref, cfg)
-    status = backend.run_case(case_dir, atoms_ref, cfg)
+    backend.run_case(case_dir, atoms_ref, cfg)
     res = backend.parse_case(case_dir, atoms_ref, cfg)
     s6_ref = stress_tensor_to_voigt6(res.stress)
 
@@ -256,7 +260,7 @@ def run_cij(config_path: str):
 
             ## backend prep & run
             backend.prepare_case(case_dir, atoms_def, cfg)
-            status = backend.run_case(case_dir, atoms_def, cfg)
+            backend.run_case(case_dir, atoms_def, cfg)
             res = backend.parse_case(case_dir, atoms_def, cfg)
 
             s6 = stress_tensor_to_voigt6(res.stress)
