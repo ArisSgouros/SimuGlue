@@ -1,70 +1,57 @@
 # src/simuglue/cli/main.py
 from __future__ import annotations
 import argparse, sys
+from importlib import import_module
+from typing import Dict, Tuple
 
-def _dispatch_qe(cmd: str, extra: list[str]) -> int:
-    if cmd == "pwo2json":
-        from .pwo2json_cli import main as inner
-        return inner(argv=extra)
-    elif cmd == "pwi2json":
-        from .pwi2json_cli import main as inner
-        return inner(argv=extra)
-    elif cmd == "json2xyz":
-        from .json2xyz_cli import main as inner
-        if not extra or extra in (["-h"], ["--help"]):
-            return inner(argv=["--help"], prog="sgl file json2xyz")
-        return inner(argv=extra, prog="sgl file json2xyz")
-    elif cmd == "xyz2qe":
-        from .xyz2qe_cli import main as inner
-        if not extra or extra in (["-h"], ["--help"]):
-            return inner(argv=["--help"], prog="sgl file xyz2qe")
-        return inner(argv=extra, prog="sgl file xyz2qe")
-    else:
-        print(f"Unknown qe subcommand: {cmd}", file=sys.stderr)
-        return 2
+# group -> { subcmd: (module_path, help_text, prog_string) }
+COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
+    "qe": {
+        "pwo2json": ("simuglue.cli.pwo2json_cli", "QE output (.out/.pwo) → JSON", "sgl qe pwo2json"),
+        "pwi2json": ("simuglue.cli.pwi2json_cli", "QE input  (.in/.pwi) → JSON", "sgl qe pwi2json"),
+        "json2xyz": ("simuglue.cli.json2xyz_cli", "QE JSON → EXTXYZ",           "sgl qe json2xyz"),
+        "xyz2qe":   ("simuglue.cli.xyz2qe_cli",   "EXTXYZ → QE input",           "sgl qe xyz2qe"),
+    },
+    "transform": {
+        "xyz":    ("simuglue.cli.transf_xyz_cli",    "Transform XYZ",         "sgl transform xyz"),
+        "lammps": ("simuglue.cli.transf_lammps_cli", "Transform LAMMPS data", "sgl transform lammps"),
+    },
+}
 
-def _dispatch_transform(cmd: str, extra: list[str]) -> int:
-    if cmd == "xyz":
-        from .transf_xyz_cli import main as inner
-        return inner(argv=extra)
-    elif cmd == "lammps":
-        from .transf_lammps_cli import main as inner
-        return inner(argv=extra)
-    else:
-        print(f"Unknown transform subcommand: {cmd}", file=sys.stderr)
+def _run_leaf(mod_path: str, prog: str, extra: list[str]) -> int:
+    """Import the leaf CLI and run it. With no args, show its help."""
+    inner = import_module(mod_path).main
+    argv = extra or ["--help"]              # no args → help
+    # pass prog so usage shows "sgl qe json2xyz" etc.
+    return inner(argv=argv, prog=prog)
+
+def _dispatch(group: str, cmd: str, extra: list[str]) -> int:
+    try:
+        mod_path, _help, prog = COMMANDS[group][cmd]
+    except KeyError:
+        print(f"Unknown {group} subcommand: {cmd}", file=sys.stderr)
         return 2
+    return _run_leaf(mod_path, prog, extra)
 
 def main(argv: list[str] | None = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(prog="sgl", description="SimuGlue command line interface")
-    sub = parser.add_subparsers(dest="group", required=True)
+    subparsers = parser.add_subparsers(dest="group", required=True)
 
-    # Group: qe
-    p_qe = sub.add_parser("qe", help="Quantum Espresso utilities")
-    sub_qe = p_qe.add_subparsers(dest="cmd", required=True)
-    sub_qe.add_parser("pwo2json", help="QE output (.out/.pwo) → JSON", add_help=False)
-    sub_qe.add_parser("pwi2json", help="QE input (.in/.pwi) → JSON", add_help=False)
-    sub_qe.add_parser("json2xyz", help="JSON → XYZ", add_help=False)
-    sub_qe.add_parser("xyz2qe", help="XYZ → QE input", add_help=False)
+    # Build groups & placeholder subcommands
+    for group, table in COMMANDS.items():
+        p_group = subparsers.add_parser(group, help=f"{group} commands")
+        sub = p_group.add_subparsers(dest="cmd", required=True)
+        for cmd, (_mod, help_text, _prog) in table.items():
+            sub.add_parser(cmd, help=help_text, add_help=False)  # forward --help to leaf
 
-    # Group: transform
-    p_tr = sub.add_parser("transform", help="Structure transforms")
-    sub_tr = p_tr.add_subparsers(dest="cmd", required=True)
-    sub_tr.add_parser("xyz", help="Transform XYZ", add_help=False)
-    sub_tr.add_parser("lammps", help="Transform LAMMPS data", add_help=False)
-
-    # Parse top-level/group/subcommand; leave the rest for the inner CLIs
     args, extra = parser.parse_known_args(argv)
-
-    if args.group == "qe":
-        return _dispatch_qe(args.cmd, extra)
-    elif args.group == "transform":
-        return _dispatch_transform(args.cmd, extra)
-    else:
+    if args.group not in COMMANDS:
         parser.error(f"Unknown group: {args.group}")
-        return 2  # not reached
+        return 2
+    return _dispatch(args.group, args.cmd, extra)
 
 if __name__ == "__main__":
     raise SystemExit(main())
