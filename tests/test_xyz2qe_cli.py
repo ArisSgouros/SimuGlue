@@ -21,14 +21,26 @@ def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     """
     cfg = yaml.safe_load((case_dir / "case.yaml").read_text(encoding="utf-8"))
 
+    exe = "sgl"
+    cli = [exe, "qe","xyz2qe"]
+
+    # launcher on PATH
+    if shutil.which(exe) is None:
+        pytest.skip(f"'{exe}' not found on PATH")
+
+    # subcommand exists
+    probe = subprocess.run(
+        cli + ["--help"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if probe.returncode != 0:
+        command_str = " ".join(cli)
+        pytest.skip(f"Subcommand '{command_str}' not available")
+
+    args = cli
+
     input_list = cfg["inputs"]
-
-    cli = "sgl-xyz2qe"
-    if shutil.which(cli) is None:
-        pytest.skip(f"CLI '{cli}' not found in PATH — is it installed in the environment?")
-
-    # Build CLI args
-    args = [cli]
 
     # Stage input
     src = case_dir / "input" / input_list[0]

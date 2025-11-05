@@ -22,13 +22,28 @@ def test_pwo2json_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     """
     cfg = yaml.safe_load((case_dir / "case.yaml").read_text(encoding="utf-8"))
 
-    cli = "sgl-pwo2json"
-    if shutil.which(cli) is None:
-        pytest.skip(f"CLI '{cli}' not found in PATH — is it installed in the environment?")
+    exe = "sgl"
+    cli = [exe, "qe","pwo2json"]
+
+    # launcher on PATH
+    if shutil.which(exe) is None:
+        pytest.skip(f"'{exe}' not found on PATH")
+
+    # subcommand exists
+    probe = subprocess.run(
+        cli + ["--help"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if probe.returncode != 0:
+        command_str = " ".join(cli)
+        pytest.skip(f"Subcommand '{command_str}' not available")
 
     # Stage inputs
     pattern = cfg.get("pattern")
     input_dir = case_dir / "input"
+
+    args = cli
 
     if pattern:
         # Copy all matching input files to tmp_path
@@ -36,13 +51,13 @@ def test_pwo2json_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
             shutil.copy(src, tmp_path_cwd / src.name)
         # We'll pass an expanded glob to the CLI (portable)
         files = sorted(tmp_path_cwd.glob(pattern))
-        args = [cli, *map(str, files)]
+        args.extend(str(p) for p in files)
     else: # single input
         src = (case_dir / "input" / cfg["input"])
         dst = tmp_path_cwd / cfg["input"]
         shutil.copy(src, dst)
         shutil.copy(src, dst)
-        args = [cli, str(dst)]
+        args.append(str(dst))
 
     # Build CLI args
     out_path = tmp_path_cwd / cfg.get("output", "o.json")

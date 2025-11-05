@@ -28,20 +28,30 @@ def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
         src = case_dir / "input" / input_
         dst = tmp_path_cwd / input_
         shutil.copy(src, dst)
+
+    exe = "sgl"
+    cli_pwi2json = [exe, "qe", "pwi2json"]
+    cli_json2xyz = [exe, "qe", "json2xyz"]
+    cli_xyz2qe   = [exe, "qe", "xyz2qe"]
  
-    clis = ["sgl-pwi2json", "sgl-json2xyz", "sgl-xyz2qe"]
-    for cli in clis:
-        if shutil.which(cli) is None:
-            pytest.skip(f"CLI '{cli}' not found in PATH — is it installed in the environment?")
+    # launcher on PATH
+    if shutil.which(exe) is None:
+        pytest.skip(f"'{exe}' not found on PATH")
 
-    args1 = [clis[0], "i.01.in", "--pretty", "-o", "o.02.json"]
-    args2 = [clis[1], "o.02.json", "-o", "o.03.xyz"]
-    args3 = [clis[2], "--header", "i.01.header", "--xyz", "o.03.xyz", "-o", "o.04.in"]
+    for cli in [cli_pwi2json, cli_json2xyz, cli_xyz2qe]:
+        # subcommand exists
+        probe = subprocess.run(
+            cli + ["--help"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if probe.returncode != 0:
+            command_str = " ".join(cli)
+            pytest.skip(f"Subcommand '{command_str}' not available")
 
-    #sgl-pwi2json i.01.in --pretty -o o.02.json
-    #sgl-json2xyz o.02.json -o o.03.xyz
-    #sgl-xyz2qe --header i.01.header --xyz o.03.xyz -o o.04.in
-    #cp o.04.in ../gold/.
+    args1 = cli_pwi2json + ["i.01.in", "--pretty", "-o", "o.02.json"]
+    args2 = cli_json2xyz + ["o.02.json", "-o", "o.03.xyz"]
+    args3 = cli_xyz2qe + ["--header", "i.01.header", "--xyz", "o.03.xyz", "-o", "o.04.in"]
 
     # Run CLI; on failure, show stdout/stderr
     for args in [args1, args2, args3]:

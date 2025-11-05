@@ -24,9 +24,25 @@ def test_transf_lammps_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool
     """
     cfg = yaml.safe_load((case_dir / "case.yaml").read_text(encoding="utf-8"))
 
-    cli = "sgl-transf-lammps"
-    if shutil.which(cli) is None:
-        pytest.skip(f"CLI '{cli}' not found in PATH — is it installed in the environment?")
+    exe = "sgl"
+    cli = [exe, "transform","lammps"]
+
+    # launcher on PATH
+    if shutil.which(exe) is None:
+        pytest.skip(f"'{exe}' not found on PATH")
+
+    # subcommand exists
+    probe = subprocess.run(
+        cli + ["--help"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if probe.returncode != 0:
+        command_str = " ".join(cli)
+        pytest.skip(f"Subcommand '{command_str}' not available")
+
+    args = cli
+
 
     # Stage input lammps
     in_lammps_name = cfg["inputs"][0]
@@ -39,8 +55,7 @@ def test_transf_lammps_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool
     out_path = tmp_path_cwd / out_name
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    args = [
-        cli,
+    args += [
         str(dst_lammps),
         str(cfg["strain"]),
         "--output", str(out_path),
