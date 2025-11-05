@@ -16,7 +16,7 @@ from ase.calculators.lammps.unitconvert import convert
 from ase import units
 
 # ---------- config ----------
-@dataclass
+@dataclass(slots=True)
 class Config:
     backend: str
     workdir: Path
@@ -76,11 +76,17 @@ def mark_done(case_dir: Path):
 
 # ---------- main workflow ----------
 def run_cij(config_path: str):
-    print("Hello from cij")
     cfg = _load_config(config_path)
 
     components = normalize_components_to_voigt1(cfg.components)   # e.g. [1,2,6]
     strains = [float(eps) for eps in cfg.strains]
+
+    if not components:
+        raise ValueError("Config 'components' is empty.")
+    if not strains:
+        raise ValueError("Config 'strains' is empty.")
+    if any(abs(e) < 1e-12 for e in strains):
+        raise ValueError("Config 'strains' contains near-zero values.")
 
     cfg.workdir.mkdir(parents=True, exist_ok=True)
     if cfg.file_type == "lammps":
@@ -104,9 +110,13 @@ def run_cij(config_path: str):
     s6_ref = stress_tensor_to_voigt6(res.stress)
 
     # For each requested Voigt component, deform the system and estimate the strain energy
+    total = len(strains)*len(components)
+    k = 0
     for eps in strains:
         for i in components:
-            print(i, eps)
+            k += 1
+            print(f"[cij] ({k}/{total}) i={i} eps={eps:g}")
+
             eid = f"c{i}_eps{eps:g}"
             case_dir = cfg.workdir / eid
             case_dir.mkdir(parents=True, exist_ok=True)
@@ -169,9 +179,6 @@ def run_cij(config_path: str):
                 diff = abs(CC_mean[(i,j)] - CC_mean[(j,i)])
                 if diff > 1e-3:  # GPa tolerance, tweak as you like
                     print(f"[cij] Note: C[{i},{j}] != C[{j},{i}] (diff={diff:.3f} GPa)")
-
-    for key in CC_all:
-        print(key, CC_mean[key], CC_sem[key])
 
     out = {
         "components": cfg.components,     # still 1-based

@@ -16,7 +16,6 @@ class LAMMPSBackend(Backend):
         if is_done(case_dir):
             return
 
-        print("Preparing case!")
         # Minimal: write a data file with ASE; let template refer to it.
         write_lammps(atoms, case_dir / "str.data", style="atomic", units="metal", force_skew="False")
  
