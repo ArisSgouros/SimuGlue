@@ -4,7 +4,7 @@ import sys
 import json, shutil, subprocess, re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Tuple, Dict
+from typing import Iterable, List, Union, Dict
 import numpy as np
 import yaml
 from ase.io import read, write
@@ -196,7 +196,7 @@ class LAMMPSBackend(Backend):
         lammps_units = cfg.lammps.get("units", "metal")
         p_evA3 = convert(1.0, "pressure", lammps_units, "ASE")
         p_GPa  = p_evA3 / units.GPa
-        e_eV = convert(10.0, "energy", lammps_units, "ASE")
+        e_eV = convert(1.0, "energy", lammps_units, "ASE")
 
         pe = data["pe"]*e_eV
 
