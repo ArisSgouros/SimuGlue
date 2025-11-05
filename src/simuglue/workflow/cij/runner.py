@@ -11,7 +11,7 @@ from ase.io import read, write
 from simuglue.io.util_ase_lammps import read_lammps, write_lammps
 from simuglue.transform.linear import apply_transform
 from simuglue.mechanics.voigt import normalize_components_to_voigt1, stress_tensor_to_voigt6
-from simuglue.mechanics.kinematics import deformation_gradient_from_voigt as deformation_gradient
+from simuglue.mechanics.kinematics import F_from_voigt_component as deformation_gradient
 from ase.calculators.lammps.unitconvert import convert
 from ase import units
 

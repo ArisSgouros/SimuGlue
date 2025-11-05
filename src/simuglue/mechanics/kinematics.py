@@ -2,9 +2,9 @@
 from __future__ import annotations
 import numpy as np
 
-__all__ = ["deformation_gradient_from_voigt"]
+__all__ = ["F_from_voigt_component"]
 
-def deformation_gradient_from_voigt(dir_idx: int, s: float) -> np.ndarray:
+def F_from_voigt_component(dir_idx: int, s: float) -> np.ndarray:
     """
     Build F for Voigt dir: 1=xx, 2=yy, 3=zz, 4=yz, 5=xz, 6=xy.
     s = ±up (engineering strain / shear).
