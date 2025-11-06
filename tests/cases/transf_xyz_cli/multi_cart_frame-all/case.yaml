@@ -1,7 +1,6 @@
 inputs:
   - multi.xyz
-transformer: "1 0 0; 0 0 0; 0 0 0"
-voigt: false
+F: "2 0 0; 0 1 0; 0 0 1"
 frames: "all"
 output: transf.xyz
 gold: transf.xyz

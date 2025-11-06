@@ -17,8 +17,7 @@ def test_transf_lammps_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool
     Expects case.yaml like:
       inputs:
         - single.lammps              # required (input datafile)
-      transformer: "a b c; d e f; g h i"   # required
-      voigt: false                # optional, default false
+      F: "a b c; d e f; g h i"   # required
       frames: None|"all"|int      # optional
       output: transf.lammps          # required (output filename)
       gold:   transf.lammps          # required (gold filename)
@@ -28,7 +27,6 @@ def test_transf_lammps_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool
     exe = "sgl"
     cli = [exe, "transform","lammps"]
     check_cli_or_skip(cli)
-
 
     args = cli
 
@@ -46,13 +44,11 @@ def test_transf_lammps_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool
 
     args += [
         str(dst_lammps),
-        str(cfg["strain"]),
+        "--F", str(cfg["F"]),
         "--output", str(out_path),
     ]
 
     # Optional flags
-    if cfg.get("voigt", False):
-        args.append("--voigt")
     frames = cfg.get("frames", None)
     if frames is not None:
         args += ["--frames", str(frames)]
