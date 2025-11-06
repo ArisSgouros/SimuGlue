@@ -8,11 +8,9 @@ from typing import Iterable, List, Union, Dict
 import numpy as np
 import yaml
 from ase.io import read, write
-from simuglue.io.util_ase_lammps import read_lammps, write_lammps
+from simuglue.io.util_ase_lammps import read_lammps # REFACTOR: RM
 from simuglue.transform.linear import apply_transform
 from simuglue.mechanics.voigt import normalize_components_to_voigt1, stress_tensor_to_voigt6
-from ase.calculators.lammps.unitconvert import convert
-from ase import units
 
 # ---------- config ----------
 @dataclass(slots=True)
@@ -110,7 +108,7 @@ def run_cij(config_path: str):
         raise ValueError("Config 'strains' contains near-zero values.")
 
     cfg.workdir.mkdir(parents=True, exist_ok=True)
-    if cfg.file_type == "lammps":
+    if cfg.file_type == "lammps": # REFACTOR: RM FUNCTIONALITY READ_LAMMPS; only xyz
         atoms_ref = read_lammps(cfg.data_file)
     else: # "xyz"
         atoms_ref = read(cfg.data_file)

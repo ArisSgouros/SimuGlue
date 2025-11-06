@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil, subprocess, json, numpy as np
 from ase.calculators.lammps.unitconvert import convert
 from ase import units
-from simuglue.io.util_ase_lammps import write_lammps
+from ase.io import write
 from ..runner import register_backend, Backend, RelaxResult, is_done, mark_done
 
 # ---------- LAMMPS backend (skeleton) ----------
@@ -17,7 +17,9 @@ class LAMMPSBackend(Backend):
             return
 
         # Minimal: write a data file with ASE; let template refer to it.
-        write_lammps(atoms, case_dir / "str.data", style="atomic", units="metal", force_skew="False")
+        units = cfg.lammps.get("units", "metal")
+        atom_style = cfg.lammps.get("atom_style", "atomic")
+        write(case_dir / "str.data", atoms, format="lammps-data", units=units, atom_style=atom_style, force_skew="False")
  
         # Render the user template (keep it simple: {datafile} placeholder)
         tpl = Path(cfg.lammps["input_template"]).read_text()
