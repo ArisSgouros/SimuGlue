@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+import argparse
+from pathlib import Path
+import numpy as np
+
+def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(description="Convert a strain tensor to deformation gradient")
+    p.add_argument(
+        "--E",
+        dest="E_str",
+        help="Strain tensor E (3×3) as 'exx exy exz; eyx eyy eyz; ezx ezy ezz' or 9 space-separated values.",
+    )
+    p.add_argument(
+        "--E-voigt",
+        dest="E_voigt_str",
+        help="Strain tensor in Voigt 6 as 'exx eyy ezz gyz gxz gxy'.",
+    )
+    p.add_argument(
+        "--measure",
+        choices=("engineering", "green-lagrange", "hencky"),
+        default="engineering",
+        help="Strain measure to convert E → F.",
+    )
+    p.add_argument("--output", "-o", default="o.json", help="Output json file")
+    return p
+
+def main(argv=None, prog: str | None = None) -> int:
+    parser = build_parser(prog=prog)
+    args = parser.parse_args(argv)
+
+    
+
+
+
+
+"""
+import json, sys, numpy as np, typer
+from pathlib import Path
+from simuglue.mechanics.kinematics import F_from_strain
+from simuglue.mechanics.voigt import (
+    voigt6_to_symmetric_tri, voigt6_to_upper_tri,
+    tri_to_voigt6
+)
+
+app = typer.Typer(no_args_is_help=True)
+
+@app.command("strain2F")
+def strain2F(
+    E: str = typer.Option(None, "--E", help='3x3 "exx exy exz; eyx eyy eyz; ezx ezy ezz"'),
+    E_voigt: str = typer.Option(None, "--E-voigt", help='"exx eyy ezz gyz gxz gxy"'),
+    measure: str = typer.Option("engineering", "--measure",
+                                case_sensitive=False,
+                                help="engineering | green-lagrange | hencky"),
+    voigt_upper: bool = typer.Option(False, "--voigt-upper",
+                                     help="Interpret Voigt shear as upper-triangular"),
+    fmt: str = typer.Option("3x3", "--format", help="3x3 | voigt"),
+    prec: int = typer.Option(10, "--prec"),
+    output: Path | None = typer.Option(None, "-o", "--output"),
+):
+    if (E is None) == (E_voigt is None):
+        raise typer.BadParameter("Provide exactly one of --E or --E-voigt")
+
+    def parse_3x3(s: str) -> np.ndarray:
+        vals = [float(x) for x in s.replace(";", " ").split()]
+        if len(vals) != 9: raise typer.BadParameter("3x3 needs 9 values")
+        return np.array(vals).reshape(3,3)
+
+    if E_voigt:
+        vals = [float(x) for x in E_voigt.replace(";", " ").split()]
+        if len(vals) != 6: raise typer.BadParameter("Voigt needs 6 values")
+        E3 = voigt6_to_upper_tri(vals) if voigt_upper else voigt6_to_symmetric_tri(vals)
+    else:
+        E3 = parse_3x3(E)
+
+    F = F_from_strain(E3, measure=measure)
+
+    if output:
+        payload = {"F": F.tolist(), "format": "3x3", "measure": measure}
+        output.write_text(json.dumps(payload, indent=2))
+    else:
+        if fmt.lower() == "voigt":
+            v6 = tri_to_voigt6(F)
+            print(" ".join(f"{x:.{prec}g}" for x in v6))
+        else:
+            rows = [" ".join(f"{x:.{prec}g}" for x in row) for row in F]
+            print("; ".join(rows))
+"""

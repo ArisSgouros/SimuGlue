@@ -16,6 +16,9 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
         "xyz":    ("simuglue.cli.transf_xyz_cli",    "Transform XYZ",         "sgl transform xyz"),
         "lammps": ("simuglue.cli.transf_lammps_cli", "Transform LAMMPS data", "sgl transform lammps"),
     },
+    "mech": {
+        "strain2defgrad": ("simuglue.cli.strain2defgrad_cli","Transform strain to deformation gradient", "sgl mech strain2defgrad"),
+    },
 }
 
 def _run_leaf(mod_path: str, prog: str, extra: list[str]) -> int:
