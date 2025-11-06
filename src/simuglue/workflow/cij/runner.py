@@ -11,7 +11,6 @@ from ase.io import read, write
 from simuglue.io.util_ase_lammps import read_lammps, write_lammps
 from simuglue.transform.linear import apply_transform
 from simuglue.mechanics.voigt import normalize_components_to_voigt1, stress_tensor_to_voigt6
-from simuglue.mechanics.kinematics import F_from_voigt_component as deformation_gradient
 from ase.calculators.lammps.unitconvert import convert
 from ase import units
 
@@ -74,6 +73,28 @@ def is_done(case_dir: Path) -> bool:
 def mark_done(case_dir: Path):
     (case_dir / ".done").write_text("ok\n", encoding="utf-8")
 
+def F_from_component(dir_idx: int, s: float) -> np.ndarray:
+    """
+    Build F for Voigt dir: 1=xx, 2=yy, 3=zz, 4=yz, 5=xz, 6=xy.
+    s = ±up (engineering strain / shear).
+    """
+    F = np.eye(3)
+    if   dir_idx == 1:  # xx
+        F[0, 0] += s
+    elif dir_idx == 2:  # yy
+        F[1, 1] += s
+    elif dir_idx == 3:  # zz
+        F[2, 2] += s
+    elif dir_idx == 4:  # yz: y' += s * z
+        F[1, 2] += s
+    elif dir_idx == 5:  # xz: x' += s * z
+        F[0, 2] += s
+    elif dir_idx == 6:  # xy: x' += s * y
+        F[0, 1] += s
+    else:
+        raise ValueError("dir_idx must be 1..6")
+    return F
+
 # ---------- main workflow ----------
 def run_cij(config_path: str):
     cfg = _load_config(config_path)
@@ -122,7 +143,7 @@ def run_cij(config_path: str):
             case_dir.mkdir(parents=True, exist_ok=True)
 
             # deform
-            F = deformation_gradient(i, eps)
+            F = F_from_component(i, eps)
             atoms_def = apply_transform(atoms_ref, F)
 
             # export deformed sample (optional)
