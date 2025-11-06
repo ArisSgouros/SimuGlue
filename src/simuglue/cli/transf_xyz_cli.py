@@ -8,9 +8,8 @@ import numpy as np
 from ase import Atoms
 from ase.io import read, write
 from simuglue.transform.linear import apply_transform
-from simuglue.mechanics.voigt import voigt_to_cart
 from simuglue.cli._xyz_io import _iter_frames
-from simuglue.cli._transf_util import parse_F_from_voigt_str, parse_F_from_tensor_str
+from simuglue.cli._transf_util import _parse_3x3
 
 def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
     if frames_arg is None:
@@ -21,12 +20,11 @@ def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Apply a linear deformation gradient to an extxyz (single or multi-frame).")
     p.add_argument("xyz", help="Input extxyz file.")
-    p.add_argument("strain", help="Either 'a b c; d e f; g h i' (semicolon-separated rows) or 6 nums with --voigt.")
+    p.add_argument("--F", help="Deformation gradient: 'xx xy xz; yx yy yz; zx zy zz' (semicolon-separated rows)")
     p.add_argument("--frames", default=None, help="Frame index (int) or 'all'. Default: first frame only.")
     p.add_argument("--output", "-o", default="o.xyz", help="Output extxyz file (single or multi-frame).")
-    p.add_argument("--voigt", action="store_true",
-                   help="Interpret --strain tensor in Voigt notation [xx yy zz yz xz xy].")
     return p
+
 
 def main(argv=None, prog: str | None = None) -> int:
     parser = build_parser(prog=prog)
@@ -36,10 +34,7 @@ def main(argv=None, prog: str | None = None) -> int:
     if not xyz_path.exists():
         raise FileNotFoundError(f"XYZ not found: {xyz_path}")
 
-    if args.voigt:
-        F = parse_F_from_voigt_str(args.strain)
-    else: # voigt = false
-        F = parse_F_from_tensor_str(args.strain)
+    F = _parse_3x3(args.F)
     if F.shape != (3, 3):
         raise ValueError(f"Transformer must be 3x3, got {F.shape}")
 

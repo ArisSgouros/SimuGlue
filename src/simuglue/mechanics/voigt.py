@@ -45,70 +45,19 @@ def stress_tensor_to_voigt6(S: np.ndarray) -> np.ndarray:
     S = 0.5 * (S + S.T)
     return np.array([S[0,0], S[1,1], S[2,2], S[1,2], S[0,2], S[0,1]], float)
 
-# FIXIT: rm redudant functions
-def voigt_to_cart(v: Sequence[float]) -> np.ndarray:
-    """
-    Convert a 6×1 array [xx, yy, zz, yz, xz, xy] to a 3×3 matrix:
-        [[xx, xy, xz],
-         [0 , yy, yz],
-         [0 , 0 , zz]]
-    """
+def voigt6_to_stress_tensor(v: Sequence[float]) -> np.ndarray:
     if len(v) != 6:
-        raise ValueError("Expected 6 elements: [xx, yy, zz, yz, xz, xy].")
+        raise ValueError("Voigt-6 input must have length 6: [xx, yy, zz, yz, xz, xy].")
     xx, yy, zz, yz, xz, xy = map(float, v)
-    return np.array([
+    S = np.array([
         [xx, xy, xz],
-        [0.0, yy, yz],
-        [0.0, 0.0, zz],
+        [xy, yy, yz],
+        [xz, yz, zz],
     ], dtype=float)
+    return S
 
 
-# FIXIT: rm redudant functions
-def voigt_to_cart_test(v: Sequence[float]) -> np.ndarray:
-    """
-    Convert a 6×1 array [xx, yy, zz, yz, xz, xy] to a 3×3 matrix:
-        [[xx, xy, xz],
-         [0 , yy, yz],
-         [0 , 0 , zz]]
-    """
-    if len(v) != 6:
-        raise ValueError("Expected 6 elements: [xx, yy, zz, yz, xz, xy].")
-    xx, yy, zz, yz, xz, xy = map(float, v)
-    return np.array([
-        [xx  , xy/2, xz/2],
-        [xy/2, yy  , yz/2],
-        [xz/2, yz/2, zz  ],
-    ], dtype=float)
-    #return np.array([
-    #    [xx  , xy, xz],
-    #    [0., yy  , yz],
-    #    [0., 0., zz  ],
-    #], dtype=float)
-
-def parse_F_from_voigt_str_sym(s: str) -> np.ndarray:
-    """
-    Build a 3x3 deformation gradient F from a string.
-
-    - "xx yy zz yz xz xy"  (engineering shear components)
-      Interprets as small strain E_voigt, returns F ≈ I + E (in cart).
-    """
-    s = s.strip()
-    parts = [float(x) for x in s.replace(",", " ").split()]
-    if len(parts) != 6:
-        raise ValueError("With --voigt, provide exactly 6 numbers: 'xx yy zz yz xz xy'.")
-    E = np.asarray(parts, dtype=float)
-    I_voigt = np.array([1, 1, 1, 0, 0, 0], dtype=float)
-    Fv = E + I_voigt
-    F = voigt_to_cart_test(Fv)
-
-    print("strain: ", Fv)
-    print("F: ", F)
-
-    if F.shape != (3, 3):
-        raise ValueError(f"Transformer must be 3x3, got {F.shape}")
-    return F
-
-
+# REFACTOR: rm redudant
 import numpy as np
 from scipy.linalg import sqrtm
 
