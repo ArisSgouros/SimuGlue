@@ -133,6 +133,17 @@ def _write_atoms(
             write(sys.stdout, atoms, format="lammps-dump-text")
             return
 
+        if fmt == "espresso-in":
+            # QE input requires pseudopotentials etc.; we don't guess here.
+            raise ValueError(
+                "espresso-in output is not supported by aseconv. "
+                "Use a dedicated QE input generator with pseudopotential settings."
+            )
+
+        if fmt == "espresso-out":
+            # ASE has no writer; keep this explicit for clarity.
+            raise ValueError("espresso-out is not a supported output format.")
+
         # extxyz / espresso-in / espresso-out
         write(sys.stdout, atoms, format=fmt)
         return
@@ -166,6 +177,17 @@ def _write_atoms(
     if fmt == "lammps-dump-text":
         write(path, atoms, format="lammps-dump-text")
         return
+
+    if fmt == "espresso-in":
+        # QE input requires pseudopotentials etc.; we don't guess here.
+        raise ValueError(
+            "espresso-in output is not supported by aseconv. "
+            "Use a dedicated QE input generator with pseudopotential settings."
+        )
+
+    if fmt == "espresso-out":
+        # ASE has no writer; keep this explicit for clarity.
+        raise ValueError("espresso-out is not a supported output format.")
 
     # extxyz / traj / espresso-in / espresso-out
     write(path, atoms, format=fmt)
