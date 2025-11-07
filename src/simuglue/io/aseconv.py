@@ -45,6 +45,23 @@ def _get_fmt_opts(fmt: str, options: Dict[str, Dict[str, Any]] | None) -> Dict[s
         return {}
     return options.get(fmt, {})
 
+def _parse_index(frames: str | None):
+    """Convert CLI --frames into an ASE index object."""
+    if frames is None:
+        return ":"
+
+    s = frames.strip()
+
+    # If it looks like a slice or complex expression, let ASE handle the string
+    if any(c in s for c in [":", ","]):
+        return s
+
+    # If it's a plain integer (including negative), use int
+    try:
+        return int(s)
+    except ValueError:
+        # Fallback: pass raw string to ASE (it may still understand it)
+        return s
 
 def _read_atoms(
     src: str,
@@ -52,7 +69,7 @@ def _read_atoms(
     frames: str | None,
     options: Dict[str, Dict[str, Any]] | None,
 ) -> List[Atoms]:
-    index = frames if frames is not None else ":"
+    index = _parse_index(frames)
     opts = _get_fmt_opts(fmt, options)
 
     # stdin allowed for text formats only
@@ -64,6 +81,7 @@ def _read_atoms(
         text = sys.stdin.read()
         fh = StringIO(text)
 
+
         if fmt == "lammps-data":
             style = opts.get("style", "full")
             from ase.io.lammpsdata import read_lammps_data
@@ -71,10 +89,15 @@ def _read_atoms(
             return [atoms]
 
         if fmt == "lammps-dump-text":
-            return list(read(fh, format="lammps-dump-text", index=index))
+            images = read(fh, format="lammps-dump-text", index=index)
+            if isinstance(images, Atoms):
+                return [images]
+            return list(images)
 
-        # extxyz / espresso-in / espresso-out
-        return list(read(fh, format=fmt, index=index))
+        images = read(fh, format=fmt, index=index)
+        if isinstance(images, Atoms):
+            return [images]
+        return list(images)
 
     # normal file
     path = Path(src)
@@ -86,14 +109,19 @@ def _read_atoms(
         return [atoms]
 
     if fmt == "lammps-dump-text":
-        return list(read(path, format="lammps-dump-text", index=index))
+        images = read(path, format="lammps-dump-text", index=index)
+        if isinstance(images, Atoms):
+            return [images]
+        return list(images)
 
     if fmt == "extxyz":
-        # ASE can infer from .xyz; specifying format is also fine
-        return list(read(path, index=index))
+        images = read(path, index=index)  # let ASE infer extxyz from suffix
+    else:
+        images = read(path, format=fmt, index=index)
 
-    # traj / espresso-in / espresso-out
-    return list(read(path, format=fmt, index=index))
+    if isinstance(images, Atoms):
+        return [images]
+    return list(images)
 
 
 def _write_atoms(
