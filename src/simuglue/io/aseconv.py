@@ -6,6 +6,7 @@ import sys
 from ase import Atoms
 from ase.io import read, write
 from ase.io.lammpsdata import read_lammps_data, write_lammps_data
+from io import StringIO
 
 SUPPORTED_INPUTS = {
     "extxyz",
@@ -64,6 +65,60 @@ def _parse_index(frames: str | None):
         # Fallback: pass raw string to ASE (it may still understand it)
         return s
 
+
+def _to_atoms_list(obj) -> List[Atoms]:
+    """Normalize ASE read() output to List[Atoms]."""
+    if isinstance(obj, Atoms):
+        return [obj]
+    # ASE already returns a list-like of Atoms for multi-frame; make it concrete.
+    return list(obj)
+
+
+def _make_source(src: str, fmt: str) -> Source:
+    """Return a Path or a StringIO depending on src, with format-specific checks."""
+    if src == "-":
+        if fmt == "traj":
+            raise ValueError("Reading traj from stdin is not supported.")
+        text = sys.stdin.read()
+        return StringIO(text)
+    return Path(src)
+
+
+def _read_from_source(
+    source: Source,
+    fmt: str,
+    index,
+    opts: Dict[str, Any],
+) -> List[Atoms]:
+    """Format-specific read logic from a Path or file-like."""
+    # --- LAMMPS data ---
+    if fmt == "lammps-data":
+        style = opts.get("style", "full")
+        units = opts.get("units", "metal")
+        if units not in ("metal", "real"):
+            raise ValueError(f"Unsupported LAMMPS units for lammps-data: {units}")
+        atoms = read_lammps_data(source, style=style, units=units)
+        return [atoms]
+
+    # --- LAMMPS dump (text) ---
+    if fmt == "lammps-dump-text":
+        images = read(source, format="lammps-dump-text", index=index)
+        return _to_atoms_list(images)
+
+    # --- extxyz ---
+    if fmt == "extxyz":
+        # Let ASE infer from suffix for Path; for StringIO we must be explicit.
+        if isinstance(source, Path):
+            images = read(source, index=index)
+        else:
+            images = read(source, format="extxyz", index=index)
+        return _to_atoms_list(images)
+
+    # --- QE + traj + others handled by ASE ---
+    images = read(source, format=fmt, index=index)
+    return _to_atoms_list(images)
+
+
 def _read_atoms(
     src: str,
     fmt: str,
@@ -72,58 +127,8 @@ def _read_atoms(
 ) -> List[Atoms]:
     index = _parse_index(frames)
     opts = _get_fmt_opts(fmt, options)
-
-    # stdin allowed for text formats only
-    if src == "-":
-        if fmt == "traj":
-            raise ValueError("Reading traj from stdin is not supported.")
-
-        from io import StringIO
-        text = sys.stdin.read()
-        fh = StringIO(text)
-
-
-        if fmt == "lammps-data":
-            style = opts.get("style", "full")
-            units = opts.get("units", "metal")
-            atoms = read_lammps_data(fh, style=style, units=units)
-            return [atoms]
-
-        if fmt == "lammps-dump-text":
-            images = read(fh, format="lammps-dump-text", index=index)
-            if isinstance(images, Atoms):
-                return [images]
-            return list(images)
-
-        images = read(fh, format=fmt, index=index)
-        if isinstance(images, Atoms):
-            return [images]
-        return list(images)
-
-    # normal file
-    path = Path(src)
-
-    if fmt == "lammps-data":
-        style = opts.get("style", "full")
-        units = opts.get("units", "metal")
-        atoms = read_lammps_data(path, style=style, units=units)
-        return [atoms]
-
-    if fmt == "lammps-dump-text":
-        images = read(path, format="lammps-dump-text", index=index)
-        if isinstance(images, Atoms):
-            return [images]
-        return list(images)
-
-    if fmt == "extxyz":
-        images = read(path, index=index)  # let ASE infer extxyz from suffix
-    else:
-        images = read(path, format=fmt, index=index)
-
-    if isinstance(images, Atoms):
-        return [images]
-    return list(images)
-
+    source = _make_source(src, fmt)
+    return _read_from_source(source, fmt, index, opts)
 
 def _write_atoms(
     atoms: Iterable[Atoms],
