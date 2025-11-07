@@ -507,3 +507,114 @@ def test_lammps_dump_select_first_two_frames(tmp_path: Path):
     # Frame 1: second atom at x = 2.0
     assert frames[1].get_positions()[1, 0] == pytest.approx(2.0)
 
+def test_lammps_data_small_skew_without_force_skew(tmp_path: Path):
+    """
+    extxyz with a very small skew (1e-8) -> lammps-data without --lammps-force-skew.
+
+    Expectation:
+      The box is treated as orthorhombic (no triclinic tilt line "xy xz yz"),
+      i.e. tiny skew is ignored unless force_skew is enabled.
+    """
+    in_xyz = tmp_path / "small_skew.xyz"
+    out_data = tmp_path / "small_skew.data"
+
+    skew = 1e-8  # tiny tilt in the b_x component
+
+    # Lattice:
+    #   a = (10,      0,  0)
+    #   b = (1e-8,  10,  0)
+    #   c = ( 0,      0, 10)
+    in_xyz.write_text(
+        "2\n"
+        f'Lattice="10 0 0 {skew} 10 0 0 0 10" Properties=species:S:1:pos:R:3\n'
+        "H  0.0 0.0 0.0\n"
+        "He 1.0 0.0 0.0\n",
+        encoding="utf-8",
+    )
+
+    # extxyz -> lammps-data WITHOUT --lammps-force-skew
+    run_aseconv(
+        tmp_path,
+        [
+            "-i",
+            str(in_xyz),
+            "--iformat",
+            "extxyz",
+            "-o",
+            str(out_data),
+            "--oformat",
+            "lammps-data",
+            "--lammps-style",
+            "atomic",
+            "--overwrite",
+        ],
+    )
+
+    text = out_data.read_text(encoding="utf-8")
+
+    # For an orthorhombic box, ASE's lammps-data writer should emit 3 box lines:
+    #   xlo xhi
+    #   ylo yhi
+    #   zlo zhi
+    # and NO extra "xy xz yz" tilt line.
+    assert "xy xz yz" not in text
+
+def test_lammps_data_small_skew_with_force_skew(tmp_path: Path):
+    """
+    extxyz with a very small skew (1e-8) -> lammps-data WITH --lammps-force-skew.
+
+    Expectation:
+      The box is written as triclinic (tilt line 'xy xz yz' present),
+      and the xy tilt is ~1e-8 (i.e. not dropped).
+    """
+    in_xyz = tmp_path / "small_skew_force.xyz"
+    out_data = tmp_path / "small_skew_force.data"
+
+    skew = 1e-8  # tiny tilt in b_x
+
+    # Same lattice as previous test:
+    #   a = (10,      0,  0)
+    #   b = (1e-8,  10,  0)
+    #   c = ( 0,      0, 10)
+    in_xyz.write_text(
+        "2\n"
+        f'Lattice="10 0 0 {skew} 10 0 0 0 10" Properties=species:S:1:pos:R:3\n'
+        "H  0.0 0.0 0.0\n"
+        "He 1.0 0.0 0.0\n",
+        encoding="utf-8",
+    )
+
+    # extxyz -> lammps-data WITH --lammps-force-skew
+    run_aseconv(
+        tmp_path,
+        [
+            "-i",
+            str(in_xyz),
+            "--iformat",
+            "extxyz",
+            "-o",
+            str(out_data),
+            "--oformat",
+            "lammps-data",
+            "--lammps-style",
+            "atomic",
+            "--lammps-force-skew",
+            "--overwrite",
+        ],
+    )
+
+    text = out_data.read_text(encoding="utf-8")
+
+    # We expect a triclinic tilt line with 'xy xz yz'
+    lines = [ln.strip() for ln in text.splitlines()]
+    tilt_lines = [ln for ln in lines if ln.endswith("xy xz yz")]
+    assert tilt_lines, "Expected triclinic tilt line 'xy xz yz' not found."
+
+    # Optionally: check that xy is ~1e-8 and xz,yz ~ 0
+    parts = tilt_lines[0].split()
+    # format: xy xz yz xy-label xz-label yz-label
+    xy, xz, yz = map(float, parts[0:3])
+    assert xy == pytest.approx(skew, rel=0, abs=1e-12)
+    assert xz == pytest.approx(0.0, abs=1e-12)
+    assert yz == pytest.approx(0.0, abs=1e-12)
+
