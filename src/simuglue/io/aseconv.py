@@ -130,67 +130,46 @@ def _read_atoms(
     source = _make_source(src, fmt)
     return _read_from_source(source, fmt, index, opts)
 
-def _write_atoms(
-    atoms: Iterable[Atoms],
-    dst: str,
-    fmt: str,
-    options: Dict[str, Dict[str, Any]] | None,
-) -> None:
-    atoms = list(atoms)
-    opts = _get_fmt_opts(fmt, options)
-
-    # stdout for text formats only
+def _make_dest(dst: str, fmt: str):
+    """Return a writable destination (Path or file-like) based on dst."""
     if dst == "-":
+        # stdout only for text formats
         if fmt == "traj":
             raise ValueError("Writing traj to stdout is not supported.")
+        return sys.stdout
+    return Path(dst)
 
-        if fmt == "lammps-data":
-            if len(atoms) != 1:
-                raise ValueError("lammps-data output supports a single frame.")
-            style = opts.get("style", "full")
-            symbols = atoms[0].get_chemical_symbols()
-            specorder = opts.get(
-                "specorder",
-                list(OrderedDict.fromkeys(symbols)),
-            )
-            write_lammps_data(
-                sys.stdout,
-                atoms[0],
-                atom_style=style,
-                specorder=specorder,
-                masses=True,      # ← also here
-            )
-            return
 
-        if fmt == "lammps-dump-text":
-            write(sys.stdout, atoms, format="lammps-dump-text")
-            return
+def _write_to_dest(
+    dest,
+    fmt: str,
+    atoms: List[Atoms],
+    opts: Dict[str, Any],
+) -> None:
+    """Format-specific write logic to a Path or file-like."""
 
-        if fmt == "espresso-in":
-            # QE input requires pseudopotentials etc.; we don't guess here.
-            raise ValueError(
-                "espresso-in output is not supported by aseconv. "
-                "Use a dedicated QE input generator with pseudopotential settings."
-            )
+    # --- disallow QE formats as outputs ---
+    if fmt == "espresso-in":
+        raise ValueError(
+            "espresso-in output is not supported by aseconv. "
+            "Use a dedicated QE input generator with pseudopotential settings."
+        )
 
-        if fmt == "espresso-out":
-            # ASE has no writer; keep this explicit for clarity.
-            raise ValueError("espresso-out is not a supported output format.")
+    if fmt == "espresso-out":
+        raise ValueError("espresso-out is not a supported output format.")
 
-        # extxyz / espresso-in / espresso-out
-        write(sys.stdout, atoms, format=fmt)
-        return
-
-    # normal file
-    path = Path(dst)
-
+    # --- LAMMPS data ---
     if fmt == "lammps-data":
         if len(atoms) != 1:
             raise ValueError("lammps-data output supports a single frame.")
 
         style = opts.get("style", "full")
+        units = opts.get("units", "metal")
+        # We don't pass units to write_lammps_data (ASE ignores), but we can
+        # enforce a whitelist here to avoid nonsense configs.
+        if units not in ("metal", "real"):
+            raise ValueError(f"Unsupported LAMMPS units for lammps-data: {units}")
 
-        # Stable type -> symbol mapping
         symbols = atoms[0].get_chemical_symbols()
         specorder = opts.get(
             "specorder",
@@ -198,32 +177,33 @@ def _write_atoms(
         )
 
         write_lammps_data(
-            path,
+            dest,
             atoms[0],
             atom_style=style,
             specorder=specorder,
-            masses=True,          # ← IMPORTANT
+            masses=True,
         )
         return
 
+    # --- LAMMPS dump (text) ---
     if fmt == "lammps-dump-text":
-        write(path, atoms, format="lammps-dump-text")
+        write(dest, atoms, format="lammps-dump-text")
         return
 
-    if fmt == "espresso-in":
-        # QE input requires pseudopotentials etc.; we don't guess here.
-        raise ValueError(
-            "espresso-in output is not supported by aseconv. "
-            "Use a dedicated QE input generator with pseudopotential settings."
-        )
+    # --- generic path for extxyz, traj, espresso-* (input-only filtered above) ---
+    write(dest, atoms, format=fmt)
 
-    if fmt == "espresso-out":
-        # ASE has no writer; keep this explicit for clarity.
-        raise ValueError("espresso-out is not a supported output format.")
 
-    # extxyz / traj / espresso-in / espresso-out
-    write(path, atoms, format=fmt)
-
+def _write_atoms(
+    atoms: Iterable[Atoms],
+    dst: str,
+    fmt: str,
+    options: Dict[str, Dict[str, Any]] | None,
+) -> None:
+    atoms_list = list(atoms)
+    opts = _get_fmt_opts(fmt, options)
+    dest = _make_dest(dst, fmt)
+    _write_to_dest(dest, fmt, atoms_list, opts)
 
 def convert(
     input_path: str,
