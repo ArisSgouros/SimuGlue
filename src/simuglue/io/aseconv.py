@@ -190,8 +190,11 @@ def _write_atoms(
 
     # --- LAMMPS dump (text) ---
     if fmt == "lammps-dump-text":
-        write(dest, atoms, format="lammps-dump-text")
-        return
+        # ASE does not support writing LAMMPS dump text via this format.
+        raise ValueError(
+            "lammps-dump-text output is not supported by aseconv "
+            "(ASE lacks a writer for this format)."
+        )
 
     # --- generic path for extxyz, traj, espresso-* (input-only filtered above) ---
     write(dest, atoms, format=fmt)
