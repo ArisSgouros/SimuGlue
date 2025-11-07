@@ -755,3 +755,87 @@ def test_triclinic_extxyz_traj_lammps_traj_extxyz_cycle(tmp_path: Path):
         a_in.get_positions(), rel=1e-8, abs=1e-8
     )
 
+from ase.io import read as ase_read
+
+
+def test_aseconv_extxyz_lammpsdata_roundtrip_stdin_stdout(tmp_path: Path):
+    """
+    extxyz -> lammps-data -> extxyz using only stdin/stdout.
+
+    All format conversions go through sgl io aseconv with '-' for input/output.
+    """
+
+    # Triclinic-ish cell to make it nontrivial:
+    # a = (10, 0, 0)
+    # b = ( 2,10, 0)
+    # c = ( 0, 0,10)
+    extxyz_text = (
+        "2\n"
+        'Lattice="10 0 0 2 10 0 0 0 10" Properties=species:S:1:pos:R:3\n'
+        "H 0.0 0.0 0.0\n"
+        "He 1.0 0.0 0.0\n"
+    )
+
+    # 1) extxyz (stdin) -> lammps-data (stdout)
+    res_data = run_aseconv(
+        tmp_path,
+        [
+            "-i",
+            "-",
+            "--iformat",
+            "extxyz",
+            "-o",
+            "-",
+            "--oformat",
+            "lammps-data",
+            "--lammps-style",
+            "atomic",
+        ],
+        stdin=extxyz_text,
+    )
+    data_text = res_data.stdout
+
+    # 2) lammps-data (stdin) -> extxyz (stdout)
+    res_xyz = run_aseconv(
+        tmp_path,
+        [
+            "-i",
+            "-",
+            "--iformat",
+            "lammps-data",
+            "--lammps-style",
+            "atomic",
+            "-o",
+            "-",
+            "--oformat",
+            "extxyz",
+        ],
+        stdin=data_text,
+    )
+    back_text = res_xyz.stdout
+
+    # Write both to temp files just for ASE to read & compare
+    in_path = tmp_path / "in.xyz"
+    back_path = tmp_path / "back.xyz"
+    in_path.write_text(extxyz_text, encoding="utf-8")
+    back_path.write_text(back_text, encoding="utf-8")
+
+    a_in = ase_read(in_path, format="extxyz")
+    a_back = ase_read(back_path, format="extxyz")
+
+    # Same number of atoms
+    assert len(a_in) == len(a_back)
+
+    # Same symbols (order should match here)
+    assert a_in.get_chemical_symbols() == a_back.get_chemical_symbols()
+
+    # Same cell (within tight tolerance)
+    assert a_back.get_cell().array == pytest.approx(
+        a_in.get_cell().array, rel=1e-10, abs=1e-10
+    )
+
+    # Same positions (within tight tolerance)
+    assert a_back.get_positions() == pytest.approx(
+        a_in.get_positions(), rel=1e-10, abs=1e-10
+    )
+
