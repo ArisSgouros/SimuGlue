@@ -13,6 +13,7 @@ except Exception:
 COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
     "io": {
         "aseconv": ("simuglue.cli.io_aseconv", "Convert file types using ASE modules", "sgl io aseconv"),
+        "nepconv": ("simuglue.cli.io_nepconv", "Convert file extxyz between NEP and ASE", "sgl io nepconv"),
     },
     "qe": {
         "pwo2json": ("simuglue.cli.pwo2json_cli", "QE output (.out/.pwo) → JSON", "sgl qe pwo2json"),
