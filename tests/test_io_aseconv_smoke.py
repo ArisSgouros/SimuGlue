@@ -429,3 +429,81 @@ Atoms # full
     ])
     assert cell == pytest.approx(expected, rel=1e-12, abs=1e-12)
 
+def test_lammps_dump_select_first_two_frames(tmp_path: Path):
+    """lammps-dump-text with 3 frames -> select first 2 via --frames and check."""
+
+    dump = tmp_path / "three_frames.dump"
+    out_xyz = tmp_path / "two_frames.xyz"
+
+    # 3 timesteps, 2 atoms, simple positions to distinguish frames
+    dump.write_text(
+        # frame 0
+        "ITEM: TIMESTEP\n"
+        "0\n"
+        "ITEM: NUMBER OF ATOMS\n"
+        "2\n"
+        "ITEM: BOX BOUNDS pp pp pp\n"
+        "0.0 10.0\n"
+        "0.0 10.0\n"
+        "0.0 10.0\n"
+        "ITEM: ATOMS id type x y z\n"
+        "1 1 0.0 0.0 0.0\n"
+        "2 1 1.0 0.0 0.0\n"
+        # frame 1
+        "ITEM: TIMESTEP\n"
+        "1\n"
+        "ITEM: NUMBER OF ATOMS\n"
+        "2\n"
+        "ITEM: BOX BOUNDS pp pp pp\n"
+        "0.0 10.0\n"
+        "0.0 10.0\n"
+        "0.0 10.0\n"
+        "ITEM: ATOMS id type x y z\n"
+        "1 1 0.0 0.0 0.0\n"
+        "2 1 2.0 0.0 0.0\n"
+        # frame 2
+        "ITEM: TIMESTEP\n"
+        "2\n"
+        "ITEM: NUMBER OF ATOMS\n"
+        "2\n"
+        "ITEM: BOX BOUNDS pp pp pp\n"
+        "0.0 10.0\n"
+        "0.0 10.0\n"
+        "0.0 10.0\n"
+        "ITEM: ATOMS id type x y z\n"
+        "1 1 0.0 0.0 0.0\n"
+        "2 1 3.0 0.0 0.0\n",
+        encoding="utf-8",
+    )
+
+    # Select only the first two frames: indices 0 and 1.
+    # Using slice syntax "0:2" works with our _parse_index.
+    run_aseconv(
+        tmp_path,
+        [
+            "-i",
+            str(dump),
+            "--iformat",
+            "lammps-dump-text",
+            "--frames",
+            "0:2",
+            "-o",
+            str(out_xyz),
+            "--oformat",
+            "extxyz",
+            "--overwrite",
+        ],
+    )
+
+    # Read all frames from the output
+    frames = list(read(out_xyz, format="extxyz", index=":"))
+
+    # We expect exactly 2 frames
+    assert len(frames) == 2
+
+    # Frame 0: second atom at x = 1.0
+    assert frames[0].get_positions()[1, 0] == pytest.approx(1.0)
+
+    # Frame 1: second atom at x = 2.0
+    assert frames[1].get_positions()[1, 0] == pytest.approx(2.0)
+
