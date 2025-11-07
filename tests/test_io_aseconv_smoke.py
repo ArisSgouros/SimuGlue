@@ -1,64 +1,71 @@
 from __future__ import annotations
 import subprocess
 from pathlib import Path
+import numpy as np
 
 import pytest
 from ase.io import read
 
 
-def run_aseconv(tmp_path, args):
-    """Helper: run `sgl io aseconv` in tmp dir."""
-    # If your `sgl` is not on PATH in CI, adjust to call the module directly.
+# ---------- helpers ----------
+
+def run_aseconv(tmp_path: Path, args: list[str], stdin: str | None = None) -> subprocess.CompletedProcess:
+    """
+    Run `sgl io aseconv` inside tmp_path.
+    If stdin is provided, it's passed to the process.
+    """
+    cmd = ["sgl", "io", "aseconv", *args]
     result = subprocess.run(
-        ["sgl", "io", "aseconv", *args],
+        cmd,
         cwd=tmp_path,
+        input=stdin,
         capture_output=True,
         text=True,
     )
     if result.returncode != 0:
         raise RuntimeError(
-            f"aseconv failed:\nCMD: sgl io aseconv {' '.join(args)}\n"
-            f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+            f"Command failed: {' '.join(cmd)}\n"
+            f"STDOUT:\n{result.stdout}\n"
+            f"STDERR:\n{result.stderr}"
         )
     return result
 
 
-def test_extxyz_roundtrip(tmp_path):
-    """extxyz -> extxyz sanity check."""
+# ---------- tests ----------
+
+def test_extxyz_roundtrip(tmp_path: Path):
+    """extxyz -> extxyz should be structurally identical."""
     in_xyz = tmp_path / "in.xyz"
     out_xyz = tmp_path / "out.xyz"
 
-    # minimal extxyz: 2 atoms + cell
     in_xyz.write_text(
         "2\n"
-        "Lattice=\"5 0 0 0 5 0 0 0 5\" Properties=species:S:1:pos:R:3\n"
+        'Lattice="5 0 0 0 5 0 0 0 5" Properties=species:S:1:pos:R:3\n'
         "H 0.0 0.0 0.0\n"
         "He 1.0 1.0 1.0\n",
         encoding="utf-8",
     )
 
-    run_aseconv(tmp_path, [
-        "-i", str(in_xyz),
-        "-o", str(out_xyz),
-    ])
+    run_aseconv(tmp_path, ["-i", str(in_xyz), "-o", str(out_xyz)])
 
     a_in = read(in_xyz)
     a_out = read(out_xyz)
 
     assert len(a_in) == len(a_out)
     assert a_in.get_chemical_symbols() == a_out.get_chemical_symbols()
-    assert a_in.get_cell().volume == pytest.approx(a_out.get_cell().volume)
+    assert a_in.get_volume() == pytest.approx(a_out.get_volume())
+    assert a_in.get_positions() == pytest.approx(a_out.get_positions())
 
 
-def test_extxyz_to_lammps_data_and_back(tmp_path):
-    """extxyz -> lammps-data -> extxyz: preserves natoms & symbols."""
+def test_extxyz_to_lammps_data_and_back(tmp_path: Path):
+    """extxyz -> lammps-data -> extxyz: preserve natoms + symbols (via Masses+specorder)."""
     in_xyz = tmp_path / "in.xyz"
     data_file = tmp_path / "out.data"
     back_xyz = tmp_path / "back.xyz"
 
     in_xyz.write_text(
         "4\n"
-        "Lattice=\"10 0 0 0 10 0 0 0 10\" Properties=species:S:1:pos:R:3\n"
+        'Lattice="10 0 0 0 10 0 0 0 10" Properties=species:S:1:pos:R:3\n'
         "Bi 0 0 0\n"
         "Bi 1 0 0\n"
         "Se 0 1 0\n"
@@ -66,7 +73,7 @@ def test_extxyz_to_lammps_data_and_back(tmp_path):
         encoding="utf-8",
     )
 
-    # extxyz -> lammps-data (use atomic style for simpler test data)
+    # extxyz -> lammps-data
     run_aseconv(tmp_path, [
         "-i", str(in_xyz),
         "--iformat", "extxyz",
@@ -92,11 +99,57 @@ def test_extxyz_to_lammps_data_and_back(tmp_path):
     a_back = read(back_xyz)
 
     assert len(a_in) == len(a_back)
+    # same multiset of symbols (order may differ depending on writer)
     assert sorted(a_in.get_chemical_symbols()) == sorted(a_back.get_chemical_symbols())
 
 
-def test_lammps_dump_to_extxyz(tmp_path):
-    """lammps-dump-text -> extxyz basic check."""
+def test_multiframe_extxyz_traj_roundtrip(tmp_path: Path):
+    """Multi-frame extxyz -> traj -> extxyz: preserve natoms and frame count."""
+    in_xyz = tmp_path / "multi.xyz"
+    traj_file = tmp_path / "out.traj"
+    back_xyz = tmp_path / "back.xyz"
+
+    # 2 frames, 2 atoms each
+    in_xyz.write_text(
+        "2\n"
+        'Lattice="5 0 0 0 5 0 0 0 5" Properties=species:S:1:pos:R:3\n'
+        "H 0 0 0\n"
+        "He 1 1 1\n"
+        "2\n"
+        'Lattice="5 0 0 0 5 0 0 0 5" Properties=species:S:1:pos:R:3\n'
+        "H 0.1 0 0\n"
+        "He 1.1 1 1\n",
+        encoding="utf-8",
+    )
+
+    # extxyz -> traj
+    run_aseconv(tmp_path, [
+        "-i", str(in_xyz),
+        "--iformat", "extxyz",
+        "-o", str(traj_file),
+        "--oformat", "traj",
+        "--overwrite",
+    ])
+    assert traj_file.exists()
+
+    # traj -> extxyz
+    run_aseconv(tmp_path, [
+        "-i", str(traj_file),
+        "--iformat", "traj",
+        "-o", str(back_xyz),
+        "--oformat", "extxyz",
+        "--overwrite",
+    ])
+
+    frames_in = list(read(in_xyz, index=":"))
+    frames_back = list(read(back_xyz, index=":"))
+
+    assert len(frames_in) == len(frames_back)
+    assert all(len(a) == len(b) for a, b in zip(frames_in, frames_back))
+
+
+def test_lammps_dump_to_extxyz(tmp_path: Path):
+    """lammps-dump-text -> extxyz: basic sanity on atom count and coords."""
     dump = tmp_path / "in.dump"
     out_xyz = tmp_path / "out.xyz"
 
@@ -127,4 +180,252 @@ def test_lammps_dump_to_extxyz(tmp_path):
     xs = a.get_positions()[:, 0]
     assert xs.min() == pytest.approx(0.0)
     assert xs.max() == pytest.approx(1.0)
+
+def test_stdin_stdout_extxyz(tmp_path: Path):
+    """extxyz -> extxyz via stdin/stdout: ensure streaming path works."""
+    extxyz_text = (
+        "2\n"
+        'Lattice="5 0 0 0 5 0 0 0 5" Properties=species:S:1:pos:R:3\n'
+        "H 0.0 0.0 0.0\n"
+        "He 1.0 1.0 1.0\n"
+    )
+
+    # Run through aseconv with stdin/stdout
+    result = run_aseconv(
+        tmp_path,
+        ["-i", "-", "--iformat", "extxyz", "-o", "-", "--oformat", "extxyz"],
+        stdin=extxyz_text,
+    )
+
+    out_xyz = tmp_path / "pipe.xyz"
+    out_xyz.write_text(result.stdout, encoding="utf-8")
+
+    in_xyz = tmp_path / "in_from_text.xyz"
+    in_xyz.write_text(extxyz_text, encoding="utf-8")
+
+    a_in = read(in_xyz)
+    a_out = read(out_xyz)
+
+    assert len(a_in) == len(a_out)
+    assert a_in.get_chemical_symbols() == a_out.get_chemical_symbols()
+
+def test_espresso_in_to_extxyz(tmp_path: Path):
+    """QE espresso-in -> extxyz: parse cell + positions + symbols."""
+    qe_in = tmp_path / "qe.in"
+    out_xyz = tmp_path / "out.xyz"
+
+    qe_in.write_text(
+        """ &control
+    calculation = 'scf'
+    restart_mode='from_scratch',
+    prefix='myprefix',
+    tstress = .true.
+    tprnfor = .true.
+    etot_conv_thr=0.1,
+    forc_conv_thr=0.2
+    pseudo_dir = '/psuedo_path/',
+    outdir='/outdir_path/'
+ /
+ &system
+    ibrav=  0, celldm(1) =3.77945225090701, nat=  3, ntyp= 3,
+    ecutwfc = 100.0, ecutrho=200.0
+ /
+ &electrons
+    diagonalization='david'
+    electron_maxstep = 100
+    mixing_mode = 'plain'
+    mixing_beta = 0.7
+    conv_thr = 1d-10
+ /
+ATOMIC_SPECIES
+ Mo  1.0     Mo.UPF
+ S   2.0     S.UPF
+ Se  3.0     Se.UPF
+CELL_PARAMETERS {alat}
+0.50000000      0.00000000      0.00000000
+0.00000000      0.50000000      0.00000000
+0.00000000      0.00000000      5.00000000
+ATOMIC_POSITIONS {angstrom}
+Mo      0.110000000     0.120000000     0.130000000
+S       0.210000000     0.220000000     0.230000000
+Se      0.310000000     0.320000000     0.330000000
+K_POINTS automatic
+24 24 1 0 0 0
+""",
+        encoding="utf-8",
+    )
+
+    # espresso-in -> extxyz
+    run_aseconv(tmp_path, [
+        "-i", str(qe_in),
+        "--iformat", "espresso-in",
+        "-o", str(out_xyz),
+        "--oformat", "extxyz",
+        "--overwrite",
+    ])
+
+    a = read(out_xyz, format="extxyz")
+
+    # 1) Correct number of atoms
+    assert len(a) == 3
+
+    # 2) Correct species order
+    assert a.get_chemical_symbols() == ["Mo", "S", "Se"]
+
+    # 3) Positions match ATOMIC_POSITIONS
+    pos = a.get_positions()
+    assert pos.shape == (3, 3)
+    assert pos[0, 0] == pytest.approx(0.110000000)
+    assert pos[0, 1] == pytest.approx(0.120000000)
+    assert pos[0, 2] == pytest.approx(0.130000000)
+    assert pos[1, 0] == pytest.approx(0.210000000)
+    assert pos[1, 1] == pytest.approx(0.220000000)
+    assert pos[1, 2] == pytest.approx(0.230000000)
+    assert pos[2, 0] == pytest.approx(0.310000000)
+    assert pos[2, 1] == pytest.approx(0.320000000)
+    assert pos[2, 2] == pytest.approx(0.330000000)
+
+    # 4) Cell from celldm(1) + CELL_PARAMETERS {alat}:
+    # celldm(1) in Bohr; alat ≈ 2.0 Å; so diag ~ (1, 1, 10) Å
+    cell = a.get_cell()
+    assert cell[0, 0] == pytest.approx(1.0, rel=1e-6, abs=1e-6)
+    assert cell[1, 1] == pytest.approx(1.0, rel=1e-6, abs=1e-6)
+    assert cell[2, 2] == pytest.approx(10.0, rel=1e-6, abs=1e-6)
+
+
+def test_lammps_triclinic_data_to_extxyz(tmp_path: Path):
+    """lammps-data (triclinic) -> extxyz: verify tilted cell is preserved."""
+    data_file = tmp_path / "triclinic.data"
+    out_xyz = tmp_path / "triclinic.xyz"
+
+    data_file.write_text(
+        """# Triclinic test box
+4 atoms
+1 atom types
+
+0.0 10.0 xlo xhi
+0.0 11.0 ylo yhi
+0.0 12.0 zlo zhi
+2.0 3.0 4.0 xy xz yz
+
+Masses
+
+1 1.0
+
+Atoms # atomic
+
+1 1 0.0 0.0 0.0
+2 1 1.0 0.0 0.0
+3 1 0.0 1.0 0.0
+4 1 0.0 0.0 1.0
+""",
+        encoding="utf-8",
+    )
+
+    run_aseconv(
+        tmp_path,
+        [
+            "-i",
+            str(data_file),
+            "--iformat",
+            "lammps-data",
+            "--lammps-style",
+            "atomic",
+            "-o",
+            str(out_xyz),
+            "--oformat",
+            "extxyz",
+            "--overwrite",
+        ],
+    )
+
+    a = read(out_xyz, format="extxyz")
+
+    # 4 atoms: make sure it actually read them
+    assert len(a) == 4
+
+    # Expected triclinic cell:
+    # a = (10, 0, 0)
+    # b = ( 2,10, 0)
+    # c = ( 3, 4,10)
+    cell = a.get_cell().array
+
+    expected = np.array([
+        [10.0, 0.0, 0.0],
+        [2.0, 11.0, 0.0],
+        [3.0, 4.0, 12.0],
+    ])
+
+    assert cell == pytest.approx(expected, rel=1e-12, abs=1e-12)
+
+def test_lammps_data_full_to_extxyz(tmp_path: Path):
+    """lammps-data (Atoms # full) -> extxyz: verify we parse style=full correctly."""
+    data_file = tmp_path / "full.data"
+    out_xyz = tmp_path / "full.xyz"
+
+    # LAMMPS data in 'full' atom_style:
+    # Atoms # full: id mol type q x y z
+    data_file.write_text(
+        """# Full style LAMMPS data
+3 atoms
+3 atom types
+
+0.0 10.0 xlo xhi
+0.0 10.0 ylo yhi
+0.0 10.0 zlo zhi
+
+Masses
+
+1 95.95  # Mo
+2 32.06  # S
+3 78.96  # Se
+
+Atoms # full
+
+1 1 1  0.10  0.0 0.0 0.0
+2 1 2 -0.20  1.0 0.0 0.0
+3 2 3  0.30  0.0 1.0 0.0
+""",
+        encoding="utf-8",
+    )
+
+    run_aseconv(
+        tmp_path,
+        [
+            "-i",
+            str(data_file),
+            "--iformat",
+            "lammps-data",
+            "--lammps-style",
+            "full",
+            "-o",
+            str(out_xyz),
+            "--oformat",
+            "extxyz",
+            "--overwrite",
+        ],
+    )
+
+    a = read(out_xyz, format="extxyz")
+
+    # 1) Correct number of atoms
+    assert len(a) == 3
+
+    # 2) Symbols inferred from Masses comments via ASE
+    assert sorted(a.get_chemical_symbols()) == ["Mo", "S", "Se"]
+
+    # 3) Positions preserved
+    pos = a.get_positions()
+    assert pos[0] == pytest.approx([0.0, 0.0, 0.0])
+    assert pos[1] == pytest.approx([1.0, 0.0, 0.0])
+    assert pos[2] == pytest.approx([0.0, 1.0, 0.0])
+
+    # 4) Cell preserved
+    cell = a.get_cell().array
+    expected = np.array([
+        [10.0, 0.0, 0.0],
+        [0.0,10.0, 0.0],
+        [0.0, 0.0,10.0],
+    ])
+    assert cell == pytest.approx(expected, rel=1e-12, abs=1e-12)
 
