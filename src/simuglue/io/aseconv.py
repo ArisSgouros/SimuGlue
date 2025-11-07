@@ -170,6 +170,8 @@ def _write_to_dest(
         if units not in ("metal", "real"):
             raise ValueError(f"Unsupported LAMMPS units for lammps-data: {units}")
 
+        force_skew = bool(opts.get("force_skew", False))
+
         symbols = atoms[0].get_chemical_symbols()
         specorder = opts.get(
             "specorder",
@@ -182,6 +184,7 @@ def _write_to_dest(
             atom_style=style,
             specorder=specorder,
             masses=True,
+            force_skew=force_skew,
         )
         return
 

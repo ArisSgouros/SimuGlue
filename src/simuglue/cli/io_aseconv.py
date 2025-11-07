@@ -44,6 +44,11 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
         choices=["metal", "real"],
         help="LAMMPS units for lammps-data read/write (default: metal).",
     )
+    p.add_argument(
+        "--lammps-force-skew",
+        action="store_true",
+        help="Force writing LAMMPS data cell as triclinic (force_skew=True).",
+    )
 
     p.add_argument("--overwrite", action="store_true",
                    help="Allow overwriting existing output file.")
@@ -65,11 +70,9 @@ def main(argv=None, prog: str | None = None) -> int:
         read_opts.setdefault("lammps-data", {})["units"] = args.lammps_units
         write_opts.setdefault("lammps-data", {})["units"] = args.lammps_units
 
-    # if you add --lammps-units later:
-    # if args.lammps_units:
-    #     for key in ("lammps-data", "lammps-dump-text"):
-    #         read_opts.setdefault(key, {})["units"] = args.lammps_units
-    #         write_opts.setdefault(key, {})["units"] = args.lammps_units
+    if args.lammps_force_skew:
+        # Only relevant for writing lammps-data
+        write_opts.setdefault("lammps-data", {})["force_skew"] = True
 
     convert(
         input_path=args.input,
