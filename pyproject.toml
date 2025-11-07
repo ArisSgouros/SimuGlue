@@ -23,6 +23,10 @@ dependencies = [
 dev = [
   "pytest>=8.0",
   "pyyaml>=6.0",
+  "argcomplete>=3.1",
+]
+cli = [
+  "argcomplete>=3.1",
 ]
 
 [project.scripts]
@@ -35,6 +39,10 @@ sgl-xyz2qe = "simuglue.cli.xyz2qe_cli:main"
 sgl-transf-xyz = "simuglue.cli.transf_xyz_cli:main"
 sgl-transf-lammps = "simuglue.cli.transf_lammps_cli:main"
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.pytest.ini_options]
 addopts = "-q"
 pythonpath = ["src"]
+

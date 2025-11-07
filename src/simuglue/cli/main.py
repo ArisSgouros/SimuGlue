@@ -4,6 +4,11 @@ import argparse, sys
 from importlib import import_module
 from typing import Dict, Tuple
 
+try:
+    from argcomplete import autocomplete  # optional; CLI still works without it
+except Exception:
+    autocomplete = None
+
 # group -> { subcmd: (module_path, help_text, prog_string) }
 COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
     "qe": {
@@ -17,24 +22,17 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
         "lammps": ("simuglue.cli.transf_lammps_cli", "Transform LAMMPS data", "sgl transform lammps"),
     },
     "mech": {
-        "strain2defgrad": ("simuglue.cli.strain2defgrad_cli","Transform strain to deformation gradient", "sgl mech strain2defgrad"),
+        "strain2defgrad": ("simuglue.cli.strain2defgrad_cli",
+                           "Transform strain to deformation gradient",
+                           "sgl mech strain2defgrad"),
     },
 }
 
 def _run_leaf(mod_path: str, prog: str, extra: list[str]) -> int:
     """Import the leaf CLI and run it. With no args, show its help."""
     inner = import_module(mod_path).main
-    argv = extra or ["--help"]              # no args → help
-    # pass prog so usage shows "sgl qe json2xyz" etc.
+    argv = extra or ["--help"]
     return inner(argv=argv, prog=prog)
-
-def _dispatch(group: str, cmd: str, extra: list[str]) -> int:
-    try:
-        mod_path, _help, prog = COMMANDS[group][cmd]
-    except KeyError:
-        print(f"Unknown {group} subcommand: {cmd}", file=sys.stderr)
-        return 2
-    return _run_leaf(mod_path, prog, extra)
 
 def main(argv: list[str] | None = None) -> int:
     if argv is None:
@@ -43,18 +41,20 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="sgl", description="SimuGlue command line interface")
     subparsers = parser.add_subparsers(dest="group", required=True)
 
-    # Build groups & placeholder subcommands
+    # just register group+subcommand names so argcomplete can tab-complete them
     for group, table in COMMANDS.items():
         p_group = subparsers.add_parser(group, help=f"{group} commands")
         sub = p_group.add_subparsers(dest="cmd", required=True)
-        for cmd, (_mod, help_text, _prog) in table.items():
-            sub.add_parser(cmd, help=help_text, add_help=False)  # forward --help to leaf
+        for cmd, (mod_path, help_text, prog) in table.items():
+            sp = sub.add_parser(cmd, help=help_text, add_help=False)  # no arg defs here
+            sp.set_defaults(_mod_path=mod_path, _prog=prog)
+
+    if autocomplete:
+        autocomplete(parser)
 
     args, extra = parser.parse_known_args(argv)
-    if args.group not in COMMANDS:
-        parser.error(f"Unknown group: {args.group}")
-        return 2
-    return _dispatch(args.group, args.cmd, extra)
+    return _run_leaf(args._mod_path, args._prog, extra)
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
