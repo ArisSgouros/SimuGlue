@@ -618,3 +618,140 @@ def test_lammps_data_small_skew_with_force_skew(tmp_path: Path):
     assert xz == pytest.approx(0.0, abs=1e-12)
     assert yz == pytest.approx(0.0, abs=1e-12)
 
+from ase.io.lammpsdata import read_lammps_data
+
+def test_triclinic_extxyz_traj_lammps_traj_extxyz_cycle(tmp_path: Path):
+    """
+    Cycle:
+      extxyz (triclinic) -> traj -> lammps-data -> traj -> extxyz
+
+    Verify:
+      - number of atoms preserved
+      - symbols preserved
+      - triclinic cell preserved (within numerical tolerance)
+      - positions preserved (within numerical tolerance)
+    """
+    ext_in = tmp_path / "tri_in.xyz"
+    traj1 = tmp_path / "tri_1.traj"
+    data = tmp_path / "tri.data"
+    traj2 = tmp_path / "tri_2.traj"
+    ext_out = tmp_path / "tri_out.xyz"
+
+    # Triclinic cell:
+    #  a = (10, 0,  0)
+    #  b = ( 2,10, 0)
+    #  c = ( 3, 4,10)
+    # Lattice is row-major: a_x a_y a_z b_x b_y b_z c_x c_y c_z
+    ext_in.write_text(
+        "4\n"
+        'Lattice="10 0 0 2 10 0 3 4 10" Properties=species:S:1:pos:R:3\n'
+        "H  0.0 0.0 0.0\n"
+        "H  1.0 0.0 0.0\n"
+        "He 0.0 1.0 0.0\n"
+        "He 0.0 0.0 1.0\n",
+        encoding="utf-8",
+    )
+
+    # 1) extxyz -> traj
+    run_aseconv(
+        tmp_path,
+        [
+            "-i",
+            str(ext_in),
+            "--iformat",
+            "extxyz",
+            "-o",
+            str(traj1),
+            "--oformat",
+            "traj",
+            "--overwrite",
+        ],
+    )
+
+    # 2) traj -> lammps-data (single frame)
+    run_aseconv(
+        tmp_path,
+        [
+            "-i",
+            str(traj1),
+            "--iformat",
+            "traj",
+            "--frames",
+            "0",
+            "-o",
+            str(data),
+            "--oformat",
+            "lammps-data",
+            "--lammps-style",
+            "atomic",
+            "--overwrite",
+        ],
+    )
+
+    # 3) lammps-data -> traj
+    run_aseconv(
+        tmp_path,
+        [
+            "-i",
+            str(data),
+            "--iformat",
+            "lammps-data",
+            "--lammps-style",
+            "atomic",
+            "-o",
+            str(traj2),
+            "--oformat",
+            "traj",
+            "--overwrite",
+        ],
+    )
+
+    # 4) traj -> extxyz
+    run_aseconv(
+        tmp_path,
+        [
+            "-i",
+            str(traj2),
+            "--iformat",
+            "traj",
+            "--frames",
+            "0",
+            "-o",
+            str(ext_out),
+            "--oformat",
+            "extxyz",
+            "--overwrite",
+        ],
+    )
+
+    from ase.io import read as ase_read
+
+    a_in = ase_read(ext_in, format="extxyz")
+    a_out = ase_read(ext_out, format="extxyz")
+
+    # Same number of atoms
+    assert len(a_in) == len(a_out)
+
+    # Same symbols (including order)
+    assert a_in.get_chemical_symbols() == a_out.get_chemical_symbols()
+
+    # Cell preserved (triclinic)
+    cell_in = a_in.get_cell().array
+    cell_out = a_out.get_cell().array
+    expected = np.array(
+        [
+            [10.0, 0.0, 0.0],
+            [2.0, 10.0, 0.0],
+            [3.0, 4.0, 10.0],
+        ]
+    )
+    # sanity: input correct
+    assert cell_in == pytest.approx(expected, rel=1e-12, abs=1e-12)
+    # roundtrip close
+    assert cell_out == pytest.approx(expected, rel=1e-8, abs=1e-8)
+
+    # Positions preserved
+    assert a_out.get_positions() == pytest.approx(
+        a_in.get_positions(), rel=1e-8, abs=1e-8
+    )
+
