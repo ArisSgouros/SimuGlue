@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Iterable, Dict, Any, List
+from typing import Iterable, Dict, Any, List, OrderedDict
 import sys
 
 from ase import Atoms
@@ -114,8 +114,19 @@ def _write_atoms(
             if len(atoms) != 1:
                 raise ValueError("lammps-data output supports a single frame.")
             style = opts.get("style", "full")
+            symbols = atoms[0].get_chemical_symbols()
+            specorder = opts.get(
+                "specorder",
+                list(OrderedDict.fromkeys(symbols)),
+            )
             from ase.io.lammpsdata import write_lammps_data
-            write_lammps_data(sys.stdout, atoms[0], atom_style=style)
+            write_lammps_data(
+                sys.stdout,
+                atoms[0],
+                atom_style=style,
+                specorder=specorder,
+                masses=True,      # ← also here
+            )
             return
 
         if fmt == "lammps-dump-text":
@@ -132,9 +143,24 @@ def _write_atoms(
     if fmt == "lammps-data":
         if len(atoms) != 1:
             raise ValueError("lammps-data output supports a single frame.")
+
         style = opts.get("style", "full")
+
+        # Stable type -> symbol mapping
+        symbols = atoms[0].get_chemical_symbols()
+        specorder = opts.get(
+            "specorder",
+            list(OrderedDict.fromkeys(symbols)),
+        )
+
         from ase.io.lammpsdata import write_lammps_data
-        write_lammps_data(path, atoms[0], atom_style=style)
+        write_lammps_data(
+            path,
+            atoms[0],
+            atom_style=style,
+            specorder=specorder,
+            masses=True,          # ← IMPORTANT
+        )
         return
 
     if fmt == "lammps-dump-text":
