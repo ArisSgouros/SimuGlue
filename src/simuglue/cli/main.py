@@ -11,6 +11,9 @@ except Exception:
 
 # group -> { subcmd: (module_path, help_text, prog_string) }
 COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
+    "io": {
+        "aseconv": ("simuglue.cli.io_aseconv", "Convert file types using ASE modules", "sgl io aseconv"),
+    },
     "qe": {
         "pwo2json": ("simuglue.cli.pwo2json_cli", "QE output (.out/.pwo) → JSON", "sgl qe pwo2json"),
         "pwi2json": ("simuglue.cli.pwi2json_cli", "QE input  (.in/.pwi) → JSON", "sgl qe pwi2json"),
@@ -22,9 +25,7 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
         "lammps": ("simuglue.cli.transf_lammps_cli", "Transform LAMMPS data", "sgl transform lammps"),
     },
     "mech": {
-        "strain2defgrad": ("simuglue.cli.strain2defgrad_cli",
-                           "Transform strain to deformation gradient",
-                           "sgl mech strain2defgrad"),
+        "strain2defgrad": ("simuglue.cli.strain2defgrad_cli", "Transform strain to deformation gradient", "sgl mech strain2defgrad"),
     },
 }
 
