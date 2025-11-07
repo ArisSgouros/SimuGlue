@@ -83,14 +83,22 @@ def _make_source(src: str, fmt: str) -> Source:
         return StringIO(text)
     return Path(src)
 
-
-def _read_from_source(
-    source: Source,
+def _read_atoms(
+    src: str,
     fmt: str,
-    index,
-    opts: Dict[str, Any],
+    frames: str | None,
+    options: Dict[str, Dict[str, Any]] | None,
 ) -> List[Atoms]:
-    """Format-specific read logic from a Path or file-like."""
+    """
+    Read input into a list[Atoms], handling:
+      - stdin vs file
+      - format-specific readers (lammps-data, lammps-dump-text, extxyz, etc.)
+      - single-Atoms vs sequence-of-Atoms outputs from ASE.
+    """
+    index = _parse_index(frames)
+    opts = _get_fmt_opts(fmt, options)
+    source = _make_source(src, fmt)
+
     # --- LAMMPS data ---
     if fmt == "lammps-data":
         style = opts.get("style", "full")
@@ -119,17 +127,6 @@ def _read_from_source(
     return _to_atoms_list(images)
 
 
-def _read_atoms(
-    src: str,
-    fmt: str,
-    frames: str | None,
-    options: Dict[str, Dict[str, Any]] | None,
-) -> List[Atoms]:
-    index = _parse_index(frames)
-    opts = _get_fmt_opts(fmt, options)
-    source = _make_source(src, fmt)
-    return _read_from_source(source, fmt, index, opts)
-
 def _make_dest(dst: str, fmt: str):
     """Return a writable destination (Path or file-like) based on dst."""
     if dst == "-":
@@ -140,12 +137,15 @@ def _make_dest(dst: str, fmt: str):
     return Path(dst)
 
 
-def _write_to_dest(
-    dest,
+def _write_atoms(
+    atoms: Iterable[Atoms],
+    dst: str,
     fmt: str,
-    atoms: List[Atoms],
-    opts: Dict[str, Any],
+    options: Dict[str, Dict[str, Any]] | None,
 ) -> None:
+    atoms_list: List[Atoms] = list(atoms)
+    opts = _get_fmt_opts(fmt, options)
+    dest = _make_dest(dst, fmt)
     """Format-specific write logic to a Path or file-like."""
 
     # --- disallow QE formats as outputs ---
@@ -195,18 +195,6 @@ def _write_to_dest(
 
     # --- generic path for extxyz, traj, espresso-* (input-only filtered above) ---
     write(dest, atoms, format=fmt)
-
-
-def _write_atoms(
-    atoms: Iterable[Atoms],
-    dst: str,
-    fmt: str,
-    options: Dict[str, Dict[str, Any]] | None,
-) -> None:
-    atoms_list = list(atoms)
-    opts = _get_fmt_opts(fmt, options)
-    dest = _make_dest(dst, fmt)
-    _write_to_dest(dest, fmt, atoms_list, opts)
 
 def convert(
     input_path: str,
