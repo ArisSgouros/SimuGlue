@@ -5,6 +5,7 @@ import sys
 
 from ase import Atoms
 from ase.io import read, write
+from ase.io.lammpsdata import read_lammps_data, write_lammps_data
 
 SUPPORTED_INPUTS = {
     "extxyz",
@@ -84,8 +85,8 @@ def _read_atoms(
 
         if fmt == "lammps-data":
             style = opts.get("style", "full")
-            from ase.io.lammpsdata import read_lammps_data
-            atoms = read_lammps_data(fh, style=style)
+            units = opts.get("units", "metal")
+            atoms = read_lammps_data(fh, style=style, units=units)
             return [atoms]
 
         if fmt == "lammps-dump-text":
@@ -104,8 +105,8 @@ def _read_atoms(
 
     if fmt == "lammps-data":
         style = opts.get("style", "full")
-        from ase.io.lammpsdata import read_lammps_data
-        atoms = read_lammps_data(path, style=style)
+        units = opts.get("units", "metal")
+        atoms = read_lammps_data(path, style=style, units=units)
         return [atoms]
 
     if fmt == "lammps-dump-text":
@@ -147,7 +148,6 @@ def _write_atoms(
                 "specorder",
                 list(OrderedDict.fromkeys(symbols)),
             )
-            from ase.io.lammpsdata import write_lammps_data
             write_lammps_data(
                 sys.stdout,
                 atoms[0],
@@ -192,7 +192,6 @@ def _write_atoms(
             list(OrderedDict.fromkeys(symbols)),
         )
 
-        from ase.io.lammpsdata import write_lammps_data
         write_lammps_data(
             path,
             atoms[0],

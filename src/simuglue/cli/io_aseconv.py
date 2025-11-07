@@ -38,8 +38,12 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p.add_argument("--lammps-style", default=None,
                    choices=["full", "atomic", "charge"],
                    help="LAMMPS atom_style for lammps-data read/write.")
-    # placeholder for future:
-    # p.add_argument("--lammps-units", default=None, ...)
+    p.add_argument(
+        "--lammps-units",
+        default=None,
+        choices=["metal", "real"],
+        help="LAMMPS units for lammps-data read/write (default: metal).",
+    )
 
     p.add_argument("--overwrite", action="store_true",
                    help="Allow overwriting existing output file.")
@@ -56,6 +60,10 @@ def main(argv=None, prog: str | None = None) -> int:
         for key in ("lammps-data",):
             read_opts.setdefault(key, {})["style"] = args.lammps_style
             write_opts.setdefault(key, {})["style"] = args.lammps_style
+
+    if args.lammps_units:
+        read_opts.setdefault("lammps-data", {})["units"] = args.lammps_units
+        write_opts.setdefault("lammps-data", {})["units"] = args.lammps_units
 
     # if you add --lammps-units later:
     # if args.lammps_units:
