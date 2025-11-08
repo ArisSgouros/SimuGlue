@@ -126,3 +126,112 @@ def test_defgrad_ignores_antisymmetric_part(measure: str):
 
     _approx(F_from_bad, F_from_sym)
 
+
+import subprocess
+
+@pytest.mark.parametrize("measure", ["green-lagrange"])
+def test_unphysical_strain_spd_check(tmp_path: Path, measure: str):
+    """
+    Unphysical Green–Lagrange strain should be rejected by SPD check.
+
+    For GL: C = I + 2E must be SPD.
+    Choose E so that I + 2E has a negative eigenvalue, e.g.
+      E = diag(-1, 0, 0) -> C = diag(-1, 1, 1), not SPD.
+    """
+    # This E is 3x3 full format: exx exy exz; eyx eyy eyz; ezx ezy ezz
+    E_text = "-1 0 0; 0 0 0; 0 0 0"
+
+    cmd = [
+        "sgl",
+        "mech",
+        "defgrad",
+        "--kind",
+        "full",
+        "--measure",
+        measure,
+        "--precision",
+        "12",
+    ]
+    res = subprocess.run(
+        cmd,
+        cwd=tmp_path,
+        input=E_text,
+        capture_output=True,
+        text=True,
+    )
+
+    # Must fail
+    assert res.returncode != 0
+
+    # Error message should indicate SPD incompatibility (from our kinematics logic)
+    assert "Green-Lagrange strain incompatible with SPD" in res.stderr or "SPD" in res.stderr
+
+
+import subprocess
+
+
+def test_unphysical_green_lagrange_spd_check(tmp_path: Path):
+    """
+    Unphysical GL strain: C = I + 2E not SPD -> must fail.
+    """
+    # E = diag(-1, 0, 0) -> C = diag(-1, 1, 1), not SPD
+    E_text = "-1 0 0; 0 0 0; 0 0 0"
+
+    cmd = [
+        "sgl",
+        "mech",
+        "defgrad",
+        "--kind",
+        "full",
+        "--measure",
+        "green-lagrange",
+        "--precision",
+        "12",
+    ]
+    res = subprocess.run(
+        cmd,
+        cwd=tmp_path,
+        input=E_text,
+        capture_output=True,
+        text=True,
+    )
+
+    assert res.returncode != 0
+    assert "Green-Lagrange strain incompatible with SPD".lower() in res.stderr.lower() \
+        or "SPD" in res.stderr
+
+
+def test_unphysical_hencky_nonsymmetric(tmp_path: Path):
+    """
+    For Hencky, any symmetric E is mathematically valid (log/exp bijection).
+    The physically invalid case is a non-symmetric 'strain' tensor.
+
+    Our CLI enforces symmetry at parse time, so an asymmetric 3x3 input
+    must be rejected before reaching Hencky logic.
+    """
+    # Asymmetric "strain" matrix
+    E_text = "0 1 0; 0 0 0; 0 0 0"
+
+    cmd = [
+        "sgl",
+        "mech",
+        "defgrad",
+        "--kind",
+        "full",
+        "--measure",
+        "hencky",
+        "--precision",
+        "12",
+    ]
+    res = subprocess.run(
+        cmd,
+        cwd=tmp_path,
+        input=E_text,
+        capture_output=True,
+        text=True,
+    )
+
+    assert res.returncode != 0
+    # This comes from _parse_3x3 symmetry check
+    assert "must be symmetric" in res.stderr.lower()
+

@@ -178,23 +178,42 @@ def test_uniaxial_known_F(tmp_path: Path, lmbda: float, measure: str):
 
 
 # --- Tests: simple shear (engineering & Green–Lagrange) ---
-
-
 @pytest.mark.parametrize("gamma", [0.05, 0.10])
 def test_simple_shear_engineering(tmp_path: Path, gamma: float):
     """
-    Simple shear: F = [[1, gamma, 0], [0, 1, 0], [0, 0, 1]]
-    Engineering/small strain: E = sym(F - I) -> off-diagonal gamma/2.
+    Engineering measure semantics check.
+
+    We define (in kinematics.py):
+      engineering: F = I + E   (small-strain, rotation-free approximation)
+
+    For a given simple-shear deformation F_simple:
+      F_simple = [[1, gamma, 0],
+                  [0, 1,     0],
+                  [0, 0,     1]]
+
+    the engineering strain tensor is:
+      E = 0.5 * ((F_simple - I) + (F_simple - I)^T)
+        = [[0,      gamma/2, 0],
+           [gamma/2, 0,      0],
+           [0,       0,      0]]
+
+    Feeding this E into `sgl mech defgrad --measure engineering`
+    should return F = I + E (NOT the original F_simple).
     """
-    F = np.array([[1.0, gamma, 0.0],
-                  [0.0, 1.0, 0.0],
-                  [0.0, 0.0, 1.0]])
-
-    E = E_engineering_from_F(F)
-
-    E_text = "; ".join(
-        " ".join(str(float(x)) for x in row) for row in E
+    F_simple = np.array(
+        [
+            [1.0, gamma, 0.0],
+            [0.0, 1.0,   0.0],
+            [0.0, 0.0,   1.0],
+        ]
     )
+
+    # Engineering strain from definition
+    I = np.eye(3)
+    E = 0.5 * ((F_simple - I) + (F_simple - I).T)
+
+    # Text input for --kind full
+    E_text = "; ".join(" ".join(str(float(x)) for x in row) for row in E)
 
     res = run_defgrad(
         tmp_path,
@@ -203,24 +222,39 @@ def test_simple_shear_engineering(tmp_path: Path, gamma: float):
     )
     F_cli = _parse_F_text(res.stdout)
 
-    assert F_cli == pytest.approx(F, rel=1e-8, abs=1e-8)
+    # Expected F per our convention: F = I + E
+    F_expected = I + E
 
+    assert F_cli == pytest.approx(F_expected, rel=1e-8, abs=1e-8)
 
 @pytest.mark.parametrize("gamma", [0.05, 0.10])
 def test_simple_shear_green_lagrange(tmp_path: Path, gamma: float):
     """
-    Simple shear: F = [[1, gamma, 0], [0, 1, 0], [0, 0, 1]]
-    Green–Lagrange: E = 0.5(F^T F - I).
+    Simple shear:
+      F = [[1, gamma, 0],
+           [0, 1,     0],
+           [0, 0,     1]]
+
+    Green–Lagrange:
+      E = 0.5(F^T F - I).
+
+    defgrad_from_strain(E, 'green-lagrange') is defined to return the
+    rotation-free deformation gradient, i.e. the right stretch U from
+    the polar decomposition F = R U.
+
+    For simple shear, U != F. This test checks F_cli == U, not F.
     """
     F = np.array([[1.0, gamma, 0.0],
-                  [0.0, 1.0, 0.0],
-                  [0.0, 0.0, 1.0]])
+                  [0.0, 1.0,   0.0],
+                  [0.0, 0.0,   1.0]])
 
-    E = E_green_lagrange_from_F(F)
+    # Compute E from the definition
+    I = np.eye(3)
+    C = F.T @ F
+    E = 0.5 * (C - I)
 
-    E_text = "; ".join(
-        " ".join(str(float(x)) for x in row) for row in E
-    )
+    # Text form of E for --kind full
+    E_text = "; ".join(" ".join(str(float(x)) for x in row) for row in E)
 
     res = run_defgrad(
         tmp_path,
@@ -229,5 +263,11 @@ def test_simple_shear_green_lagrange(tmp_path: Path, gamma: float):
     )
     F_cli = _parse_F_text(res.stdout)
 
-    assert F_cli == pytest.approx(F, rel=1e-8, abs=1e-8)
+    # Analytic U = sqrtm(C) via eigendecomposition (same idea as _sqrtm_spd)
+    w, V = np.linalg.eigh(C)
+    w = np.clip(w, 0.0, None)
+    U = (V * np.sqrt(w)) @ V.T
+    U = 0.5 * (U + U.T)
+
+    assert F_cli == pytest.approx(U, rel=1e-8, abs=1e-8)
 
