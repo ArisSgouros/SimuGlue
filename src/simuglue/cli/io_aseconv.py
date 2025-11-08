@@ -10,7 +10,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     )
     p.add_argument("-i", "--input", required=True,
                    help="Input file or '-' for stdin.")
-    p.add_argument("-o", "--output", required=True,
+    p.add_argument("-o", "--output", default='-',
                    help="Output file or '-' for stdout.")
     p.add_argument("--iformat", default="auto",
                    choices=[
@@ -26,10 +26,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
                    choices=[
                        "extxyz",
                        "traj",
-                       "espresso-in",
-                       "espresso-out",
                        "lammps-data",
-                       "lammps-dump-text",
                    ])
     p.add_argument("--frames", default=None,
                    help="Frame selection (ASE index syntax, e.g. ':', '0', '0:10:2').")
