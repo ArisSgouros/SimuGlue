@@ -6,7 +6,7 @@ import shutil
 import yaml
 import pytest
 
-CASES = Path(__file__).parent / "cases" / "xyz2qe_cli"
+CASES = Path(__file__).parent / "cases" / "qe_xyz2qe_cli"
 
 def discover():
     return [p for p in CASES.iterdir() if (p / "case.yaml").exists()]

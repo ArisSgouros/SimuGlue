@@ -9,7 +9,7 @@ from ase.io import read, write
 
 
 def run_deform_xyz(tmp_path: Path, args: list[str], stdin: str | None = None) -> subprocess.CompletedProcess:
-    cmd = ["sgl", "transform", "xyz", *args]
+    cmd = ["sgl", "xform", "xyz", *args]
     result = subprocess.run(
         cmd,
         cwd=tmp_path,

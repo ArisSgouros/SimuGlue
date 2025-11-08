@@ -1,4 +1,4 @@
-# tests/test_pwo2json.py
+# tests/test_pwi2json.py
 from pathlib import Path
 from _utils import check_cli_or_skip
 import subprocess
@@ -7,13 +7,13 @@ import yaml
 import json
 import pytest
 
-CASES = Path(__file__).parent / "cases" / "pwo2json_cli"
+CASES = Path(__file__).parent / "cases" / "qe_pwi2json_cli"
 
 def discover():
     return [p for p in CASES.iterdir() if (p / "case.yaml").exists()]
 
 @pytest.mark.parametrize("case_dir", discover(), ids=lambda p: p.name)
-def test_pwo2json_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
+def test_pwi2json_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     """
     Expects case.yaml like:
       input:  log.out | pattern: log*.out
@@ -24,7 +24,7 @@ def test_pwo2json_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     cfg = yaml.safe_load((case_dir / "case.yaml").read_text(encoding="utf-8"))
 
     exe = "sgl"
-    cli = [exe, "qe","pwo2json"]
+    cli = [exe, "qe","pwi2json"]
     check_cli_or_skip(cli)
 
     # Stage inputs
