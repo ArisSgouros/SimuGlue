@@ -1,0 +1,78 @@
+from __future__ import annotations
+import argparse
+
+from simuglue.io._defgradconv import convert_strain_to_F_stream
+
+
+def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog=prog or "sgl mech defgrad",
+        description=(
+            "Convert a strain tensor E to a deformation gradient F.\n\n"
+            "Input (from -i / stdin) is plain text:\n"
+            "  - 3x3: 'exx exy exz; eyx eyy eyz; ezx ezy ezz'  (9 numbers)\n"
+            "  - Voigt: 'exx eyy ezz gyz gxz gxy' (no 2x on shear)\n"
+            "Use --kind to force interpretation, or 'auto' (default) to guess.\n"
+            "Output: 'F11 F12 F13; F21 F22 F23; F31 F32 F33'."
+        ),
+    )
+
+    p.add_argument(
+        "-i",
+        "--input",
+        default="-",
+        help="Input source: path or '-' for stdin (default: '-').",
+    )
+
+    p.add_argument(
+        "--kind",
+        choices=["auto", "full", "voigt"],
+        default="auto",
+        help="Interpretation of input strain.",
+    )
+
+    p.add_argument(
+        "--measure",
+        choices=["engineering", "green-lagrange", "hencky"],
+        default="engineering",
+        help="Strain measure used to compute F from E.",
+    )
+
+    p.add_argument(
+        "-o",
+        "--output",
+        default="-",
+        help="Output target: path or '-' for stdout (default: '-').",
+    )
+
+    p.add_argument(
+        "--precision",
+        type=int,
+        default=12,
+        help="Decimal digits in the output.",
+    )
+
+    return p
+
+
+def main(argv=None, prog: str | None = None) -> int:
+    parser = build_parser(prog=prog)
+    args = parser.parse_args(argv)
+
+    try:
+        convert_strain_to_F_stream(
+            input_source=args.input,
+            input_kind=args.kind,
+            measure=args.measure,
+            precision=args.precision,
+            output_target=args.output,
+        )
+    except Exception as exc:
+        parser.exit(status=1, message=f"Error: {exc}\n")
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
