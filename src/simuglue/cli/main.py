@@ -16,14 +16,14 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
         "nepconv": ("simuglue.cli.io_nepconv", "Convert file extxyz between NEP and ASE", "sgl io nepconv"),
     },
     "qe": {
-        "pwo2json": ("simuglue.cli.pwo2json_cli", "QE output (.out/.pwo) → JSON", "sgl qe pwo2json"),
-        "pwi2json": ("simuglue.cli.pwi2json_cli", "QE input  (.in/.pwi) → JSON", "sgl qe pwi2json"),
-        "json2xyz": ("simuglue.cli.json2xyz_cli", "QE JSON → EXTXYZ",           "sgl qe json2xyz"),
-        "xyz2qe":   ("simuglue.cli.xyz2qe_cli",   "EXTXYZ → QE input",           "sgl qe xyz2qe"),
+        "pwo2json": ("simuglue.cli.qe_pwo2json", "QE output (.out/.pwo) → JSON", "sgl qe pwo2json"),
+        "pwi2json": ("simuglue.cli.qe_pwi2json", "QE input  (.in/.pwi) → JSON", "sgl qe pwi2json"),
+        "json2xyz": ("simuglue.cli.qe_json2xyz", "QE JSON → EXTXYZ",           "sgl qe json2xyz"),
+        "xyz2qe":   ("simuglue.cli.qe_xyz2qe",   "EXTXYZ → QE input",           "sgl qe xyz2qe"),
     },
     "transform": {
-        "xyz":    ("simuglue.cli.transf_xyz_cli",    "Transform XYZ",         "sgl transform xyz"),
-        "lammps": ("simuglue.cli.transf_lammps_cli", "Transform LAMMPS data", "sgl transform lammps"),
+        "xyz":    ("simuglue.cli.mech_xform-xyz",    "Transform XYZ",         "sgl transform xyz"),
+        "lammps": ("simuglue.cli.mech_xform-lammps", "Transform LAMMPS data", "sgl transform lammps"),
     },
     "mech": {
         "strain2defgrad": ("simuglue.cli.strain2defgrad_cli", "Transform strain to deformation gradient", "sgl mech strain2defgrad"),

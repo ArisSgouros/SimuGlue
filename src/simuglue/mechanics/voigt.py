@@ -75,28 +75,3 @@ def voigt6_to_stress_tensor(v: Sequence[float]) -> np.ndarray:
         [xz, yz, zz],
     ], dtype=float)
     return S
-
-
-# REFACTOR: rm redudant
-import numpy as np
-from scipy.linalg import sqrtm
-
-def symmetric_equivalent_from_upper_tri(F_ut):
-    # Right Cauchy–Green
-    C = F_ut.T @ F_ut
-    # Symmetric stretch tensor U
-    U = sqrtm(C).real
-    return U
-
-
-import numpy as np
-from scipy.linalg import sqrtm, qr
-
-def symmetric_to_upper_tri(U):
-    C = U @ U
-    C = 0.5 * (C + C.T)
-    L = np.linalg.cholesky(C)   # C = L L^T, L lower with diag > 0
-    return L.T                  # upper with diag > 0
-
-
-
