@@ -21,9 +21,9 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
         "json2xyz": ("simuglue.cli.qe_json2xyz", "QE JSON → EXTXYZ",           "sgl qe json2xyz"),
         "xyz2qe":   ("simuglue.cli.qe_xyz2qe",   "EXTXYZ → QE input",           "sgl qe xyz2qe"),
     },
-    "transform": {
-        "xyz":    ("simuglue.cli.mech_xform-xyz",    "Transform XYZ",         "sgl transform xyz"),
-        "lammps": ("simuglue.cli.mech_xform-lammps", "Transform LAMMPS data", "sgl transform lammps"),
+    "xform": {
+        "xyz":    ("simuglue.cli.mech_xform-xyz",    "Transform XYZ",         "sgl xform xyz"),
+        "lammps": ("simuglue.cli.mech_xform-lammps", "Transform LAMMPS data", "sgl xform lammps"),
     },
     "mech": {
         "strain2defgrad": ("simuglue.cli.strain2defgrad_cli", "Transform strain to deformation gradient", "sgl mech strain2defgrad"),
