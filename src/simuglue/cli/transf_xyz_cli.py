@@ -11,8 +11,7 @@ from ase.io import read, write
 
 from simuglue.transform.linear import apply_transform
 from simuglue.cli._xyz_io import _iter_frames
-from simuglue.cli._transf_util import _parse_3x3
-
+from simuglue.io.matrix_3x3 import parse_3x3
 
 def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
     """
@@ -94,7 +93,7 @@ def main(argv=None, prog: str | None = None) -> int:
 
     # Parse F
     try:
-        F = _parse_3x3(args.F)
+        F = parse_3x3(args.F)
     except Exception as exc:
         parser.exit(status=1, message=f"Error parsing F: {exc}\n")
 

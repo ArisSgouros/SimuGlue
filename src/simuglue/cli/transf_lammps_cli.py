@@ -10,7 +10,7 @@ import numpy as np
 from ase import Atoms
 from ase.io.lammpsdata import read_lammps_data, write_lammps_data
 from simuglue.transform.linear import apply_transform
-from simuglue.cli._transf_util import _parse_3x3
+from simuglue.io.matrix_3x3 import parse_3x3
 
 
 # ---------- IO helpers ----------
@@ -74,7 +74,7 @@ def main(argv: Optional[list[str]] = None, prog: str | None = None) -> int:
     args = build_parser(prog=prog).parse_args(argv)
 
     # Parse F and validate
-    F = _parse_3x3(args.F)
+    F = parse_3x3(args.F)
     if F.shape != (3, 3):
         raise ValueError(f"Transformer must be 3x3, got {F.shape}")
 
