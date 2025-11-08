@@ -1,7 +1,35 @@
 from __future__ import annotations
+from pathlib import Path
+from typing import Literal
 import argparse
+import sys
+import numpy as np
 
-from simuglue.io._strainconv import convert_F_to_strain_stream
+from simuglue.mechanics.kinematics import strain_from_F
+from simuglue.io.matrix_3x3 import parse_3x3, format_3x3, ensure_symmetric
+
+
+def _format_strain_voigt(E: np.ndarray, precision: int) -> str:
+    """
+    Format symmetric E as Voigt:
+      'exx eyy ezz gyz gxz gxy'
+    using:
+      exx = E[0,0], eyy = E[1,1], ezz = E[2,2],
+      gyz = 2 E[1,2], gxz = 2 E[0,2], gxy = 2 E[0,1]
+    """
+    E = np.array(E, float)
+    E = 0.5 * (E + E.T)
+    E = np.round(E, precision)
+
+    exx = E[0, 0]
+    eyy = E[1, 1]
+    ezz = E[2, 2]
+    gyz = 2.0 * E[1, 2]
+    gxz = 2.0 * E[0, 2]
+    gxy = 2.0 * E[0, 1]
+
+    vals = [exx, eyy, ezz, gyz, gxz, gxy]
+    return " ".join(f"{x:.{precision}g}" for x in vals)
 
 
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
@@ -64,16 +92,51 @@ def main(argv=None, prog: str | None = None) -> int:
     parser = build_parser(prog=prog)
     args = parser.parse_args(argv)
 
-    try:
-        convert_F_to_strain_stream(
-            input_source=args.input,
-            measure=args.measure,
-            out_kind=args.out_kind,
-            precision=args.precision,
-            output_target=args.output,
-        )
-    except Exception as exc:
-        parser.exit(status=1, message=f"Error: {exc}\n")
+    """
+    Read F, compute strain E via chosen measure, and write E.
+
+    - input_source: path or '-' for stdin
+    - measure: 'engineering' | 'green-lagrange' | 'hencky'
+    - out_kind: 'full' -> 3x3 text, 'voigt' -> Voigt 6
+    - precision: decimals
+    - output_target: path or '-' for stdout
+    """
+    # read
+    if args.input == "-":
+        text = sys.stdin.read()
+    else:
+        text = Path(args.input).read_text(encoding="utf-8")
+
+    # parse F
+    F = parse_3x3(text)
+
+    # compute strain
+    E = strain_from_F(F, measure=args.measure)
+
+    # symmetry check
+    ensure_symmetric(E)
+
+    # format
+    if args.out_kind == "full":
+        out = format_3x3(E, precision=args.precision)
+    else:
+        out = _format_strain_voigt(E, args.precision)
+
+    if not out.endswith("\n"):
+        out += "\n"
+
+    # write
+    if args.output == "-":
+        sys.stdout.write(out)
+    else:
+        Path(args.output).write_text(out, encoding="utf-8")
+
+#    with ExitStack() as stack:
+#        if dst == "-":
+#            fh = sys.stdout
+#        else:
+#            fh = stack.enter_context(Path(dst).open("w"))
+#        write_lammps_data(fh, atoms, atom_style=atom_style, units=units, force_skew=force_skew)
 
     return 0
 
