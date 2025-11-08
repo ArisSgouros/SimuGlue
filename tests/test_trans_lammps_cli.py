@@ -43,7 +43,7 @@ def test_transf_lammps_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     args += [
-        str(dst_lammps),
+        "-i", str(dst_lammps),
         "--F", str(cfg["F"]),
         "--output", str(out_path),
     ]
