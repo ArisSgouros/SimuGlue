@@ -2,6 +2,26 @@ from __future__ import annotations
 from typing import Iterable, Union, List
 import numpy as np
 
+
+def parse_voigt6(s: str) -> np.ndarray:
+    """
+    Parse Voigt: exx eyy ezz gyz gxz gxy -> symmetric 3x3 strain tensor.
+
+    Convention: no factor 2 on shear in input; we divide by 2 internally.
+    """
+    vals = [float(x) for x in s.replace(";", " ").split()]
+    if len(vals) != 6:
+        raise ValueError("Voigt strain needs 6 numbers: exx eyy ezz gyz gxz gxy.")
+    exx, eyy, ezz, gyz, gxz, gxy = vals
+    return np.array(
+        [
+            [exx,       gxy / 2.0, gxz / 2.0],
+            [gxy / 2.0, eyy,       gyz / 2.0],
+            [gxz / 2.0, gyz / 2.0, ezz],
+        ],
+        float,
+    )
+
 # 1-based Voigt: 1=xx,2=yy,3=zz,4=yz,5=xz,6=xy
 _NAME_TO_VOIGT1 = {"xx":1, "yy":2, "zz":3, "yz":4, "xz":5, "xy":6}
 _VOIGT1_TO_NAME = {v:k for k,v in _NAME_TO_VOIGT1.items()}

@@ -1,8 +1,50 @@
 from __future__ import annotations
 import argparse
 
-from simuglue.io._defgradconv import convert_strain_to_F_stream
+from simuglue.mechanics.kinematics import defgrad_from_strain
+from simuglue.io.matrix_3x3 import parse_3x3, ensure_symmetric, format_3x3, ensure_symmetric
+from simuglue.mechanics.voigt import parse_voigt6
 
+from pathlib import Path
+from typing import Literal
+import sys
+import numpy as np
+
+StrainKind = Literal["auto", "full", "voigt"]
+
+def parse_strain(text: str, kind: StrainKind = "auto") -> np.ndarray:
+    """
+    Parse a 3x3 strain tensor E from plain text.
+
+    kind:
+      - 'full'  : 3x3 (9 numbers, ';' optional between rows), must be symmetric
+      - 'voigt' : exx eyy ezz gyz gxz gxy
+      - 'auto'  : 9 -> full, 6 -> voigt, else error
+    """
+    s = text.strip()
+    if not s:
+        raise ValueError("Empty strain input.")
+
+    if kind == "full":
+        strain = parse_3x3(s)
+        ensure_symmetric(strain)
+        return strain
+
+    if kind == "voigt":
+        return parse_voigt6(s)
+
+    # auto-detect
+    vals = s.replace(";", " ").split()
+    if len(vals) == 9:
+        strain = parse_3x3(s)
+        ensure_symmetric(strain)
+        return strain
+    if len(vals) == 6:
+        return parse_voigt6(s)
+
+    raise ValueError(
+        "Could not infer strain format in auto mode: expected 9 (3x3) or 6 (Voigt) numbers."
+    )
 
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -11,7 +53,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
             "Convert a symmetric strain tensor E to a deformation gradient F.\n\n"
             "Input (from -i/--input or stdin) is plain text:\n"
             "  --kind full : 3x3 as 'exx exy exz; eyx eyy eyz; ezx ezy ezz'\n"
-            "  --kind voigt: 'exx eyy ezz gyz gxz gxy' (no 2x on shear)\n"
+            "  --kind voigt: 'exx eyy ezz gyz gxz gxy' (gij = 2eij, i!=j)\n"
             "  --kind auto : guess 9 -> full, 6 -> voigt\n\n"
             "Measures:\n"
             "  engineering     : F = I + E (small-strain, rotation-free approximation)\n"
@@ -64,19 +106,28 @@ def main(argv=None, prog: str | None = None) -> int:
     parser = build_parser(prog=prog)
     args = parser.parse_args(argv)
 
-    try:
-        convert_strain_to_F_stream(
-            input_source=args.input,
-            input_kind=args.kind,
-            measure=args.measure,
-            precision=args.precision,
-            output_target=args.output,
-        )
-    except Exception as exc:
-        parser.exit(status=1, message=f"Error: {exc}\n")
+    # read
+    if args.input == "-":
+        text = sys.stdin.read()
+    else:
+        text = Path(args.input).read_text(encoding="utf-8")
 
-    return 0
+    # parse strain
+    E = parse_strain(text, kind=args.kind)
 
+    # compute F using the kinematics core (which also symmetrizes defensively)
+    F = defgrad_from_strain(E, measure=args.measure)
+
+    # format
+    out = format_3x3(F, precision=args.precision)
+    if not out.endswith("\n"):
+        out += "\n"
+
+    # write
+    if args.output == "-":
+        sys.stdout.write(out)
+    else:
+        Path(args.output).write_text(out, encoding="utf-8")
 
 if __name__ == "__main__":
     raise SystemExit(main())
