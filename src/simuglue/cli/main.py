@@ -27,6 +27,7 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
     },
     "mech": {
         "strain2defgrad": ("simuglue.cli.strain2defgrad_cli", "Transform strain to deformation gradient", "sgl mech strain2defgrad"),
+        "defgrad": ("simuglue.cli.mech_defgrad", "Transform strain to deformation gradient", "sgl mech defgrad"),
     },
 }
 
