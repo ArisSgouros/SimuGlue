@@ -61,13 +61,6 @@ class LAMMPSBackend(Backend):
         if not is_done(case_dir) and not dst.exists():
             dst.write_text(tpl, encoding="utf-8")
 
-        # Copy include files if listed
-        for p in cfg.lammps.get("include_files", []):
-            src = Path(p)
-            dst = case_dir / src.name
-            if src.resolve() != dst.resolve():
-                shutil.copy(src, dst)
-
     def run_case(self, case_dir: Path, atoms, cfg: Config) -> RelaxResult:
         if is_done(case_dir):
             return

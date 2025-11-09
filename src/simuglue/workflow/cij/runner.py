@@ -17,6 +17,8 @@ class Config:
     workdir: Path
     data_file: Path
     file_type: str
+    common_files: List[str]
+    common_path: Path
     components: List[int]
     strains: List[float]
     relax: Dict
@@ -31,6 +33,8 @@ def _load_config(path: str) -> Config:
         workdir=Path(cfg.get("workdir", '.')),
         data_file=Path(cfg["data_file"]),
         file_type=cfg["file_type"],
+        common_files=list(cfg.get("common_files","")),
+        common_path=Path(cfg.get("common_path", '.')),
         components=list(cfg["components"]),
         strains=list(cfg["strains"]),
         relax=cfg.get("relax", {}),
@@ -107,14 +111,20 @@ def run_cij(config_path: str):
     if any(abs(e) < 1e-12 for e in strains):
         raise ValueError("Config 'strains' contains near-zero values.")
 
+    # Create workdir and copy common include files
+    # Copy include files if listed
     cfg.workdir.mkdir(parents=True, exist_ok=True)
+    for p in cfg.common_files:
+        src = Path(p)
+        dst = cfg.workdir / cfg.common_path / src.name
+        if src.resolve() != dst.resolve():
+            shutil.copy(src, dst)
 
+    # ferch backend
     backend = get_backend(cfg.backend)
 
     # read reference configuration
     atoms_ref = backend.read_data(path=cfg.data_file, cfg=cfg)
-
-    rows = []
 
     # Calculate reference case
     eid = "run.ref"
@@ -129,6 +139,7 @@ def run_cij(config_path: str):
 
     # For each requested Voigt component, deform the system and estimate the strain energy
     total = len(strains)*len(components)
+    rows = []
     k = 0
     for eps in strains:
         for i in components:
