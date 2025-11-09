@@ -8,7 +8,7 @@ Public API:
 """
 
 from .config import Config, load_config
-from .run import run_cij
+from .workflow import run_cij
 from .post import post_cij
 
 # auto-register workflow-local backends

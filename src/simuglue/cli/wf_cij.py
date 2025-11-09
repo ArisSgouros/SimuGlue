@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 from typing import Sequence
 
-from simuglue.workflow.cij.run import (
+from simuglue.workflow.cij.workflow import (
     init_cij,
     run_cij,
     parse_cij,
