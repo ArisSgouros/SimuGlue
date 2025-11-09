@@ -1,0 +1,29 @@
+workdir: o.res_2d
+
+backend: lammps
+
+data_file: in.data
+file_type: lammps
+
+# which stiffness components to build (Voigt indices)
+# 2D example (6 components): xx,yy,xy → 1,2,6
+components: [1, 2, 6]
+
+# strain magnitudes used for finite differences
+strains: [0.00001, -0.00001]
+
+# LAMMPS-specific settings
+lammps:
+  exe: lmp_mpi
+  units: metal
+  atom_style: atomic
+  input_template: in.template
+
+common_files: [_potential.mod, _Si.sw]
+common_path: '.'
+
+# output
+output:
+  cij_json: cij.json
+  cij_unit: GPa
+  save_traj: true
