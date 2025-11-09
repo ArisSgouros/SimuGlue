@@ -117,7 +117,7 @@ def run_cij(config_path: str):
     rows = []
 
     # Calculate reference case
-    eid = "ref"
+    eid = "run.ref"
     case_dir = cfg.workdir / eid
     case_dir.mkdir(parents=True, exist_ok=True)
 
@@ -135,7 +135,7 @@ def run_cij(config_path: str):
             k += 1
             print(f"[cij] ({k}/{total}) i={i} eps={eps:g}")
 
-            eid = f"c{i}_eps{eps:g}"
+            eid = f"run.c{i}_eps{eps:g}"
             case_dir = cfg.workdir / eid
             case_dir.mkdir(parents=True, exist_ok=True)
 
