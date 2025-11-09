@@ -28,7 +28,7 @@ def _load_config(path: str) -> Config:
     cfg = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     return Config(
         backend=cfg["backend"],
-        workdir=Path(cfg["workdir"]),
+        workdir=Path(cfg.get("workdir", '.')),
         data_file=Path(cfg["data_file"]),
         file_type=cfg["file_type"],
         components=list(cfg["components"]),
@@ -205,6 +205,7 @@ def run_cij(config_path: str):
         "C_sem":  {f"{i}-{j}": CC_sem[(i,j)]  for i in components for j in components},
         "units": {"stress":"GPa","strain":"-"},
     }
-    (cfg.workdir / "cij.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
+    cij_json = cfg.output.get('cij_json','cij.json')
+    (cfg.workdir / cij_json).write_text(json.dumps(out, indent=2), encoding="utf-8")
 
     return out
