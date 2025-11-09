@@ -74,7 +74,7 @@ def _dump_result_json(case_dir: Path, *, kind: str, i: int | None,
         "eps": eps,
         "energy": float(res.energy),
         "stress6": [float(x) for x in s6],
-        "units": {"stress": "GPa", "energy": "eV", "strain": "-"},
+        "units": {"stress": "eV/\u00c5^3", "energy": "eV", "strain": "-"},
     }
     (case_dir / "result.json").write_text(
         json.dumps(payload, indent=2), encoding="utf-8"
