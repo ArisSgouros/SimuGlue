@@ -8,9 +8,9 @@ from typing import Iterable, List, Union, Dict
 import numpy as np
 import yaml
 from ase.io import read, write
-from simuglue.io.util_ase_lammps import read_lammps # REFACTOR: RM
 from simuglue.transform.linear import apply_transform
 from simuglue.mechanics.voigt import normalize_components_to_voigt1, stress_tensor_to_voigt6
+#from ase.io.lammpsdata import read_lammps_data, write_lammps_data
 
 # ---------- config ----------
 @dataclass(slots=True)
@@ -49,6 +49,7 @@ class RelaxResult:
         self.stress = stress_tensor_3x3  # in GPa (your canonical choice)
 
 class Backend:
+    def read_data(self, path: Path, cfg: Config): ...
     def prepare_case(self, case_dir: Path, atoms, cfg: Config): ...
     def run_case(self, case_dir: Path, atoms, cfg: Config): ...
     def parse_case(self, case_dir: Path, atoms, cfg: Config) -> RelaxResult: ...
@@ -108,12 +109,11 @@ def run_cij(config_path: str):
         raise ValueError("Config 'strains' contains near-zero values.")
 
     cfg.workdir.mkdir(parents=True, exist_ok=True)
-    if cfg.file_type == "lammps": # REFACTOR: RM FUNCTIONALITY READ_LAMMPS; only xyz
-        atoms_ref = read_lammps(cfg.data_file)
-    else: # "xyz"
-        atoms_ref = read(cfg.data_file)
 
     backend = get_backend(cfg.backend)
+
+    # read reference configuration
+    atoms_ref = backend.read_data(path=cfg.data_file, cfg=cfg)
 
     rows = []
 

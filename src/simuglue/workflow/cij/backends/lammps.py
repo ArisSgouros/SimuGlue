@@ -3,12 +3,19 @@ from pathlib import Path
 import shutil, subprocess, json, numpy as np
 from ase.calculators.lammps.unitconvert import convert
 from ase import units
-from ase.io import write
+from ase.io import write # REFACTOR: rm
+from ase.io.lammpsdata import read_lammps_data, write_lammps_data
 from ..runner import register_backend, Backend, RelaxResult, is_done, mark_done
 
 # ---------- LAMMPS backend (skeleton) ----------
 @register_backend("lammps")
 class LAMMPSBackend(Backend):
+
+    def read_data(self, path: Path, cfg: Config):
+        units = cfg.lammps.get("units", "metal")
+        atom_style = cfg.lammps.get("atom_style", "atomic")
+        atoms = read_lammps_data(cfg.data_file, units=units, atom_style=atom_style)
+        return atoms
 
     def prepare_case(self, case_dir: Path, atoms, cfg: Config):
 
