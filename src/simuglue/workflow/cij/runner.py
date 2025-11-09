@@ -7,10 +7,8 @@ from pathlib import Path
 from typing import Iterable, List, Union, Dict
 import numpy as np
 import yaml
-from ase.io import read, write
 from simuglue.transform.linear import apply_transform
 from simuglue.mechanics.voigt import normalize_components_to_voigt1, stress_tensor_to_voigt6
-#from ase.io.lammpsdata import read_lammps_data, write_lammps_data
 
 # ---------- config ----------
 @dataclass(slots=True)
@@ -50,6 +48,7 @@ class RelaxResult:
 
 class Backend:
     def read_data(self, path: Path, cfg: Config): ...
+    def write_data(self, path: Path, atoms, cfg: Config): ...
     def prepare_case(self, case_dir: Path, atoms, cfg: Config): ...
     def run_case(self, case_dir: Path, atoms, cfg: Config): ...
     def parse_case(self, case_dir: Path, atoms, cfg: Config) -> RelaxResult: ...
@@ -146,7 +145,7 @@ def run_cij(config_path: str):
 
             # export deformed sample (optional)
             if cfg.output.get("save_traj", True):
-                write(case_dir / "deformed.xyz", atoms_def)
+                backend.write_data(case_dir / "deformed.xyz", atoms_def, cfg)
 
             ## backend prep & run
             backend.prepare_case(case_dir, atoms_def, cfg)

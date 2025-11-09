@@ -3,7 +3,6 @@ from pathlib import Path
 import shutil, subprocess, json, numpy as np
 from ase.calculators.lammps.unitconvert import convert
 from ase import units
-from ase.io import write # REFACTOR: rm
 from ase.io.lammpsdata import read_lammps_data, write_lammps_data
 from ..runner import register_backend, Backend, RelaxResult, is_done, mark_done
 
@@ -17,6 +16,17 @@ class LAMMPSBackend(Backend):
         atoms = read_lammps_data(cfg.data_file, units=units, atom_style=atom_style)
         return atoms
 
+    def write_data(self, path: Path, atoms, cfg: Config):
+        units = cfg.lammps.get("units", "metal")
+        atom_style = cfg.lammps.get("atom_style", "atomic")
+        write_lammps_data(
+            path,
+            atoms,
+            atom_style=atom_style,
+            units=units,
+            force_skew=True,
+        )
+
     def prepare_case(self, case_dir: Path, atoms, cfg: Config):
 
         # If already done, do nothing.
@@ -26,7 +36,14 @@ class LAMMPSBackend(Backend):
         # Minimal: write a data file with ASE; let template refer to it.
         units = cfg.lammps.get("units", "metal")
         atom_style = cfg.lammps.get("atom_style", "atomic")
-        write(case_dir / "str.data", atoms, format="lammps-data", units=units, atom_style=atom_style, force_skew="False")
+
+        write_lammps_data(
+            case_dir / "str.data",
+            atoms,
+            atom_style=atom_style,
+            units=units,
+            force_skew=True,
+        )
  
         # Render the user template (keep it simple: {datafile} placeholder)
         tpl = Path(cfg.lammps["input_template"]).read_text()
