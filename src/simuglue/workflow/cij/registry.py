@@ -49,3 +49,7 @@ def is_done(case_dir: Path) -> bool:
 def mark_done(case_dir: Path) -> None:
     (case_dir / ".done").write_text("ok\n", encoding="utf-8")
 
+
+def make_case_id(i: int, eps: float) -> str:
+    """Shared between init/run/parse and post."""
+    return f"run.c{i}_eps{eps:g}"

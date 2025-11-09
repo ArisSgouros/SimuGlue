@@ -12,7 +12,7 @@ from simuglue.mechanics.voigt import normalize_components_to_voigt1
 from ase import units
 
 from .config import Config, load_config
-from .run import make_case_id
+from .registry import make_case_id
 
 
 def _vpos(j_1based: int) -> int:

@@ -38,7 +38,7 @@ class QEBackend(Backend):
             return
         self.write_data(case_dir / 'qe.in', atoms, cfg)
 
-    def run_case(self, case_dir: Path, atoms, cfg: Config) -> None:
+    def run_case(self, case_dir: Path, cfg: Config) -> None:
         if is_done(case_dir):
             return
         exe = cfg.qe.get("exe", "pw.x")

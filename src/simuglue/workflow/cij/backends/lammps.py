@@ -68,7 +68,7 @@ class LAMMPSBackend(Backend):
         if not dst.exists():
             dst.write_text(tpl, encoding="utf-8")
 
-    def run_case(self, case_dir: Path, atoms, cfg: Config) -> None:
+    def run_case(self, case_dir: Path, cfg: Config) -> None:
         if is_done(case_dir):
             return
         exe = cfg.lammps.get("exe", "lmp")
