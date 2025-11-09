@@ -96,9 +96,8 @@ class LAMMPSBackend(Backend):
 
         lammps_units = cfg.lammps.get("units", "metal")
 
-        # pressures: LAMMPS p (compression +) = -σ, convert to GPa
+        # pressures: LAMMPS p (compression +) = -σ, convert to ASE [eV/Angstrom^3]
         p_evA3 = convert(1.0, "pressure", lammps_units, "ASE")
-        p_GPa = p_evA3 / units.GPa
 
         S = -np.array(
             [
@@ -107,7 +106,7 @@ class LAMMPSBackend(Backend):
                 [data["pxz"], data["pyz"], data["pzz"]],
             ],
             dtype=float,
-        ) * p_GPa
+        ) * p_evA3
 
         # energy
         e_eV = convert(1.0, "energy", lammps_units, "ASE")

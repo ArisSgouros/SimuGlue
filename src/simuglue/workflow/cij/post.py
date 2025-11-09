@@ -9,6 +9,7 @@ from typing import Dict, Tuple
 import numpy as np
 
 from simuglue.mechanics.voigt import normalize_components_to_voigt1
+from ase import units
 
 from .config import Config, load_config
 from .run import make_case_id
@@ -108,15 +109,34 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
                         file=sys.stderr,
                     )
 
+    from ase import units
+
+    units_cij = cfg.output.get("units_cij", "GPa")
+
+    converters = {
+        "gpa":  1.0 / units.GPa,
+        "pa":   1.0 / units.Pascal,
+        "kbar": 1.0 / (1000.0 * units.bar),
+    }
+
+    key = units_cij.lower()
+    try:
+        conv = converters[key]
+    except KeyError:
+        raise ValueError(
+            f"Unsupported units_cij={units_cij!r}; supported: GPa, Pa, kbar."
+        )
+
     out = {
-        "components": components,          # normalized 1-based
+        "components": components,
         "strains": strains,
-        "C_mean": {f"{i}-{j}": CC_mean[i, j] for i in components for j in components},
-        "C_sem":  {f"{i}-{j}": CC_sem[i, j]  for i in components for j in components},
-        "units": {"stress": "GPa", "strain": "-"},
+        "C_mean": {f"{i}-{j}": CC_mean[i, j] * conv for i in components for j in components},
+        "C_sem":  {f"{i}-{j}": CC_sem[i, j]  * conv for i in components for j in components},
+        "units": {"stress": units_cij, "strain": "-"},
         "meta": {
             "workdir": str(cfg.workdir),
             "backend": cfg.backend,
+            "base_units": "eV/Å^3",
         },
     }
 
