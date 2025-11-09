@@ -88,7 +88,7 @@ class LAMMPSBackend(Backend):
             )
         mark_done(case_dir)
 
-    def parse_case(self, case_dir: Path, atoms, cfg: Config) -> RelaxResult:
+    def parse_case(self, case_dir: Path, cfg: Config) -> RelaxResult:
         if not is_done(case_dir):
             raise ValueError("Attempted to parse case that is not marked done.")
 
@@ -112,5 +112,5 @@ class LAMMPSBackend(Backend):
         e_eV = convert(1.0, "energy", lammps_units, "ASE")
         pe = float(data["pe"] * e_eV)
 
-        return RelaxResult(atoms=atoms, energy=pe, stress=S)
+        return RelaxResult(energy=pe, stress=S)
 

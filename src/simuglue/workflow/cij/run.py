@@ -81,6 +81,14 @@ def _dump_result_json(case_dir: Path, *, kind: str, i: int | None,
     )
 
 
+def _iter_cases(cfg: Config, components: list[int], strains: list[float]):
+    for eps in strains:
+        for i in components:
+            cid = make_case_id(i, eps)
+            case_dir = cfg.workdir / cid
+            yield i, eps, cid, case_dir
+
+
 def run_cij(config_path: str) -> None:
     """
     Generate + run all Cij deformation cases.
@@ -104,7 +112,7 @@ def run_cij(config_path: str) -> None:
 
     backend = get_backend(cfg.backend)
 
-    # --- reference case ---
+    # ---- reference case ----
     atoms_ref = backend.read_data(cfg.data_file, cfg)
     ref_dir = cfg.workdir / "run.ref"
     ref_dir.mkdir(parents=True, exist_ok=True)
@@ -112,37 +120,38 @@ def run_cij(config_path: str) -> None:
     if not is_done(ref_dir):
         backend.prepare_case(ref_dir, atoms_ref, cfg)
         backend.run_case(ref_dir, atoms_ref, cfg)
-        res_ref = backend.parse_case(ref_dir, atoms_ref, cfg)
-        _dump_result_json(ref_dir, kind="ref", i=None, eps=None, res=res_ref)
         mark_done(ref_dir)
 
-    # --- deformed cases ---
+    # ---- stage 1: prepare + run deformed cases ----
     total = len(components) * len(strains)
-    k = 0
+    for k, (i, eps, cid, case_dir) in enumerate(_iter_cases(cfg, components, strains), start=1):
+        case_dir.mkdir(parents=True, exist_ok=True)
+        print(f"[cij/run] ({k}/{total}) i={i} eps={eps:g} -> {cid}")
 
-    for eps in strains:
-        for i in components:
-            k += 1
-            cid = make_case_id(i, eps)
-            case_dir = cfg.workdir / cid
-            case_dir.mkdir(parents=True, exist_ok=True)
+        if is_done(case_dir):
+            print(f"[cij/run] skip {cid} (already done)")
+            continue
 
-            print(f"[cij/run] ({k}/{total}) i={i} eps={eps:g} -> {cid}")
+        F = F_from_component(i, eps)
+        atoms_def = apply_transform(atoms_ref, F)
 
-            if is_done(case_dir):
-                print(f"[cij/run] skip {cid} (already done)")
-                continue
+        if cfg.output.get("save_traj", True):
+            backend.write_data(case_dir / "deformed.xyz", atoms_def, cfg)
 
-            F = F_from_component(i, eps)
-            atoms_def = apply_transform(atoms_ref, F)
+        backend.prepare_case(case_dir, atoms_def, cfg)
+        backend.run_case(case_dir, atoms_def, cfg)
+        mark_done(case_dir)
 
-            if cfg.output.get("save_traj", True):
-                # backend decides real format; xyz is just a conventional name here
-                backend.write_data(case_dir / "deformed.xyz", atoms_def, cfg)
+    # ---- stage 2: parse finished cases → result.json ----
+    # (Can be re-run safely; parse_case should be idempotent.)
+    # Reference:
+    res_ref = backend.parse_case(ref_dir, cfg)
+    _dump_result_json(ref_dir, kind="ref", i=None, eps=None, res=res_ref)
 
-            backend.prepare_case(case_dir, atoms_def, cfg)
-            backend.run_case(case_dir, atoms_def, cfg)
-            res = backend.parse_case(case_dir, atoms_def, cfg)
-            _dump_result_json(case_dir, kind="sample", i=i, eps=eps, res=res)
-            mark_done(case_dir)
-
+    for i, eps, cid, case_dir in _iter_cases(cfg, components, strains):
+        if not is_done(case_dir):
+            # job not finished yet (e.g. still running on cluster) → skip
+            print(f"[cij/run] skip parse {cid} (not done)", file=sys.stderr)
+            continue
+        res = backend.parse_case(case_dir, cfg)
+        _dump_result_json(case_dir, kind="sample", i=i, eps=eps, res=res)

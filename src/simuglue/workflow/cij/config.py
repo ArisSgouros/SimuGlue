@@ -39,7 +39,7 @@ def load_config(path: str | Path) -> Config:
         backend=str(cfg["backend"]),
         workdir=Path(cfg.get("workdir", ".")),
         data_file=Path(cfg["data_file"]),
-        file_type=str(cfg["file_type"]),
+        file_type=str(cfg.get("file_type","")),
         common_files=common_files,
         common_path=Path(cfg.get("common_path", ".")),
         components=[int(i) for i in cfg["components"]],

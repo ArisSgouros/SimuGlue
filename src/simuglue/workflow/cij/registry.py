@@ -10,7 +10,6 @@ import numpy as np
 
 @dataclass(slots=True)
 class RelaxResult:
-    atoms: Any
     energy: float
     stress: np.ndarray  # 3x3 tensor in GPa (canonical)
 
