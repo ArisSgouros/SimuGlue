@@ -65,13 +65,11 @@ def stress_tensor_to_voigt6(S: np.ndarray) -> np.ndarray:
     S = 0.5 * (S + S.T)
     return np.array([S[0,0], S[1,1], S[2,2], S[1,2], S[0,2], S[0,1]], float)
 
-def voigt6_to_stress_tensor(v: Sequence[float]) -> np.ndarray:
-    if len(v) != 6:
-        raise ValueError("Voigt-6 input must have length 6: [xx, yy, zz, yz, xz, xy].")
-    xx, yy, zz, yz, xz, xy = map(float, v)
-    S = np.array([
-        [xx, xy, xz],
-        [xy, yy, yz],
-        [xz, yz, zz],
-    ], dtype=float)
-    return S
+def voigt6_to_stress_tensor(v: np.ndarray) -> np.ndarray:
+    v = np.asarray(v, float)
+    if v.shape != (6,):
+        raise ValueError(f"Expected shape (6,), got {v.shape}")
+    return v[np.array([[0, 5, 4],
+                       [5, 1, 3],
+                       [4, 3, 2]])]
+
