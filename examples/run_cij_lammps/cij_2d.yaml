@@ -25,5 +25,5 @@ common_path: '.'
 # output
 output:
   cij_json: cij.json
-  cij_unit: GPa
+  units_cij: gpa
   save_traj: true

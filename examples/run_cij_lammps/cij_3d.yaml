@@ -20,8 +20,10 @@ lammps:
   input_template: in.template
 
 common_files: [_potential.mod, _Si.sw]
+common_path: '.'
 
 # output
 output:
   cij_json: cij.json
+  units_cij: gpa
   save_traj: true
