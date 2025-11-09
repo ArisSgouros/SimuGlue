@@ -1,0 +1,40 @@
+ &control
+    calculation = 'relax'
+    restart_mode='from_scratch',
+    wf_collect=.true.
+    prefix='MoS2_0.000',
+    tstress = .true.
+    tprnfor = .true.
+    etot_conv_thr=1d-6, 
+    forc_conv_thr=1.d-5
+    pseudo_dir = '/home/asgouros/Programs/qe_psextra//',
+    outdir='/home/asgouros/temp//MoS2_biaxial_/'
+ /
+ &system
+    ibrav=  0, celldm(1) =6.0336772, nat=  3, ntyp= 2,
+    ecutwfc =80.0, ecutrho=320.0
+    occupations='fixed'
+ /
+ &electrons
+    diagonalization='david'
+    electron_maxstep = 100
+    mixing_mode = 'plain'
+    mixing_beta = 0.7
+    conv_thr = 1d-10
+ /
+ &ions
+ /
+ATOMIC_SPECIES
+ S  32.07   S.pz-hgh.UPF
+ Mo  95.94   Mo.pz-hgh.UPF
+CELL_PARAMETERS {alat}
+   .982807261000    -.000000591000   0.000000000
+   .491403116000    .851130774000   0.000000000
+   0.000000000   0.000000000   3.987305081
+ATOMIC_POSITIONS {angstrom}
+Mo       -.0009452819000   .0047982866000   0.0000000000
+S       1.5680496703000   .9106492955000   1.5624770775
+S       1.5680496703000   .9106492955000   -1.5624770775
+
+K_POINTS automatic
+24 24 1 0 0 0

@@ -1,0 +1,40 @@
+ &control
+    calculation = 'scf'
+    restart_mode='from_scratch',
+    wf_collect=.true.
+    prefix='MoS2_0.000',
+    tstress = .true.
+    tprnfor = .true.
+    etot_conv_thr=1.d-3, 
+    forc_conv_thr=1.d-3
+    pseudo_dir = '/home/aps/projects/PhononQE/qe_psextra/',
+    outdir='/home/aps/scratch/qe/'
+ /
+ &system
+    ibrav=  0, nat=  3, ntyp= 2,
+    ecutwfc =70.0, ecutrho=300.0
+    occupations='fixed'
+ /
+ &electrons
+    diagonalization='david'
+    electron_maxstep = 100
+    mixing_mode = 'plain'
+    mixing_beta = 0.7
+    conv_thr = 1d-5
+ /
+ &ions
+ /
+ATOMIC_SPECIES
+ S  32.07   S.pz-hgh.UPF
+ Mo  95.94   Mo.pz-hgh.UPF
+
+K_POINTS automatic
+1 1 1 0 0 0
+CELL_PARAMETERS {angstrom}
+3.1379900276794510 -0.0000019058646611 0.0000000000000000
+1.5689933711006725 2.7447378412009145 0.0000000000000000
+0.0000000000000000 0.0000000000000000 12.7310044176541819
+ATOMIC_POSITIONS {angstrom}
+Mo -0.0009452819000000 0.0048462694660000 0.0000000000000000 
+S 1.5680496703000000 0.9197557884549999 1.5624770775000001 
+S 1.5680496703000000 0.9197557884549999 -1.5624770775000001 
