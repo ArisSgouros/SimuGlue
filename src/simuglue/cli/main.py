@@ -43,7 +43,7 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
     ],
     "wf": [
         {
-            "cij": ("simuglue.cli.wf_cij", "Elastic constants (Cij) workflow", "sgl wf cij"),
+            "cij": ("simuglue.cli.wf_cij", "Elastic constants (Cij) workflow", "sgl wf cij init|run|parse|post|all"),
         },
         'workflows'
     ]
