@@ -1,4 +1,4 @@
-workdir: .
+workdir: o.res_2d
 
 backend: lammps
 
@@ -6,9 +6,8 @@ data_file: in.data
 file_type: lammps
 
 # which stiffness components to build (Voigt indices)
-# 3D example (6 components): xx,yy,zz,yz,xz,xy → 0,1,2,3,4,5
-components: [1, 'yy', 3, 'yz', 5, 6]    # e.g., only C11,C22,C12,C66 (orthorhombic/2D-like)
-#ZZcomponents: [1, 2]    # e.g., only C11,C22,C12,C66 (orthorhombic/2D-like)
+# 2D example (6 components): xx,yy,xy → 1,2,6
+components: [1, 2, 6]
 
 # strain magnitudes used for finite differences
 strains: [0.00001, -0.00001]
@@ -19,10 +18,11 @@ lammps:
   units: metal
   atom_style: atomic
   input_template: in.template
-  include_files: [potential.mod, Si.sw]
+
+common_files: [_potential.mod, _Si.sw]
+common_path: '.'
 
 # output
 output:
-  csv: results.csv
-  cij_json: C_partial.json
+  cij_json: cij.json
   save_traj: true

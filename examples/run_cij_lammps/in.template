@@ -11,7 +11,7 @@ variable dmax equal 1.0e-2
 box tilt large
 read_data ${datafile}
 mass 1 1.0e-20
-include potential.mod
+include ../_potential.mod
 
 # consistent numeric format
 thermo_style custom step pxx pyy pzz pxy pxz pyz pe

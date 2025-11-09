@@ -3,7 +3,7 @@
 
 # Choose potential
 pair_style     sw
-pair_coeff * * Si.sw Si
+pair_coeff * * ../_Si.sw Si
 
 # Setup neighbor style
 neighbor 1.0 nsq
