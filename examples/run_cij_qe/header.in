@@ -7,8 +7,8 @@
     tprnfor = .true.
     etot_conv_thr=1.d-3, 
     forc_conv_thr=1.d-3
-    pseudo_dir = '/home/aps/projects/PhononQE/qe_psextra/',
-    outdir='/home/aps/scratch/qe/'
+    pseudo_dir = '../../PSEUDO/',
+    outdir='../../SCRATCH'
  /
  &system
     ibrav=  0, nat=  3, ntyp= 2,
