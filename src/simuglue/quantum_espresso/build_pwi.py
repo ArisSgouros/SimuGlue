@@ -28,32 +28,18 @@ def _format_atomic_positions(atoms: Atoms) -> str:
 
 
 def build_pwi_from_header(
-    header_path: str | Path,
-    atoms: Atoms
+    header_text: str,
+    atoms: Atoms,
 ) -> str:
     """
-    Read QE header file and append CELL_PARAMETERS and ATOMIC_POSITIONS
-    derived from a single-frame ASE Atoms object. Returns the complete text.
-
-    Parameters
-    ----------
-    header_path : str | Path
-        Path to a QE header (without CELL_PARAMETERS / ATOMIC_POSITIONS).
-    atoms : ase.Atoms
-        Single-frame atoms object.
-
-    Returns
-    -------
-    str
-        Fully assembled Quantum ESPRESSO input text.
+    Assemble QE input by concatenating a provided header (without
+    CELL_PARAMETERS / ATOMIC_POSITIONS) with those sections from atoms.
     """
-    header_text = Path(header_path).read_text(encoding="utf-8").rstrip()
+    header_text = header_text.rstrip()
     parts = [
         header_text,
-        #"",
         _format_cell_parameters(atoms),
-        #"",
         _format_atomic_positions(atoms),
-        #"",
     ]
     return "\n".join(parts)
+

@@ -30,20 +30,22 @@ def main(argv=None, prog: str | None = None) -> int:
     parser = build_parser(prog=prog)
     args = parser.parse_args(argv)
 
-    header = Path(args.header)
+    header_path = Path(args.header)
     xyz_path = Path(args.xyz)
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    if not header.exists():
-        raise FileNotFoundError(f"Header not found: {header}")
+    if not header_path.exists():
+        raise FileNotFoundError(f"Header not found: {header_path}")
     if not xyz_path.exists():
         raise FileNotFoundError(f"XYZ not found: {xyz_path}")
 
+    # Read header text once (passed to builder below)
+    header_text = header_path.read_text(encoding="utf-8")
+
     # Normalize frames argument
-    frames_arg: int | str | None
     if args.frames is None:
-        frames_arg = None
+        frames_arg: int | str | None = None
     else:
         s = str(args.frames).strip().lower()
         frames_arg = "all" if s == "all" else int(s)
@@ -54,9 +56,9 @@ def main(argv=None, prog: str | None = None) -> int:
         outfile = args.output if args.output else xyz_path.stem
         if frames_arg:
             outfile += f"_{i:05d}.in"
-        outpath = outdir / f"{outfile}"
+        outpath = outdir / outfile
 
-        qe_text = build_pwi_from_header(header, atoms)
+        qe_text = build_pwi_from_header(header_text, atoms)
         outpath.write_text(qe_text, encoding="utf-8")
         generated += 1
 
@@ -66,6 +68,7 @@ def main(argv=None, prog: str | None = None) -> int:
     else:
         print(f"Generated {generated} QE inputs in {outdir.resolve()}")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
