@@ -2,9 +2,6 @@ workdir: o.res_3d
 
 backend: lammps
 
-data_file: in.data
-file_type: lammps
-
 # which stiffness components to build (Voigt indices)
 # 3D example (6 components): xx,yy,zz,yz,xz,xy → 1,2,3,4,5,6
 components: [1, 2, 3, 4, 5, 6]
@@ -18,6 +15,7 @@ lammps:
   units: metal
   atom_style: atomic
   input_template: in.template
+  data_file: in.data
 
 common_files: [_potential.mod, _Si.sw]
 common_path: '.'
