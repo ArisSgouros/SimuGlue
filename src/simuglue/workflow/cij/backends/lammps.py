@@ -22,10 +22,11 @@ from ..registry import (
 @register_backend("lammps")
 class LAMMPSBackend(Backend):
 
-    def read_data(self, path: Path, cfg: Config):
+    def read_data(self, cfg: Config):
         units_ = cfg.lammps.get("units", "metal")
         atom_style = cfg.lammps.get("atom_style", "atomic")
-        return read_lammps_data(path, units=units_, atom_style=atom_style)
+        data_file = cfg.lammps.get("data_file", None)
+        return read_lammps_data(data_file, units=units_, atom_style=atom_style)
 
     def write_data(self, path: Path, atoms, cfg: Config) -> None:
         units_ = cfg.lammps.get("units", "metal")

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import numpy as np
 from ase import units
@@ -18,20 +18,34 @@ from ..registry import (
     mark_done,
 )
 
-from simuglue.quantum_espresso.build_pwi import build_pwi_from_header
+from simuglue.quantum_espresso.pwi_update import update_qe_input
 from simuglue.mechanics.voigt import voigt6_to_stress_tensor
 
 # ---------- QE backend (skeleton) ----------
 @register_backend("qe")
 class QEBackend(Backend):
 
-    def read_data(self, path: Path, cfg: Config):
-        return read(path, format='espresso-in', index=0)
+    def read_data(self, cfg: Config):
+        qe_input = cfg.qe.get("input", None)
+        return read(qe_input, format='espresso-in', index=0)
 
     def write_data(self, path: Path, atoms, cfg: Config) -> None:
-        header = Path(cfg.qe.get("header_in", "header.in"))
-        header_text = header.read_text(encoding="utf-8")
-        qe_text = build_pwi_from_header(header_text, atoms)
+        qe_input = Path(cfg.qe.get("input", None))
+        header_text = qe_input.read_text(encoding="utf-8")
+        prefix = cfg.qe.get("prefix", None)
+        outdir = cfg.qe.get("outdir", None)
+        if outdir and prefix:
+            outdir = str(PurePosixPath(outdir) / prefix)
+
+        qe_text = update_qe_input(
+            header_text,
+            cell=atoms.get_cell().array,
+            positions=atoms.get_positions(),
+            symbols=atoms.get_chemical_symbols(),
+            prefix=prefix,
+            outdir=outdir,
+        )
+
         path.write_text(qe_text, encoding="utf-8")
 
     def prepare_case(self, case_dir: Path, atoms, cfg: Config) -> None:

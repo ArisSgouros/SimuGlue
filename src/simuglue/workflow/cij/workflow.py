@@ -129,7 +129,7 @@ def init_cij(config_path: str) -> None:
     backend = get_backend(cfg.backend)
 
     # reference
-    atoms_ref = backend.read_data(cfg.data_file, cfg)
+    atoms_ref = backend.read_data(cfg)
     ref_dir = cfg.workdir / "run.ref"
     ref_dir.mkdir(parents=True, exist_ok=True)
 
