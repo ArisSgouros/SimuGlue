@@ -74,6 +74,11 @@ def _find_card_block(
 
     return start, j
 
+def _strip_trailing_blank_lines(lines: list[str]) -> list[str]:
+    while lines and lines[-1].strip() == "":
+        lines.pop()
+    return lines
+
 def update_qe_input(
     text: str,
     cell: Sequence[Sequence[float]] | None = None,
@@ -134,9 +139,8 @@ def update_qe_input(
         if start is not None:
             lines = lines[:start] + cell_lines + lines[end:]
         else:
-            # Append if missing
-            if lines and lines[-1].strip() != "":
-                lines.append("")
+            # Append if missing, but do NOT add an extra blank line
+            lines = _strip_trailing_blank_lines(lines)
             lines.extend(cell_lines)
 
     # ATOMIC_POSITIONS
@@ -153,9 +157,7 @@ def update_qe_input(
         if start is not None:
             lines = lines[:start] + pos_lines + lines[end:]
         else:
-            # Append if missing
-            if lines and lines[-1].strip() != "":
-                lines.append("")
+            lines = _strip_trailing_blank_lines(lines)
             lines.extend(pos_lines)
 
     # Re-join after structural edits
