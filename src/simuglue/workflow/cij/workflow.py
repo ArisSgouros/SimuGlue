@@ -16,7 +16,7 @@ from simuglue.mechanics.voigt import (
 )
 
 from .config import Config, load_config
-from .registry import get_backend, is_done, mark_done, RelaxResult, make_case_id
+from .registry import get_backend, is_done, is_running, RelaxResult, make_case_id
 
 
 # -------------------- core helpers --------------------
@@ -174,9 +174,13 @@ def run_cij(config_path: str) -> None:
         )
 
     # reference
-    if not is_done(ref_dir):
-        backend.run_case(ref_dir, cfg)
-        mark_done(ref_dir)
+    if is_done(ref_dir):
+        print(f"[cij/run] (ref) skip run.ref (done)")
+    elif is_running(ref_dir):
+        print(f"[cij/run] (ref) skip run.ref (running)")
+    else:
+        print(f"[cij/run] (ref) run  run.ref")
+    backend.run_case(ref_dir, cfg)
 
     # deformed
     total = len(components) * len(strains)
@@ -189,12 +193,14 @@ def run_cij(config_path: str) -> None:
             )
 
         if is_done(case_dir):
-            print(f"[cij/run] ({k}/{total}) skip {cid} (already done)")
+            print(f"[cij/run] ({k}/{total}) skip {cid} (done)")
+            continue
+        elif is_running(case_dir):
+            print(f"[cij/run] ({k}/{total}) skip {cid} (running)")
             continue
 
-        print(f"[cij/run] ({k}/{total}) run {cid}")
+        print(f"[cij/run] ({k}/{total}) run  {cid}")
         backend.run_case(case_dir, cfg)
-        mark_done(case_dir)
 
 
 # -------------------- 3) parse: outputs → result.json --------------------

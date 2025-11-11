@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-import subprocess
+import os, shlex, subprocess
 from pathlib import Path, PurePosixPath
 
 import numpy as np
@@ -15,11 +15,20 @@ from ..registry import (
     Backend,
     RelaxResult,
     is_done,
-    mark_done,
 )
 
 from simuglue.quantum_espresso.pwi_update import update_qe_input
 from simuglue.mechanics.voigt import voigt6_to_stress_tensor
+
+def _to_argv(x) -> list[str]:
+    """Accept list/tuple/str/None and return a list of argv tokens."""
+    if x is None:
+        return []
+    if isinstance(x, (list, tuple)):
+        return [str(t) for t in x]
+    if isinstance(x, str):
+        return shlex.split(x)
+    return [str(x)]
 
 # ---------- QE backend (skeleton) ----------
 @register_backend("qe")
@@ -67,20 +76,72 @@ class QEBackend(Backend):
         case_tag = case_dir.name or "case"
         self.write_data(case_dir / "qe.in", atoms, cfg, case_tag=case_tag)
 
+
     def run_case(self, case_dir: Path, cfg: Config) -> None:
-        if is_done(case_dir):
+        """Run a single QE case with simple .running / .done / .failed markers."""
+        running = case_dir / ".running"
+        done    = case_dir / ".done"
+        failed  = case_dir / ".failed"
+        log     = case_dir / "qe.out"
+
+        # --- skip conditions ---
+        if done.exists():
             return
-        exe = cfg.qe.get("exe", "pw.x")
-        log = case_dir / "qe.out"
-        with log.open("w") as f:
-            subprocess.run(
-                [exe, "-in", "qe.in"],
-                cwd=case_dir,
-                check=True,
-                stdout=f,
-                stderr=subprocess.STDOUT,
-            )
-        mark_done(case_dir)
+        if running.exists():
+            return
+
+        log.parent.mkdir(parents=True, exist_ok=True)
+
+        # --- build command ---
+        exe  = cfg.qe.get("exe", "pw.x")
+        para = cfg.qe.get("para", None)
+        post = cfg.qe.get("post", None)
+        env  = dict(os.environ)
+        env.update(cfg.qe.get("env", {}))
+
+        para_argv = _to_argv(para)
+        exe_argv  = _to_argv(exe)
+        post_argv = _to_argv(post)
+        cmd = [*para_argv, *exe_argv, "-in", "qe.in", *post_argv]
+
+        # --- mark as running ---
+        running.write_text("running\n", encoding="utf-8")
+        if failed.exists():
+            failed.unlink()  # clean old failure marker
+
+        try:
+            with log.open("w") as f:
+                f.write(f"# cwd: {case_dir}\n# cmd: {' '.join(shlex.quote(c) for c in cmd)}\n\n")
+                f.flush()
+                subprocess.run(
+                    cmd,
+                    cwd=case_dir,
+                    check=True,
+                    stdout=f,
+                    stderr=subprocess.STDOUT,
+                    env=env,
+                )
+
+            # --- check convergence ---
+            txt = log.read_text(errors="ignore")
+            if "JOB DONE." in txt or "convergence has been achieved" in txt:
+                done.write_text("done\n", encoding="utf-8")
+            else:
+                print(f"[warn] QE run in {case_dir} finished but may not be converged.")
+                failed.write_text("not converged\n", encoding="utf-8")
+
+        except subprocess.CalledProcessError as e:
+            msg = f"QE failed with exit code {e.returncode}\n"
+            failed.write_text(msg, encoding="utf-8")
+            print(f"[error] QE failed in {case_dir}: {msg.strip()}")
+
+        except Exception as e:
+            failed.write_text(str(e), encoding="utf-8")
+            print(f"[error] Unexpected failure in {case_dir}: {e}")
+
+        finally:
+            # --- always remove .running ---
+            running.unlink(missing_ok=True)
 
     def parse_case(self, case_dir: Path, cfg: Config) -> RelaxResult:
         if not is_done(case_dir):

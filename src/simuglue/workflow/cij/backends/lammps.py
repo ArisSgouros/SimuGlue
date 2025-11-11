@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-import subprocess
+import os, shlex, subprocess
 from pathlib import Path
 
 import numpy as np
@@ -15,8 +15,17 @@ from ..registry import (
     Backend,
     RelaxResult,
     is_done,
-    mark_done,
 )
+
+def _to_argv(x) -> list[str]:
+    """Accept list/tuple/str/None and return a list of argv tokens."""
+    if x is None:
+        return []
+    if isinstance(x, (list, tuple)):
+        return [str(t) for t in x]
+    if isinstance(x, str):
+        return shlex.split(x)
+    return [str(x)]
 
 # ---------- LAMMPS backend (skeleton) ----------
 @register_backend("lammps")
@@ -69,25 +78,73 @@ class LAMMPSBackend(Backend):
         if not dst.exists():
             dst.write_text(tpl, encoding="utf-8")
 
+
     def run_case(self, case_dir: Path, cfg: Config) -> None:
-        if is_done(case_dir):
+        """Run a single LAMMPS case with .running / .done / .failed markers."""
+        running = case_dir / ".running"
+        done    = case_dir / ".done"
+        failed  = case_dir / ".failed"
+        log     = case_dir / "log.lammps"
+
+        # --- skip conditions ---
+        if done.exists():
             return
-        exe = cfg.lammps.get("exe", "lmp")
-        log = case_dir / "log.lammps"
-        with log.open("w") as f:
-            subprocess.run(
-                [exe, "-in", "in.min"],
-                cwd=case_dir,
-                check=True,
-                stdout=f,
-                stderr=subprocess.STDOUT,
-            )
-        if not (case_dir / "thermo.json").is_file():
-            raise RuntimeError(
-                "LAMMPS finished but thermo.json missing; "
-                "check template/thermo line."
-            )
-        mark_done(case_dir)
+        if running.exists():
+            print(f"[skip] {case_dir} is already running.")
+            return
+
+        log.parent.mkdir(parents=True, exist_ok=True)
+
+        # --- build command ---
+        exe  = cfg.lammps.get("exe", "lmp")
+        para = cfg.lammps.get("para", None)   # optional: "mpirun -np 8"
+        post = cfg.lammps.get("post", None)   # optional trailing args
+        env  = dict(os.environ)
+        env.update(cfg.lammps.get("env", {}))
+
+        para_argv = _to_argv(para)
+        exe_argv  = _to_argv(exe)
+        post_argv = _to_argv(post)
+        cmd = [*para_argv, *exe_argv, "-in", "in.min", *post_argv]
+
+        # --- mark as running ---
+        running.write_text("running\n", encoding="utf-8")
+        if failed.exists():
+            failed.unlink()  # remove old failure marker
+
+        try:
+            with log.open("w") as f:
+                f.write(f"# cwd: {case_dir}\n# cmd: {' '.join(shlex.quote(c) for c in cmd)}\n\n")
+                f.flush()
+                subprocess.run(
+                    cmd,
+                    cwd=case_dir,
+                    check=True,
+                    stdout=f,
+                    stderr=subprocess.STDOUT,
+                    env=env,
+                )
+
+            # --- post-run sanity check ---
+            thermo_json = case_dir / "thermo.json"
+            if thermo_json.is_file():
+                done.write_text("done\n", encoding="utf-8")
+            else:
+                msg = "LAMMPS finished but thermo.json missing; check template/thermo line."
+                failed.write_text(msg + "\n", encoding="utf-8")
+                print(f"[warn] {msg}")
+
+        except subprocess.CalledProcessError as e:
+            msg = f"LAMMPS failed with exit code {e.returncode}\n"
+            failed.write_text(msg, encoding="utf-8")
+            print(f"[error] {msg.strip()}")
+
+        except Exception as e:
+            failed.write_text(str(e), encoding="utf-8")
+            print(f"[error] Unexpected failure in {case_dir}: {e}")
+
+        finally:
+            running.unlink(missing_ok=True)
 
     def parse_case(self, case_dir: Path, cfg: Config) -> RelaxResult:
         if not is_done(case_dir):

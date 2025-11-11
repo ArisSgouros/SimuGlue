@@ -41,14 +41,11 @@ def get_backend(name: str) -> Backend:
             f"Unknown backend '{name}'. Available: {sorted(_BACKENDS)}"
         ) from exc
 
-
 def is_done(case_dir: Path) -> bool:
     return (case_dir / ".done").exists()
 
-
-def mark_done(case_dir: Path) -> None:
-    (case_dir / ".done").write_text("ok\n", encoding="utf-8")
-
+def is_running(case_dir: Path) -> bool:
+    return (case_dir / ".running").exists()
 
 def make_case_id(i: int, eps: float) -> str:
     """Shared between init/run/parse and post."""
