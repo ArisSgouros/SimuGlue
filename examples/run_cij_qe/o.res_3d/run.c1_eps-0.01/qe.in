@@ -2,18 +2,18 @@
     calculation = 'scf'
     restart_mode='from_scratch',
     wf_collect=.true.
-    prefix='MoS2_0.000',
+    prefix='RES3d',
     tstress = .true.
     tprnfor = .true.
     etot_conv_thr=1.d-3, 
     forc_conv_thr=1.d-3
-    pseudo_dir = '/home/aps/projects/PhononQE/qe_psextra/',
-    outdir='/home/aps/scratch/qe/'
+    pseudo_dir = '../../PSEUDO',
+    outdir='../../OUTDIR/RES3d'
  /
  &system
-    ibrav=  0, nat=  3, ntyp= 2,
-    ecutwfc =70.0, ecutrho=300.0
-    occupations='fixed'
+ ibrav= 0, nat= 3, ntyp= 2,
+ ecutwfc =70.0, ecutrho=300.0
+ occupations='fixed'
  /
  &electrons
     diagonalization='david'
@@ -27,9 +27,6 @@
 ATOMIC_SPECIES
  S  32.07   S.pz-hgh.UPF
  Mo  95.94   Mo.pz-hgh.UPF
-
-K_POINTS automatic
-1 1 1 0 0 0
 CELL_PARAMETERS {angstrom}
 3.1066101274026563 -0.0000018869947140 0.0000000000000000
 1.5533034373896657 2.7175622190108064 0.0000000000000000
@@ -38,3 +35,6 @@ ATOMIC_POSITIONS {angstrom}
 Mo -0.0009358290810000 0.0047982866000000 0.0000000000000000 
 S 1.5523691735970000 0.9106492955000000 1.5624770775000001 
 S 1.5523691735970000 0.9106492955000000 -1.5624770775000001 
+
+K_POINTS automatic
+1 1 1 0 0 0

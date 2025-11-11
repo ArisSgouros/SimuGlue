@@ -1,18 +1,18 @@
  &control
-    calculation = 'relax'
+    calculation = 'scf'
     restart_mode='from_scratch',
     wf_collect=.true.
     prefix='MoS2_0.000',
     tstress = .true.
     tprnfor = .true.
-    etot_conv_thr=1d-6, 
-    forc_conv_thr=1.d-5
-    pseudo_dir = '/home/asgouros/Programs/qe_psextra//',
-    outdir='/home/asgouros/temp//MoS2_biaxial_/'
+    etot_conv_thr=1.d-3, 
+    forc_conv_thr=1.d-3
+    pseudo_dir = '../../PSEUDO',
+    outdir='/OUTDIR/'
  /
  &system
     ibrav=  0, celldm(1) =6.0336772, nat=  3, ntyp= 2,
-    ecutwfc =80.0, ecutrho=320.0
+    ecutwfc =70.0, ecutrho=300.0
     occupations='fixed'
  /
  &electrons
@@ -20,7 +20,7 @@
     electron_maxstep = 100
     mixing_mode = 'plain'
     mixing_beta = 0.7
-    conv_thr = 1d-10
+    conv_thr = 1d-5
  /
  &ions
  /
@@ -37,4 +37,4 @@ S       1.5680496703000   .9106492955000   1.5624770775
 S       1.5680496703000   .9106492955000   -1.5624770775
 
 K_POINTS automatic
-24 24 1 0 0 0
+1 1 1 0 0 0

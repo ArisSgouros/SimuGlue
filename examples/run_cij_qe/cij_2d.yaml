@@ -2,8 +2,6 @@ workdir: o.res_3d
 
 backend: qe
 
-data_file: MoS2_qe.in
-
 # which stiffness components to build (Voigt indices)
 # 3D example (6 components): xx,yy,zz,yz,xz,xy → 1,2,3,4,5,6
 components: [1, 2, 6]
@@ -14,7 +12,9 @@ strains: [0.01, -0.01]
 # LAMMPS-specific settings
 qe:
   exe: pw.x
-  header_in: header.in
+  input: MoS2_qe.in
+  prefix: RES3d
+  outdir: ../../OUTDIR/
 
 common_files: []
 common_path: '.'
@@ -23,4 +23,3 @@ common_path: '.'
 output:
   cij_json: cij.json
   units_cij: gpa
-  save_traj: true
