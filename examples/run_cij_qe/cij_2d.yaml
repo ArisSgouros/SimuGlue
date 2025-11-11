@@ -16,9 +16,6 @@ qe:
   prefix: RES3d
   outdir: ../../OUTDIR/
 
-common_files: []
-common_path: '.'
-
 # output
 output:
   cij_json: cij.json
