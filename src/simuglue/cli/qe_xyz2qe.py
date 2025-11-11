@@ -6,23 +6,26 @@ from typing import Iterable, List
 from ase import Atoms
 from ase.io import read
 from simuglue.quantum_espresso.build_pwi import build_pwi_from_header
+from simuglue.quantum_espresso.pwi_update import update_qe_input
 from simuglue.cli._xyz_io import _iter_frames
 
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description=(
-            "Generate Quantum ESPRESSO input file(s) by combining a header "
+            "Generate Quantum ESPRESSO input file(s) by combining a pwi "
             "with CELL_PARAMETERS and ATOMIC_POSITIONS read from an extxyz file."
         )
     )
-    p.add_argument("--header", required=True, help="QE header file (without CELL_PARAMETERS/ATOMIC_POSITIONS).")
+    p.add_argument("--pwi", required=True, help="QE pwi file.")
     p.add_argument("--xyz", required=True, help="Input extxyz trajectory or structure.")
+    p.add_argument("--prefix", required=False, help="QE prefix.")
+    p.add_argument("--outdir", required=False, help="QE outdir.")
     p.add_argument(
         "--frames",
         default=None,
         help="Frame index (int) or 'all'. Default: first frame only."
     )
-    p.add_argument("--outdir", default=".", help="Directory for output .in files. Default: current directory.")
+    p.add_argument("--output_dir", default=".", help="Directory for output .in files. Default: current directory.")
     p.add_argument("-o", "--output", help="Path to output (default: stem of xyz file).")
     return p
 
@@ -30,18 +33,18 @@ def main(argv=None, prog: str | None = None) -> int:
     parser = build_parser(prog=prog)
     args = parser.parse_args(argv)
 
-    header_path = Path(args.header)
+    pwi_path = Path(args.pwi)
     xyz_path = Path(args.xyz)
-    outdir = Path(args.outdir)
-    outdir.mkdir(parents=True, exist_ok=True)
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    if not header_path.exists():
-        raise FileNotFoundError(f"Header not found: {header_path}")
+    if not pwi_path.exists():
+        raise FileNotFoundError(f"Header not found: {pwi_path}")
     if not xyz_path.exists():
         raise FileNotFoundError(f"XYZ not found: {xyz_path}")
 
-    # Read header text once (passed to builder below)
-    header_text = header_path.read_text(encoding="utf-8")
+    # Read pwi text once (passed to builder below)
+    pwi_text = pwi_path.read_text(encoding="utf-8")
 
     # Normalize frames argument
     if args.frames is None:
@@ -56,17 +59,18 @@ def main(argv=None, prog: str | None = None) -> int:
         outfile = args.output if args.output else xyz_path.stem
         if frames_arg:
             outfile += f"_{i:05d}.in"
-        outpath = outdir / outfile
+        outpath = output_dir / outfile
 
-        qe_text = build_pwi_from_header(header_text, atoms)
+        #qe_text = build_pwi_from_pwi(pwi_text, atoms)
+        qe_text = update_qe_input(pwi_text, cell = atoms.get_cell().array, positions = atoms.get_positions(), symbols = atoms.get_chemical_symbols())
         outpath.write_text(qe_text, encoding="utf-8")
         generated += 1
 
     # Friendly summary
     if generated == 1:
-        print(f"Generated 1 QE input in {outdir.resolve()}")
+        print(f"Generated 1 QE input in {output_dir.resolve()}")
     else:
-        print(f"Generated {generated} QE inputs in {outdir.resolve()}")
+        print(f"Generated {generated} QE inputs in {output_dir.resolve()}")
     return 0
 
 
