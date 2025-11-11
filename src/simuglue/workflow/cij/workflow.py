@@ -141,11 +141,6 @@ def init_cij(config_path: str) -> None:
         case_dir.mkdir(parents=True, exist_ok=True)
         F = F_from_component(i, eps)
         atoms_def = apply_transform(atoms_ref, F)
-
-        if cfg.output.get("save_traj", True):
-            # backend is free to ignore extension; xyz is conventional
-            backend.write_data(case_dir / "deformed.xyz", atoms_def, cfg)
-
         backend.prepare_case(case_dir, atoms_def, cfg)
 
 
