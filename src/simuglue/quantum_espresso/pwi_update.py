@@ -74,6 +74,42 @@ def _find_card_block(
 
     return start, j
 
+import re
+
+# NOTE: allow leading spaces before &system
+_SYS = re.compile(r'(?is)^\s*&system\b.*?^\s*/\s*$', re.MULTILINE)
+
+def _prefer_explicit_cell(text: str) -> str:
+    def fix(block: str) -> str:
+        # 1) ensure ibrav=0 (replace or insert after &system)
+        if re.search(r'(?im)^\s*ibrav\s*=', block):
+            block = re.sub(
+                r'(?im)^(?P<i>\s*)ibrav\s*=\s*[^,/\n]+(?P<t>\s*,?)\s*$',
+                r"\g<i>ibrav=  0\g<t>", block, count=1
+            )
+        else:
+            block = re.sub(
+                r'(?im)^\s*&system\b\s*$',
+                "&system\n  ibrav=  0,", block, count=1
+            )
+
+        # 2) remove lattice-parameter tokens anywhere on the line
+        block = re.sub(r'(?i)\bcelldm\(\s*[1-6]\s*\)\s*=\s*[^,/\n]+,?\s*', '', block)
+        block = re.sub(r'(?i)\b(?:A|B|C|cosAB|cosAC|cosBC)\s*=\s*[^,/\n]+,?\s*', '', block)
+
+        # 3) tidy punctuation/spacing
+        while True:
+            nb = re.sub(r',\s*,', ',', block)
+            if nb == block: break
+            block = nb
+        block = re.sub(r'(?m)^\s*,\s*', '', block)                       # leading commas
+        block = re.sub(r',\s*(\n\s*/\s*$)', r'\1', block)                 # comma before '/'
+        block = re.sub(r'[ \t]+', ' ', block)                             # collapse spaces
+        return block
+
+    return _SYS.sub(lambda m: fix(m.group(0)), text)
+
+
 def _strip_trailing_blank_lines(lines: list[str]) -> list[str]:
     while lines and lines[-1].strip() == "":
         lines.pop()
@@ -162,6 +198,11 @@ def update_qe_input(
 
     # Re-join after structural edits
     result = "\n".join(lines)
+
+    # If we provided an explicit cell (or positions), make sure &system
+    # does not declare lattice parameters that conflict with ibrav=0 + CELL_PARAMETERS.
+    if cell is not None:
+        result = _prefer_explicit_cell(result)
 
     # --- 2) prefix update ---
     if prefix is not None:
