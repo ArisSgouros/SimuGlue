@@ -10,6 +10,7 @@ from ase.calculators.lammps.unitconvert import convert
 from ase.io import read, write
 
 from ..config import Config
+from ..markers import prepare_run, finalize_success, finalize_failure
 from ..registry import (
     register_backend,
     Backend,
@@ -76,38 +77,21 @@ class QEBackend(Backend):
         case_tag = case_dir.name or "case"
         self.write_data(case_dir / "qe.in", atoms, cfg, case_tag=case_tag)
 
-
     def run_case(self, case_dir: Path, cfg: Config) -> None:
-        """Run a single QE case with simple .running / .done / .failed markers."""
-        running = case_dir / ".running"
-        done    = case_dir / ".done"
-        failed  = case_dir / ".failed"
-        log     = case_dir / "qe.out"
-
-        # --- skip conditions ---
-        if done.exists():
-            return
-        if running.exists():
+        """Run a single QE case with shared markers helper."""
+        if not prepare_run(case_dir):
             return
 
+        log = case_dir / "qe.out"
         log.parent.mkdir(parents=True, exist_ok=True)
 
-        # --- build command ---
         exe  = cfg.qe.get("exe", "pw.x")
         para = cfg.qe.get("para", None)
         post = cfg.qe.get("post", None)
         env  = dict(os.environ)
         env.update(cfg.qe.get("env", {}))
 
-        para_argv = _to_argv(para)
-        exe_argv  = _to_argv(exe)
-        post_argv = _to_argv(post)
-        cmd = [*para_argv, *exe_argv, "-in", "qe.in", *post_argv]
-
-        # --- mark as running ---
-        running.write_text("running\n", encoding="utf-8")
-        if failed.exists():
-            failed.unlink()  # clean old failure marker
+        cmd = [*_to_argv(para), *_to_argv(exe), "-in", "qe.in", *_to_argv(post)]
 
         try:
             with log.open("w") as f:
@@ -122,26 +106,17 @@ class QEBackend(Backend):
                     env=env,
                 )
 
-            # --- check convergence ---
             txt = log.read_text(errors="ignore")
             if "JOB DONE." in txt or "convergence has been achieved" in txt:
-                done.write_text("done\n", encoding="utf-8")
+                finalize_success(case_dir)
             else:
-                print(f"[warn] QE run in {case_dir} finished but may not be converged.")
-                failed.write_text("not converged\n", encoding="utf-8")
+                finalize_failure(case_dir, "not converged")
 
         except subprocess.CalledProcessError as e:
-            msg = f"QE failed with exit code {e.returncode}\n"
-            failed.write_text(msg, encoding="utf-8")
-            print(f"[error] QE failed in {case_dir}: {msg.strip()}")
-
+            finalize_failure(case_dir, f"QE failed with exit code {e.returncode}")
         except Exception as e:
-            failed.write_text(str(e), encoding="utf-8")
-            print(f"[error] Unexpected failure in {case_dir}: {e}")
+            finalize_failure(case_dir, f"Unexpected failure: {e}")
 
-        finally:
-            # --- always remove .running ---
-            running.unlink(missing_ok=True)
 
     def parse_case(self, case_dir: Path, cfg: Config) -> RelaxResult:
         if not is_done(case_dir):

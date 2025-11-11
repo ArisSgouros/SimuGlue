@@ -17,6 +17,8 @@ from ..registry import (
     is_done,
 )
 
+from ..markers import prepare_run, finalize_success, finalize_failure
+
 def _to_argv(x) -> list[str]:
     """Accept list/tuple/str/None and return a list of argv tokens."""
     if x is None:
@@ -80,37 +82,20 @@ class LAMMPSBackend(Backend):
 
 
     def run_case(self, case_dir: Path, cfg: Config) -> None:
-        """Run a single LAMMPS case with .running / .done / .failed markers."""
-        running = case_dir / ".running"
-        done    = case_dir / ".done"
-        failed  = case_dir / ".failed"
-        log     = case_dir / "log.lammps"
-
-        # --- skip conditions ---
-        if done.exists():
-            return
-        if running.exists():
-            print(f"[skip] {case_dir} is already running.")
+        """Run a single LAMMPS case with shared markers helper."""
+        if not prepare_run(case_dir):
             return
 
+        log = case_dir / "log.lammps"
         log.parent.mkdir(parents=True, exist_ok=True)
 
-        # --- build command ---
         exe  = cfg.lammps.get("exe", "lmp")
-        para = cfg.lammps.get("para", None)   # optional: "mpirun -np 8"
-        post = cfg.lammps.get("post", None)   # optional trailing args
+        para = cfg.lammps.get("para", None)   # e.g., "mpirun -np 8"
+        post = cfg.lammps.get("post", None)
         env  = dict(os.environ)
         env.update(cfg.lammps.get("env", {}))
 
-        para_argv = _to_argv(para)
-        exe_argv  = _to_argv(exe)
-        post_argv = _to_argv(post)
-        cmd = [*para_argv, *exe_argv, "-in", "in.min", *post_argv]
-
-        # --- mark as running ---
-        running.write_text("running\n", encoding="utf-8")
-        if failed.exists():
-            failed.unlink()  # remove old failure marker
+        cmd = [*_to_argv(para), *_to_argv(exe), "-in", "in.min", *_to_argv(post)]
 
         try:
             with log.open("w") as f:
@@ -125,26 +110,16 @@ class LAMMPSBackend(Backend):
                     env=env,
                 )
 
-            # --- post-run sanity check ---
-            thermo_json = case_dir / "thermo.json"
-            if thermo_json.is_file():
-                done.write_text("done\n", encoding="utf-8")
+            # sanity check for expected output
+            if (case_dir / "thermo.json").is_file():
+                finalize_success(case_dir)
             else:
-                msg = "LAMMPS finished but thermo.json missing; check template/thermo line."
-                failed.write_text(msg + "\n", encoding="utf-8")
-                print(f"[warn] {msg}")
+                finalize_failure(case_dir, "thermo.json missing; check your thermo output.")
 
         except subprocess.CalledProcessError as e:
-            msg = f"LAMMPS failed with exit code {e.returncode}\n"
-            failed.write_text(msg, encoding="utf-8")
-            print(f"[error] {msg.strip()}")
-
+            finalize_failure(case_dir, f"LAMMPS failed with exit code {e.returncode}")
         except Exception as e:
-            failed.write_text(str(e), encoding="utf-8")
-            print(f"[error] Unexpected failure in {case_dir}: {e}")
-
-        finally:
-            running.unlink(missing_ok=True)
+            finalize_failure(case_dir, f"Unexpected failure: {e}")
 
     def parse_case(self, case_dir: Path, cfg: Config) -> RelaxResult:
         if not is_done(case_dir):
