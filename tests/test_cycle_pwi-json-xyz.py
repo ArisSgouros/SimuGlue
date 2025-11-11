@@ -15,7 +15,7 @@ def discover():
 def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     """
     Expects case.yaml like:
-      header:    *.in
+      pwi:    *.in
       xyz:       *.xyz
       gold:      *.in
       frames:    None|"all"|int
@@ -40,7 +40,7 @@ def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
 
     args1 = cli_pwi2json + ["i.01.in", "--pretty", "-o", "o.02.json"]
     args2 = cli_json2xyz + ["o.02.json", "-o", "o.03.xyz"]
-    args3 = cli_xyz2qe + ["--header", "i.01.header", "--xyz", "o.03.xyz", "-o", "o.04.in"]
+    args3 = cli_xyz2qe + ["--pwi", "i.01.header", "--xyz", "o.03.xyz", "-o", "o.04.in"]
 
     # Run CLI; on failure, show stdout/stderr
     for args in [args1, args2, args3]:

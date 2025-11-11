@@ -15,7 +15,7 @@ def discover():
 def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     """
     Expects case.yaml like:
-      header:    *.in
+      pwi:    *.in
       xyz:       *.xyz
       gold:      *.in
       frames:    None|"all"|int
@@ -34,7 +34,7 @@ def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     src = case_dir / "input" / input_list[0]
     dst = tmp_path_cwd / input_list[0]
     shutil.copy(src, dst)
-    args += ["--header", str(dst)]
+    args += ["--pwi", str(dst)]
 
     src = case_dir / "input" / input_list[1]
     dst = tmp_path_cwd / input_list[1]
