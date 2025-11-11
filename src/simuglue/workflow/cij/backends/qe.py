@@ -29,29 +29,43 @@ class QEBackend(Backend):
         qe_input = cfg.qe.get("input", None)
         return read(qe_input, format='espresso-in', index=0)
 
-    def write_data(self, path: Path, atoms, cfg: Config) -> None:
-        qe_input = Path(cfg.qe.get("input", None))
-        header_text = qe_input.read_text(encoding="utf-8")
+    def write_data(self, path: Path, atoms, cfg: Config, case_tag: str | None) -> None:
+        input_path = Path(cfg.qe.get("input", None))
+        input_text = input_path.read_text(encoding="utf-8")
+
         prefix = cfg.qe.get("prefix", None)
-        outdir = cfg.qe.get("outdir", None)
-        if outdir and prefix:
-            outdir = str(PurePosixPath(outdir) / prefix)
+        outdir_base = cfg.qe.get("outdir", None)
+
+        outdir_for_qe = None
+        if outdir_base:
+            # Build per-case outdir: <outdir_base>/<prefix>/<case_tag>
+            outdir_path = Path(outdir_base)
+            if prefix:
+                outdir_path = outdir_path / prefix
+            if case_tag:
+                outdir_path = outdir_path / case_tag
+
+            outdir_path = outdir_path.resolve()
+            outdir_path.mkdir(parents=True, exist_ok=True)
+            outdir_for_qe = outdir_path.as_posix()  # POSIX slashes for QE
 
         qe_text = update_qe_input(
-            header_text,
+            input_text,
             cell=atoms.get_cell().array,
             positions=atoms.get_positions(),
             symbols=atoms.get_chemical_symbols(),
             prefix=prefix,
-            outdir=outdir,
+            outdir=outdir_for_qe,
         )
 
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(qe_text, encoding="utf-8")
 
     def prepare_case(self, case_dir: Path, atoms, cfg: Config) -> None:
         if is_done(case_dir):
             return
-        self.write_data(case_dir / 'qe.in', atoms, cfg)
+        case_tag = case_dir.name or "case"
+        self.write_data(case_dir / "qe.in", atoms, cfg, case_tag=case_tag)
 
     def run_case(self, case_dir: Path, cfg: Config) -> None:
         if is_done(case_dir):
