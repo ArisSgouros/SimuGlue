@@ -30,7 +30,8 @@ class QEBackend(Backend):
 
     def write_data(self, path: Path, atoms, cfg: Config) -> None:
         header = Path(cfg.qe.get("header_in", "header.in"))
-        qe_text = build_pwi_from_header(header, atoms)
+        header_text = header.read_text(encoding="utf-8")
+        qe_text = build_pwi_from_header(header_text, atoms)
         path.write_text(qe_text, encoding="utf-8")
 
     def prepare_case(self, case_dir: Path, atoms, cfg: Config) -> None:
