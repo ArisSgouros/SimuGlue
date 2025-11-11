@@ -32,7 +32,6 @@ cli = [
 
 [project.scripts]
 sgl = "simuglue.cli.main:main"
-sgl-hello = "simuglue.cli.template_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
