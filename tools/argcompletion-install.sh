@@ -5,5 +5,5 @@ mkdir -p "$CONDA_PREFIX/etc/conda/activate.d"
 printf '%s\n' 'eval "$('"$CONDA_PREFIX"'/bin/register-python-argcomplete sgl)"' \
   >> "$CONDA_PREFIX/etc/conda/activate.d/argcomplete.sh"
 
-conda deactivate && conda activate "$(basename "$CONDA_PREFIX")"
-
+envpath="$CONDA_PREFIX"
+conda deactivate && conda activate "$envpath"   # or: conda activate --prefix "$envpath"

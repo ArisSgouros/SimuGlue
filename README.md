@@ -21,4 +21,8 @@ launch jobs, and extract physical quantities.
 conda create -n simuglue python=3.11
 conda activate simuglue
 
-pip install -e ".[dev]"
+# install dev version
+tools/dev-install.sh
+
+# intall argcomplete
+argcompletion-install.sh
