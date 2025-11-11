@@ -8,7 +8,7 @@
     etot_conv_thr=1.d-3, 
     forc_conv_thr=1.d-3
     pseudo_dir = '../../PSEUDO',
-    outdir='../../OUTDIR/RES3d'
+    outdir='/home/aps/Programs/SimuGlue/examples/run_cij_qe/OUTDIR/RES3d/run.c1_eps0.01'
  /
  &system
  ibrav= 0, nat= 3, ntyp= 2,

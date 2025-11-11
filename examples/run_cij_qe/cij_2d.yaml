@@ -14,7 +14,7 @@ qe:
   exe: pw.x
   input: MoS2_qe.in
   prefix: RES3d
-  outdir: ../../OUTDIR/
+  outdir: OUTDIR
 
 # output
 output:
