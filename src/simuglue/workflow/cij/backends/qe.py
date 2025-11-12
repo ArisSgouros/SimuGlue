@@ -146,4 +146,4 @@ class QEBackend(Backend):
         # Enforce symmetry numerically
         S = 0.5 * (S + S.T)
 
-        return RelaxResult(energy=pe, stress=S)
+        return RelaxResult(energy=pe, stress=S, cell=atoms.cell.array)

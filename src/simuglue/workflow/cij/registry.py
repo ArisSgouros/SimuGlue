@@ -12,6 +12,7 @@ import numpy as np
 class RelaxResult:
     energy: float
     stress: np.ndarray  # 3x3 tensor in GPa (canonical)
+    cell: np.ndarray  # 3x3 arr
 
 
 class Backend(Protocol):

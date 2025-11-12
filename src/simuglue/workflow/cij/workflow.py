@@ -66,7 +66,6 @@ def _copy_common_files(cfg: Config) -> None:
         if src.resolve() != dst.resolve():
             shutil.copy(src, dst)
 
-
 def _dump_result_json(
     case_dir: Path,
     *,
@@ -82,6 +81,7 @@ def _dump_result_json(
         "eps": eps,
         "energy": float(res.energy),
         "stress6": [float(x) for x in s6],
+        "cell": res.cell.tolist(),
         "units": {"stress": "eV/\u00c5^3", "energy": "eV", "strain": "-"},
     }
     (case_dir / "result.json").write_text(

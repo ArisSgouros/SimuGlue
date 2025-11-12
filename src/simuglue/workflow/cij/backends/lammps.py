@@ -8,6 +8,7 @@ import numpy as np
 from ase import units
 from ase.calculators.lammps.unitconvert import convert
 from ase.io.lammpsdata import read_lammps_data, write_lammps_data
+from simuglue.io.lammps_cell import lammps_box_to_ase_cell
 
 from ..config import Config
 from ..registry import (
@@ -71,7 +72,8 @@ class LAMMPSBackend(Backend):
 
         print_line = (
             "print '{\"pxx\":$(pxx), \"pyy\":$(pyy), \"pzz\":$(pzz), "
-            "\"pyz\":$(pyz), \"pxz\":$(pxz), \"pxy\":$(pxy), \"pe\":$(pe)}' "
+            "\"pyz\":$(pyz), \"pxz\":$(pxz), \"pxy\":$(pxy), \"pe\":$(pe),"
+            "\"lx\":$(lx), \"ly\":$(ly), \"lz\":$(lz), \"xy\":$(xy), \"xz\":$(xz), \"yz\":$(ly) }' "
             "file thermo.json"
         )
         if "thermo.json" not in tpl:
@@ -148,5 +150,8 @@ class LAMMPSBackend(Backend):
         e_eV = convert(1.0, "energy", lammps_units, "ASE")
         pe = float(data["pe"] * e_eV)
 
-        return RelaxResult(energy=pe, stress=S)
+        # cell
+        cell = lammps_box_to_ase_cell(data['lx'], data['ly'], data['lz'], data['xy'], data['xz'], data['yz'])
+
+        return RelaxResult(energy=pe, stress=S, cell=cell)
 
