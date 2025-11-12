@@ -1,0 +1,24 @@
+# which stiffness components to build (Voigt indices)
+# (xx,yy,zz,yz,xz,xy = 1,2,3,4,5,6)
+components: [1,2,6]
+
+# strain magnitudes used for finite differences
+strains: [0.01, -0.01]
+
+# working directory
+workdir: o.res_pa_m
+
+# output
+output:
+  cij_json: cij.json
+  units_cij: pa m
+
+# QE-specific settings
+backend: qe
+qe:
+  exe: pw.x
+  para: mpirun -np 1
+  input: hbn.in
+  outdir: /scratch/asgouros/simuglue/cij_hbn_lmp/
+  prefix: hbn
+

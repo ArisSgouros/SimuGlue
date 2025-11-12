@@ -1,0 +1,41 @@
+&control
+    calculation = 'relax',
+    restart_mode='from_scratch',
+    prefix='BN',
+    tstress = .true.,
+    tprnfor = .true.,
+    pseudo_dir = '/cyclonas_users/asgouros/projects/PhononQE/qe_psextra/',
+    outdir='/home/asgouros/temp//MoS2_biaxial_/'
+
+/
+&system
+    ibrav=  0, 
+    celldm(1) =4.7519, !a.u.
+    nat=2, ntyp=2,
+    ecutwfc =60.0, ecutrho=480.0,
+    occupations='smearing',
+    degauss=0.001
+/
+&electrons
+    diagonalization='david',
+    electron_maxstep = 100,
+    mixing_mode = 'plain',
+    mixing_beta = 0.7,
+    conv_thr =  1.0d-8
+/
+&ions
+/
+
+ATOMIC_SPECIES
+ B   10.810 B.pbe-n-kjpaw_psl.1.0.0.UPF
+ N   14.01  N.pbe-n-kjpaw_psl.1.0.0.UPF
+CELL_PARAMETERS {alat}
+   1.000000000   0.000000000   0.000000000
+   0.500000000   0.866025000   0.000000000
+   0.000000000   0.000000000   8.000000000
+ATOMIC_POSITIONS {alat}
+B        0.000000000   0.000000000   0.000000000
+N        0.5   0.288661   0.000000000
+K_POINTS automatic
+2 2 1 0 0 0
+!8 8 1 0 0 0
