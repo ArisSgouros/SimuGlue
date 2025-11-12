@@ -16,6 +16,7 @@ from ..registry import (
     Backend,
     RelaxResult,
     is_done,
+    is_running,
 )
 
 from simuglue.quantum_espresso.pwi_update import update_qe_input
@@ -78,9 +79,11 @@ class QEBackend(Backend):
         self.write_data(case_dir / "qe.in", atoms, cfg, case_tag=case_tag)
 
     def run_case(self, case_dir: Path, cfg: Config) -> None:
-        """Run a single QE case with shared markers helper."""
-        if not prepare_run(case_dir):
+        if is_done(case_dir) or is_running(case_dir):
             return
+
+        """Run a single QE case with shared markers helper."""
+        prepare_run(case_dir)
 
         log = case_dir / "qe.out"
         log.parent.mkdir(parents=True, exist_ok=True)
