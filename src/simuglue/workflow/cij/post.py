@@ -32,6 +32,11 @@ def _load_s6(path: Path) -> np.ndarray:
         raise ValueError(f"Non-finite stress6 values in {path}")
     return s6
 
+def _load_cell(path: Path) -> np.ndarray:
+    cell = np.asarray(json.loads(Path(path).read_text(encoding="utf-8"))["cell"], float)
+    if cell.shape != (3, 3): raise ValueError(f"cell shape {cell.shape}, expected 3x3")
+    return cell
+
 def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, object]:
     """
     Post-process finished Cij cases:
@@ -53,6 +58,7 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
 
     ref_path = cfg.workdir / "run.ref" / "result.json"
     s6_ref = _load_s6(ref_path)
+    cell_ref = _load_cell(ref_path)
 
     # Accumulator: (i,j) -> list of samples
     CC_all: Dict[Tuple[int, int], list[float]] = {}
@@ -117,6 +123,7 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
         "gpa":  1.0 / units.GPa,
         "pa":   1.0 / units.Pascal,
         "kbar": 1.0 / (1000.0 * units.bar),
+        "pa m": (1.0 / units.Pascal)*cell_ref[2][2]*1e-10
     }
 
     key = units_cij.lower()
@@ -124,7 +131,7 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
         conv = converters[key]
     except KeyError:
         raise ValueError(
-            f"Unsupported units_cij={units_cij!r}; supported: GPa, Pa, kbar."
+            f"Unsupported units_cij={units_cij!r}; supported: GPa, Pa, kbar, pa m."
         )
 
     out = {
