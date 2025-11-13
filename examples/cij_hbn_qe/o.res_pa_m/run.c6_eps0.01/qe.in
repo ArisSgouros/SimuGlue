@@ -5,7 +5,7 @@
     tstress = .true.,
     tprnfor = .true.,
     pseudo_dir = '../../PSEUDO/',
-    outdir='/home/aps/Programs/SimuGlue/examples/run_cij_hbn_qe/OUTDIR/hbn/run.c6_eps0.01'
+    outdir='/home/aps/Programs/SimuGlue/examples/cij_hbn_qe/OUTDIR/hbn/run.c6_eps0.01'
 
 /
 &system

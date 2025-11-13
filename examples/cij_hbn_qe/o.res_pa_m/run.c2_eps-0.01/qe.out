@@ -2,7 +2,7 @@
 # cmd: mpirun -np 3 pw.x -in qe.in
 
 
-     Program PWSCF v.6.7MaX starts on 12Nov2025 at 13: 0:30 
+     Program PWSCF v.6.7MaX starts on 13Nov2025 at  8:55:58 
 
      This program is part of the open-source Quantum ESPRESSO suite
      for quantum simulation of materials; please cite
@@ -154,7 +154,7 @@
      Starting wfcs are    8 randomized atomic wfcs
      Checking if some PAW data can be deallocated... 
 
-     total cpu time spent up to now is        1.2 secs
+     total cpu time spent up to now is        1.5 secs
 
      Self-consistent Calculation
 
@@ -164,7 +164,7 @@
 
      negative rho (up, down):  1.385E-04 0.000E+00
 
-     total cpu time spent up to now is        2.5 secs
+     total cpu time spent up to now is        3.1 secs
 
      total energy              =     -39.73188122 Ry
      estimated scf accuracy    <       0.40224975 Ry
@@ -175,7 +175,7 @@
 
      negative rho (up, down):  1.337E-04 0.000E+00
 
-     total cpu time spent up to now is        3.5 secs
+     total cpu time spent up to now is        4.5 secs
 
      total energy              =     -39.82309141 Ry
      estimated scf accuracy    <       0.19912045 Ry
@@ -186,7 +186,7 @@
 
      negative rho (up, down):  1.518E-04 0.000E+00
 
-     total cpu time spent up to now is        4.4 secs
+     total cpu time spent up to now is        5.5 secs
 
      total energy              =     -39.86400421 Ry
      estimated scf accuracy    <       0.00196561 Ry
@@ -197,7 +197,7 @@
 
      negative rho (up, down):  1.628E-04 0.000E+00
 
-     total cpu time spent up to now is        5.8 secs
+     total cpu time spent up to now is        6.9 secs
 
      total energy              =     -39.86439818 Ry
      estimated scf accuracy    <       0.00029951 Ry
@@ -208,7 +208,7 @@
 
      negative rho (up, down):  1.680E-04 0.000E+00
 
-     total cpu time spent up to now is        6.8 secs
+     total cpu time spent up to now is        7.9 secs
 
      total energy              =     -39.86446520 Ry
      estimated scf accuracy    <       0.00001501 Ry
@@ -219,7 +219,7 @@
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is        7.6 secs
+     total cpu time spent up to now is        8.7 secs
 
      total energy              =     -39.86446584 Ry
      estimated scf accuracy    <       0.00000128 Ry
@@ -230,7 +230,7 @@
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is        8.5 secs
+     total cpu time spent up to now is        9.6 secs
 
      total energy              =     -39.86446623 Ry
      estimated scf accuracy    <       0.00000002 Ry
@@ -241,7 +241,7 @@
 
      negative rho (up, down):  1.679E-04 0.000E+00
 
-     total cpu time spent up to now is        9.3 secs
+     total cpu time spent up to now is       10.4 secs
 
      End of self-consistent calculation
 
@@ -386,12 +386,12 @@ N             1.2572985882        0.7158445164        0.0000000000
 
 
 
-     Writing output data file /home/aps/Programs/SimuGlue/examples/run_cij_hbn_qe/OUTDIR/hbn/run.c2_eps-0.01/hbn.save/
+     Writing output data file /home/aps/Programs/SimuGlue/examples/cij_hbn_qe/OUTDIR/hbn/run.c2_eps-0.01/hbn.save/
      NEW-OLD atomic charge density approx. for the potential
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is       12.2 secs
+     total cpu time spent up to now is       13.2 secs
 
      Self-consistent Calculation
 
@@ -401,7 +401,7 @@ N             1.2572985882        0.7158445164        0.0000000000
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is       13.3 secs
+     total cpu time spent up to now is       14.5 secs
 
      total energy              =     -39.86447046 Ry
      estimated scf accuracy    <       0.00001435 Ry
@@ -412,7 +412,7 @@ N             1.2572985882        0.7158445164        0.0000000000
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is       14.1 secs
+     total cpu time spent up to now is       15.5 secs
 
      total energy              =     -39.86447266 Ry
      estimated scf accuracy    <       0.00000020 Ry
@@ -423,7 +423,7 @@ N             1.2572985882        0.7158445164        0.0000000000
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is       15.0 secs
+     total cpu time spent up to now is       16.6 secs
 
      total energy              =     -39.86447272 Ry
      estimated scf accuracy    <       0.00000002 Ry
@@ -434,7 +434,7 @@ N             1.2572985882        0.7158445164        0.0000000000
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is       15.8 secs
+     total cpu time spent up to now is       17.6 secs
 
      End of self-consistent calculation
 
@@ -580,12 +580,12 @@ N             1.2572985882        0.7170344364        0.0000000000
 
 
 
-     Writing output data file /home/aps/Programs/SimuGlue/examples/run_cij_hbn_qe/OUTDIR/hbn/run.c2_eps-0.01/hbn.save/
+     Writing output data file /home/aps/Programs/SimuGlue/examples/cij_hbn_qe/OUTDIR/hbn/run.c2_eps-0.01/hbn.save/
      NEW-OLD atomic charge density approx. for the potential
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is       18.6 secs
+     total cpu time spent up to now is       20.4 secs
 
      Self-consistent Calculation
 
@@ -601,7 +601,7 @@ N             1.2572985882        0.7170344364        0.0000000000
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is       20.2 secs
+     total cpu time spent up to now is       22.0 secs
 
      total energy              =     -39.86448126 Ry
      estimated scf accuracy    <       0.00000270 Ry
@@ -612,7 +612,7 @@ N             1.2572985882        0.7170344364        0.0000000000
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is       21.1 secs
+     total cpu time spent up to now is       22.9 secs
 
      total energy              =     -39.86448165 Ry
      estimated scf accuracy    <       0.00000004 Ry
@@ -623,7 +623,7 @@ N             1.2572985882        0.7170344364        0.0000000000
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is       22.0 secs
+     total cpu time spent up to now is       23.8 secs
 
      total energy              =     -39.86448166 Ry
      estimated scf accuracy    <          3.2E-09 Ry
@@ -634,7 +634,7 @@ N             1.2572985882        0.7170344364        0.0000000000
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is       22.8 secs
+     total cpu time spent up to now is       24.6 secs
 
      total energy              =     -39.86448166 Ry
      estimated scf accuracy    <          6.3E-10 Ry
@@ -645,7 +645,7 @@ N             1.2572985882        0.7170344364        0.0000000000
 
      negative rho (up, down):  1.678E-04 0.000E+00
 
-     total cpu time spent up to now is       23.8 secs
+     total cpu time spent up to now is       25.5 secs
 
      End of self-consistent calculation
 
@@ -780,7 +780,7 @@ N             1.2572985882        0.7170344364        0.0000000000
 
      Final energy   =     -39.8644816638 Ry
 
-     File /home/aps/Programs/SimuGlue/examples/run_cij_hbn_qe/OUTDIR/hbn/run.c2_eps-0.01/hbn.bfgs deleted, as requested
+     File /home/aps/Programs/SimuGlue/examples/cij_hbn_qe/OUTDIR/hbn/run.c2_eps-0.01/hbn.bfgs deleted, as requested
 Begin final coordinates
 
 ATOMIC_POSITIONS (angstrom)
@@ -790,57 +790,57 @@ End final coordinates
 
 
 
-     Writing output data file /home/aps/Programs/SimuGlue/examples/run_cij_hbn_qe/OUTDIR/hbn/run.c2_eps-0.01/hbn.save/
+     Writing output data file /home/aps/Programs/SimuGlue/examples/cij_hbn_qe/OUTDIR/hbn/run.c2_eps-0.01/hbn.save/
 
-     init_run     :      1.02s CPU      1.07s WALL (       1 calls)
-     electrons    :     16.73s CPU     16.99s WALL (       3 calls)
-     update_pot   :      1.35s CPU      1.35s WALL (       2 calls)
-     forces       :      1.83s CPU      1.83s WALL (       3 calls)
-     stress       :      4.23s CPU      4.23s WALL (       3 calls)
+     init_run     :      1.22s CPU      1.33s WALL (       1 calls)
+     electrons    :     18.01s CPU     18.41s WALL (       3 calls)
+     update_pot   :      1.47s CPU      1.47s WALL (       2 calls)
+     forces       :      1.97s CPU      1.98s WALL (       3 calls)
+     stress       :      4.03s CPU      4.05s WALL (       3 calls)
 
      Called by init_run:
-     wfcinit      :      0.23s CPU      0.24s WALL (       1 calls)
-     potinit      :      0.25s CPU      0.27s WALL (       1 calls)
-     hinit0       :      0.46s CPU      0.46s WALL (       1 calls)
+     wfcinit      :      0.25s CPU      0.28s WALL (       1 calls)
+     potinit      :      0.32s CPU      0.35s WALL (       1 calls)
+     hinit0       :      0.59s CPU      0.60s WALL (       1 calls)
 
      Called by electrons:
-     c_bands      :     11.89s CPU     12.05s WALL (      18 calls)
-     sum_band     :      2.67s CPU      2.70s WALL (      18 calls)
-     v_of_rho     :      0.95s CPU      1.02s WALL (      20 calls)
-     newd         :      0.83s CPU      0.83s WALL (      20 calls)
-     PAW_pot      :      0.55s CPU      0.56s WALL (      22 calls)
-     mix_rho      :      0.11s CPU      0.12s WALL (      18 calls)
+     c_bands      :     12.65s CPU     12.89s WALL (      18 calls)
+     sum_band     :      2.97s CPU      3.06s WALL (      18 calls)
+     v_of_rho     :      1.11s CPU      1.17s WALL (      20 calls)
+     newd         :      0.84s CPU      0.86s WALL (      20 calls)
+     PAW_pot      :      0.54s CPU      0.55s WALL (      22 calls)
+     mix_rho      :      0.15s CPU      0.16s WALL (      18 calls)
 
      Called by c_bands:
-     init_us_2    :      0.29s CPU      0.29s WALL (     945 calls)
-     cegterg      :     11.43s CPU     11.58s WALL (     378 calls)
+     init_us_2    :      0.29s CPU      0.30s WALL (     945 calls)
+     cegterg      :     12.18s CPU     12.41s WALL (     378 calls)
 
      Called by *egterg:
-     cdiaghg      :      0.11s CPU      0.11s WALL (    1417 calls)
-     h_psi        :      8.51s CPU      8.64s WALL (    1501 calls)
-     s_psi        :      0.40s CPU      0.41s WALL (    1501 calls)
+     cdiaghg      :      0.13s CPU      0.13s WALL (    1417 calls)
+     h_psi        :      9.16s CPU      9.35s WALL (    1501 calls)
+     s_psi        :      0.42s CPU      0.43s WALL (    1501 calls)
      g_psi        :      0.07s CPU      0.07s WALL (    1102 calls)
 
      Called by h_psi:
-     h_psi:calbec :      0.60s CPU      0.61s WALL (    1501 calls)
-     vloc_psi     :      7.48s CPU      7.58s WALL (    1501 calls)
-     add_vuspsi   :      0.41s CPU      0.41s WALL (    1501 calls)
+     h_psi:calbec :      0.67s CPU      0.69s WALL (    1501 calls)
+     vloc_psi     :      8.00s CPU      8.17s WALL (    1501 calls)
+     add_vuspsi   :      0.44s CPU      0.45s WALL (    1501 calls)
 
      General routines
-     calbec       :      1.18s CPU      1.19s WALL (    2236 calls)
-     fft          :      0.89s CPU      0.93s WALL (     332 calls)
+     calbec       :      1.28s CPU      1.32s WALL (    2236 calls)
+     fft          :      1.09s CPU      1.12s WALL (     332 calls)
      ffts         :      0.03s CPU      0.03s WALL (      38 calls)
-     fftw         :      8.09s CPU      8.20s WALL (   19216 calls)
-     interpolate  :      0.08s CPU      0.08s WALL (      20 calls)
+     fftw         :      8.56s CPU      8.77s WALL (   19216 calls)
+     interpolate  :      0.09s CPU      0.09s WALL (      20 calls)
 
      Parallel routines
-     fft_scatt_xy :      0.85s CPU      0.87s WALL (   19586 calls)
-     fft_scatt_yz :      3.83s CPU      3.90s WALL (   19586 calls)
+     fft_scatt_xy :      0.94s CPU      0.96s WALL (   19586 calls)
+     fft_scatt_yz :      4.11s CPU      4.21s WALL (   19586 calls)
 
-     PWSCF        :     25.45s CPU     25.79s WALL
+     PWSCF        :     27.02s CPU     27.61s WALL
 
 
-   This run was terminated on:  13: 0:56  12Nov2025            
+   This run was terminated on:   8:56:26  13Nov2025            
 
 =------------------------------------------------------------------------------=
    JOB DONE.
