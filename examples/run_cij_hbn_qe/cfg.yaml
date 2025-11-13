@@ -17,8 +17,8 @@ output:
 backend: qe
 qe:
   exe: pw.x
-  para: mpirun -np 1
+  para: mpirun -np 3
   input: hbn.in
-  outdir: /scratch/asgouros/simuglue/cij_hbn_lmp/
+  outdir: OUTDIR
   prefix: hbn
 

@@ -1,0 +1,40 @@
+&control
+    calculation = 'relax',
+    restart_mode='from_scratch',
+    prefix='hbn',
+    tstress = .true.,
+    tprnfor = .true.,
+    pseudo_dir = '../../PSEUDO/',
+    outdir='/home/aps/Programs/SimuGlue/examples/run_cij_hbn_qe/OUTDIR/hbn/run.ref'
+
+/
+&system
+ ibrav= 0,
+ !a.u.
+ nat=2, ntyp=2,
+ ecutwfc =60.0, ecutrho=480.0,
+ occupations='smearing',
+ degauss=0.001
+/
+&electrons
+    diagonalization='david',
+    electron_maxstep = 100,
+    mixing_mode = 'plain',
+    mixing_beta = 0.7,
+    conv_thr =  1.0d-8
+/
+&ions
+/
+
+ATOMIC_SPECIES
+ B   10.810 B.pbe-n-kjpaw_psl.1.0.0.UPF
+ N   14.01  N.pbe-n-kjpaw_psl.1.0.0.UPF
+CELL_PARAMETERS {angstrom}
+2.5145971763751929 0.0000000000000000 0.0000000000000000
+1.2572985881875964 2.1777040196703266 0.0000000000000000
+0.0000000000000000 0.0000000000000000 20.1167774110015429
+ATOMIC_POSITIONS {angstrom}
+B 0.0000000000000000 0.0000000000000000 0.0000000000000000 
+N 1.2572985881875964 0.7258661355296395 0.0000000000000000 
+K_POINTS automatic
+8 8 1 0 0 0

@@ -4,7 +4,7 @@
     prefix='BN',
     tstress = .true.,
     tprnfor = .true.,
-    pseudo_dir = '/cyclonas_users/asgouros/projects/PhononQE/qe_psextra/',
+    pseudo_dir = '../../PSEUDO/',
     outdir='/home/asgouros/temp//MoS2_biaxial_/'
 
 /
@@ -37,5 +37,4 @@ ATOMIC_POSITIONS {alat}
 B        0.000000000   0.000000000   0.000000000
 N        0.5   0.288661   0.000000000
 K_POINTS automatic
-2 2 1 0 0 0
-!8 8 1 0 0 0
+8 8 1 0 0 0
