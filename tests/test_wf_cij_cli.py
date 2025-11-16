@@ -39,8 +39,6 @@ def test_cij_post_smoke(tmp_path):
     cfg = {
         "backend": "dummy",
         "workdir": str(workdir),
-        "data_file": "ignored",
-        "file_type": "none",
         "components": [1],
         "strains": [0.01],
         "output": {
@@ -54,13 +52,17 @@ def test_cij_post_smoke(tmp_path):
     # Reference case: zero stress
     ref_dir = workdir / "run.ref"
     ref_dir.mkdir()
-    ref_data = {"stress6": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+    ref_data = {"stress6": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                "cell": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+               }
     (ref_dir / "result.json").write_text(json.dumps(ref_data), encoding="utf-8")
 
     # Deformed case: simple non-zero σ_xx so C11 is well-defined
     case_dir = workdir / "run.c1_eps0.01"
     case_dir.mkdir()
-    def_data = {"stress6": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+    def_data = {"stress6": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                "cell": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+               }
     (case_dir / "result.json").write_text(json.dumps(def_data), encoding="utf-8")
 
     # Run post-processing

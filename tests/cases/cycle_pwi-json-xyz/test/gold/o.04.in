@@ -10,8 +10,8 @@
     outdir='/outdir_path/'
  /
  &system
-    ibrav=  0, A=2, nat=  3, ntyp= 3,
-    ecutwfc = 100.0, ecutrho=200.0
+ ibrav= 0, nat= 3, ntyp= 3,
+ ecutwfc = 100.0, ecutrho=200.0
  /
  &electrons
     diagonalization='david'
