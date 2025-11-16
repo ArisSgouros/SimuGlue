@@ -32,6 +32,17 @@ def _to_argv(x) -> list[str]:
         return shlex.split(x)
     return [str(x)]
 
+import re
+def warn_if_not_relax(qe_text: str) -> None:
+    for line in qe_text.splitlines():
+        s = line.lstrip()
+        if s.startswith("!"):
+            continue
+        m = re.search(r"calculation\s*=\s*['\"]([^'\"]+)['\"]", s)
+        if m and m.group(1).strip().lower() != "relax":
+            print(f"Warning: calculation='{m.group(1).strip()}' (expected 'relax')")
+            break
+
 # ---------- QE backend (skeleton) ----------
 @register_backend("qe")
 class QEBackend(Backend):
@@ -43,6 +54,8 @@ class QEBackend(Backend):
     def write_data(self, path: Path, atoms, cfg: Config, case_tag: str | None) -> None:
         input_path = Path(cfg.qe.get("input", None))
         input_text = input_path.read_text(encoding="utf-8")
+
+        warn_if_not_relax(input_text)
 
         prefix = cfg.qe.get("prefix", None)
         outdir_base = cfg.qe.get("outdir", None)
