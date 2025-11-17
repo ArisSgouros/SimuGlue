@@ -115,6 +115,35 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
                         file=sys.stderr,
                     )
 
+    # Calculate the compliance matrix
+    S6 = None  # default: no compliance
+
+    if sorted(components) != [1, 2, 3, 4, 5, 6]:
+        print(
+            "Compliance calculation requires all Voigt components [1..6]. "
+            f"Got components={components!r}. Skipping compliance (Sij).",
+            file=sys.stderr,
+        )
+    else:
+        # Build 6x6 stiffness matrix C in Voigt (engineering) form
+        C6 = np.zeros((6, 6), float)
+        for i in components:
+            for j in components:
+                C6[i - 1, j - 1] = CC_mean[i, j]
+
+        # apply factor of 2 to columns of off-diagonal (shear) elements: j=3..5 -> Voigt 4..6
+        for i in range(6):
+            for j in range(3, 6):
+                C6[i, j] *= 2.0
+
+        # Invert to get compliance in that mixed convention
+        S6 = np.linalg.inv(C6)
+
+        # Undo shear scaling on compliance (columns 4..6)
+        for i in range(6):
+            for j in range(3, 6):
+                S6[i, j] *= 0.5
+
     from ase import units
 
     units_cij = cfg.output.get("units_cij", "GPa")
@@ -134,11 +163,29 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
             f"Unsupported units_cij={units_cij!r}; supported: GPa, Pa, kbar, pa m."
         )
 
+    # ------------------------------------------------------------------
+    # Flatten C and S back into dict form for JSON export
+    # ------------------------------------------------------------------
+    C_mean_out = {}
+    C_sem_out = {}
+    S_out = {}
+
+    for i in components:
+        for j in components:
+            key_ij = f"{i}-{j}"
+            C_mean_out[key_ij] = CC_mean[i, j] * conv
+            C_sem_out[key_ij] = CC_sem[i, j] * conv
+
+            if S6 is not None:
+                # Only export S if it was actually computed
+                S_out[key_ij] = S6[i - 1, j - 1] / conv
+
     out = {
         "components": components,
         "strains": strains,
-        "C_mean": {f"{i}-{j}": CC_mean[i, j] * conv for i in components for j in components},
-        "C_sem":  {f"{i}-{j}": CC_sem[i, j]  * conv for i in components for j in components},
+        "C_mean": C_mean_out,
+        "C_sem": C_sem_out,
+        "S": S_out,
         "units": {"stress": units_cij, "strain": "-"},
         "meta": {
             "workdir": str(cfg.workdir),
