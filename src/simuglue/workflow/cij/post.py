@@ -155,7 +155,7 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
                 sa = CC_sem[i, j]
                 sb = CC_sem[j, i]
                 if np.isfinite(sa) and np.isfinite(sb):
-                    avg_sem = np.sqrt(sa**2 + sb**2)
+                    avg_sem = 0.5*np.sqrt(sa**2 + sb**2)
                     CC_sem[i, j] = CC_sem[j, i] = avg_sem
 
     # ------------------------------------------------------------------
