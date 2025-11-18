@@ -61,15 +61,15 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
     cell_ref = _load_cell(ref_path)
 
     # Accumulator: (i,j) -> list of samples
-    CC_all: Dict[Tuple[int, int], list[float]] = {}
-    for i in components:
-        for j in components:
-            CC_all[i, j] = []
+    CC_all: Dict[Tuple[int, int], list[float]] = {
+        (i, j): [] for i in components for j in components
+    }
 
     for eps in strains:
         if abs(eps) < 1e-12:
             print(f"[cij/post] skip near-zero strain eps={eps}", file=sys.stderr)
             continue
+
         for i in components:
             cid = make_case_id(i, eps)
             case_path = cfg.workdir / cid / "result.json"
@@ -97,6 +97,7 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
                 CC_mean[i, j] = float("nan")
                 CC_sem[i, j] = float("nan")
                 continue
+
             CC_mean[i, j] = float(samples.mean())
             if samples.size > 1:
                 CC_sem[i, j] = float(samples.std(ddof=1) / np.sqrt(samples.size))
@@ -106,16 +107,17 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
     # Symmetry checks (soft warning)
     for i in components:
         for j in components:
-            if (j, i) in CC_mean:
+            if (j, i) in CC_mean and j > i:
                 diff = abs(CC_mean[i, j] - CC_mean[j, i])
                 if diff > 1e-3:
+                    # NOTE: diff is in base units (eV/Å^3), not GPa.
                     print(
                         f"[cij/post] note: C[{i},{j}] != C[{j},{i}] "
-                        f"(diff={diff:.3f} GPa)",
+                        f"(diff={diff:.3e} in base units eV/Å^3)",
                         file=sys.stderr,
                     )
 
-    # Calculate the compliance matrix
+    # Calculate the compliance matrix (in base units, i.e. eV/Å^3)
     S6 = None  # default: no compliance
 
     if sorted(components) != [1, 2, 3, 4, 5, 6]:
@@ -131,18 +133,32 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
             for j in components:
                 C6[i - 1, j - 1] = CC_mean[i, j]
 
-        # Invert to get compliance in that mixed convention
-        S6 = np.linalg.inv(C6)
+        # Invert to get compliance; guard against singular / ill-conditioned matrices
+        try:
+            S6 = np.linalg.inv(C6)
+        except np.linalg.LinAlgError as exc:
+            print(
+                f"[cij/post] WARNING: C6 is singular or ill-conditioned; "
+                f"cannot compute compliance. Reason: {exc}",
+                file=sys.stderr,
+            )
+            S6 = None
 
     from ase import units
 
     units_cij = cfg.output.get("units_cij", "GPa")
 
+    # "Pa m" conversion:
+    #   start from eV/Å^3 -> Pa, then multiply by the *norm* of c (Å) and 1e-10 to get m.
+    #   This gives N/m for 2D materials even if c is tilted / non-orthogonal.
+    c_vec = cell_ref[2]
+    thickness_angstrom = float(np.linalg.norm(c_vec))
+
     converters = {
         "gpa":  1.0 / units.GPa,
         "pa":   1.0 / units.Pascal,
         "kbar": 1.0 / (1000.0 * units.bar),
-        "pa m": (1.0 / units.Pascal)*cell_ref[2][2]*1e-10
+        "pa m": (1.0 / units.Pascal) * thickness_angstrom * 1e-10,
     }
 
     key = units_cij.lower()
@@ -156,9 +172,9 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
     # ------------------------------------------------------------------
     # Flatten C and S back into dict form for JSON export
     # ------------------------------------------------------------------
-    C_mean_out = {}
-    C_sem_out = {}
-    S_out = {}
+    C_mean_out: Dict[str, float] = {}
+    C_sem_out: Dict[str, float] = {}
+    S_out: Dict[str, float] = {}
 
     for i in components:
         for j in components:
@@ -167,7 +183,8 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
             C_sem_out[key_ij] = CC_sem[i, j] * conv
 
             if S6 is not None:
-                # Only export S if it was actually computed
+                # S6 is in 1 / (base units).
+                # Divide by conv so that C·S = I still holds in the chosen units.
                 S_out[key_ij] = S6[i - 1, j - 1] / conv
 
     out = {
@@ -188,4 +205,3 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
     (cfg.workdir / out_name).write_text(json.dumps(out, indent=2), encoding="utf-8")
 
     return out
-
