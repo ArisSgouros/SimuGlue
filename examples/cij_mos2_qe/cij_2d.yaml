@@ -20,3 +20,4 @@ qe:
 output:
   cij_json: cij.json
   units_cij: gpa
+  symmetrize_cij: false

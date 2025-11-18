@@ -12,6 +12,7 @@ workdir: o.res_pa_m
 output:
   cij_json: cij.json
   units_cij: pa m
+  symmetrize_cij: false
 
 # QE-specific settings
 backend: qe
