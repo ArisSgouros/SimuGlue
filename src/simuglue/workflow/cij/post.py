@@ -85,7 +85,7 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
                 C_ij = (s6_def[jpos] - s6_ref[jpos]) / eps
                 CC_all[i, j].append(float(C_ij))
 
-    # Compute mean & SEM
+    # Compute mean & SEM in base units (eV/Å^3)
     CC_mean: Dict[Tuple[int, int], float] = {}
     CC_sem: Dict[Tuple[int, int], float] = {}
 
@@ -104,21 +104,64 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
             else:
                 CC_sem[i, j] = 0.0
 
-    # Symmetry checks (soft warning)
+    # ------------------------------------------------------------------
+    # 1) Symmetry checks (soft warning, on raw C_ij)
+    # ------------------------------------------------------------------
+    ABS_TOL = 1e-4   # eV/Å^3
+    REL_TOL = 1e-3   # 0.1 %
+
     for i in components:
         for j in components:
-            if (j, i) in CC_mean and j > i:
-                diff = abs(CC_mean[i, j] - CC_mean[j, i])
-                if diff > 1e-3:
-                    # NOTE: diff is in base units (eV/Å^3), not GPa.
-                    print(
-                        f"[cij/post] note: C[{i},{j}] != C[{j},{i}] "
-                        f"(diff={diff:.3e} in base units eV/Å^3)",
-                        file=sys.stderr,
-                    )
+            if j <= i or (j, i) not in CC_mean:
+                continue
 
-    # Calculate the compliance matrix (in base units, i.e. eV/Å^3)
-    S6 = None  # default: no compliance
+            a = CC_mean[i, j]
+            b = CC_mean[j, i]
+            if not (np.isfinite(a) and np.isfinite(b)):
+                continue
+
+            diff = abs(a - b)
+            scale = max(abs(a), abs(b))
+            rel = diff / scale if scale > 0 else 0.0
+
+            if (scale < ABS_TOL and diff > ABS_TOL) or (
+                scale >= ABS_TOL and diff > ABS_TOL and rel > REL_TOL
+            ):
+                print(
+                    f"[cij/post] note: C[{i},{j}] != C[{j},{i}] "
+                    f"(diff={diff:.3e} eV/Å^3 ≈ {diff/units.GPa:.3e} GPa; "
+                    f"rel={rel:.2e})",
+                    file=sys.stderr,
+                )
+
+    # ------------------------------------------------------------------
+    # 2) Optional symmetrization of C_ij (used everywhere downstream)
+    # ------------------------------------------------------------------
+    if cfg.output.get("symmetrize_cij", True):
+        for i in components:
+            for j in components:
+                if j < i or (j, i) not in CC_mean:
+                    continue
+
+                a = CC_mean[i, j]
+                b = CC_mean[j, i]
+                if not (np.isfinite(a) and np.isfinite(b)):
+                    continue
+
+                avg = 0.5 * (a + b)
+                CC_mean[i, j] = CC_mean[j, i] = avg
+
+                # Symmetrize SEM as well, if both sides are finite
+                sa = CC_sem[i, j]
+                sb = CC_sem[j, i]
+                if np.isfinite(sa) and np.isfinite(sb):
+                    avg_sem = np.sqrt(sa**2 + sb**2)
+                    CC_sem[i, j] = CC_sem[j, i] = avg_sem
+
+    # ------------------------------------------------------------------
+    # 3) Compliance matrix (S_ij) from (optionally symmetrized) C_ij
+    # ------------------------------------------------------------------
+    S6 = None
 
     if sorted(components) != [1, 2, 3, 4, 5, 6]:
         print(
@@ -144,13 +187,12 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
             )
             S6 = None
 
-    from ase import units
-
+    # ------------------------------------------------------------------
+    # Unit conversion for export
+    # ------------------------------------------------------------------
     units_cij = cfg.output.get("units_cij", "GPa")
 
-    # "Pa m" conversion:
-    #   start from eV/Å^3 -> Pa, then multiply by the *norm* of c (Å) and 1e-10 to get m.
-    #   This gives N/m for 2D materials even if c is tilted / non-orthogonal.
+    # 2D Pa·m conversion using |c|
     c_vec = cell_ref[2]
     thickness_angstrom = float(np.linalg.norm(c_vec))
 
@@ -170,7 +212,7 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
         )
 
     # ------------------------------------------------------------------
-    # Flatten C and S back into dict form for JSON export
+    # Export (using symmetrized C_ij if symmetrize_cij=True)
     # ------------------------------------------------------------------
     C_mean_out: Dict[str, float] = {}
     C_sem_out: Dict[str, float] = {}
@@ -183,8 +225,6 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
             C_sem_out[key_ij] = CC_sem[i, j] * conv
 
             if S6 is not None:
-                # S6 is in 1 / (base units).
-                # Divide by conv so that C·S = I still holds in the chosen units.
                 S_out[key_ij] = S6[i - 1, j - 1] / conv
 
     out = {
@@ -205,3 +245,4 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
     (cfg.workdir / out_name).write_text(json.dumps(out, indent=2), encoding="utf-8")
 
     return out
+
