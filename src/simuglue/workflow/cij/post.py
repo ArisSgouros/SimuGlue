@@ -131,18 +131,8 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
             for j in components:
                 C6[i - 1, j - 1] = CC_mean[i, j]
 
-        # apply factor of 2 to columns of off-diagonal (shear) elements: j=3..5 -> Voigt 4..6
-        for i in range(6):
-            for j in range(3, 6):
-                C6[i, j] *= 2.0
-
         # Invert to get compliance in that mixed convention
         S6 = np.linalg.inv(C6)
-
-        # Undo shear scaling on compliance (columns 4..6)
-        for i in range(6):
-            for j in range(3, 6):
-                S6[i, j] *= 0.5
 
     from ase import units
 
