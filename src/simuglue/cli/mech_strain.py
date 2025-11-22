@@ -37,9 +37,12 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
         prog=prog or "sgl mech strain",
         description=(
             "Convert deformation gradient F to strain tensor E.\n\n"
-            "Input (from -i/--input or stdin) must be F as:\n"
+            "Input sources:\n"
+            "  • --F \"...\"       direct tensor specification\n"
+            "  • --input <file>   path or '-' for stdin\n\n"
+            "  accepted formats:"
             "  'F11 F12 F13; F21 F22 F23; F31 F32 F33'\n"
-            "or 9 space-separated numbers.\n\n"
+            "  or 9 space-separated numbers.\n\n"
             "Measures:\n"
             "  engineering     : eps = 0.5 * ((F - I) + (F - I)^T)\n"
             "  green-lagrange  : E   = 0.5 * (F^T F - I)\n"
@@ -55,6 +58,14 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
         "--input",
         default="-",
         help="Input deformation gradient: path or '-' for stdin (default: '-').",
+    )
+
+    p.add_argument(
+        "--F",
+        help=(
+            "Direct deformation gradient tensor input: 'F11 F12 F13; F21 F22 F23; F31 F32 F33'"
+            "Overrides --input."
+        ),
     )
 
     p.add_argument(
@@ -102,10 +113,13 @@ def main(argv=None, prog: str | None = None) -> int:
     - output_target: path or '-' for stdout
     """
     # read
-    if args.input == "-":
-        text = sys.stdin.read()
+    if args.F is not None:
+        text = args.F
     else:
-        text = Path(args.input).read_text(encoding="utf-8")
+        if args.input == "-":
+            text = sys.stdin.read()
+        else:
+            text = Path(args.input).read_text(encoding="utf-8")
 
     # parse F
     F = parse_3x3(text)
@@ -130,13 +144,6 @@ def main(argv=None, prog: str | None = None) -> int:
         sys.stdout.write(out)
     else:
         Path(args.output).write_text(out, encoding="utf-8")
-
-#    with ExitStack() as stack:
-#        if dst == "-":
-#            fh = sys.stdout
-#        else:
-#            fh = stack.enter_context(Path(dst).open("w"))
-#        write_lammps_data(fh, atoms, atom_style=atom_style, units=units, force_skew=force_skew)
 
     return 0
 
