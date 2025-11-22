@@ -235,3 +235,37 @@ def test_unphysical_hencky_nonsymmetric(tmp_path: Path):
     # This comes from _parse_3x3 symmetry check
     assert "must be symmetric" in res.stderr.lower()
 
+
+def test_unphysical_hencky_nonsymmetric_input_E(tmp_path: Path):
+    """
+    For Hencky, any symmetric E is mathematically valid (log/exp bijection).
+    The physically invalid case is a non-symmetric 'strain' tensor.
+
+    Our CLI enforces symmetry at parse time, so an asymmetric 3x3 input
+    must be rejected before reaching Hencky logic.
+    """
+    # Asymmetric "strain" matrix
+    E_text = "0 1 0; 0 0 0; 0 0 0"
+
+    cmd = [
+        "sgl",
+        "mech",
+        "defgrad",
+        "--E",
+        E_text,
+        "--measure",
+        "hencky",
+        "--precision",
+        "12",
+    ]
+    res = subprocess.run(
+        cmd,
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+    )
+
+    assert res.returncode != 0
+    # This comes from _parse_3x3 symmetry check
+    assert "must be symmetric" in res.stderr.lower()
+
