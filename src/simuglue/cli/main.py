@@ -24,7 +24,6 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
             "pwo2json": ("simuglue.cli.qe_pwo2json", "QE output (.out/.pwo) → JSON", "sgl qe pwo2json"),
             "pwi2json": ("simuglue.cli.qe_pwi2json", "QE input  (.in/.pwi) → JSON", "sgl qe pwi2json"),
             "json2xyz": ("simuglue.cli.qe_json2xyz", "QE JSON → EXTXYZ",           "sgl qe json2xyz"),
-            "xyz2qe":   ("simuglue.cli.qe_xyz2qe",   "EXTXYZ → QE input",           "sgl qe xyz2qe"),
         },
         'quantum espresso helpers',
     ],
