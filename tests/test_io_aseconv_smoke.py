@@ -79,7 +79,7 @@ def test_extxyz_to_lammps_data_and_back(tmp_path: Path):
         "--iformat", "extxyz",
         "-o", str(data_file),
         "--oformat", "lammps-data",
-        "--lammps-style", "atomic",
+        "--oopts", "lammps-data.style=atomic",
         "--overwrite",
     ])
 
@@ -89,7 +89,7 @@ def test_extxyz_to_lammps_data_and_back(tmp_path: Path):
     run_aseconv(tmp_path, [
         "-i", str(data_file),
         "--iformat", "lammps-data",
-        "--lammps-style", "atomic",
+        "--iopts", "lammps-data.style=atomic",
         "-o", str(back_xyz),
         "--oformat", "extxyz",
         "--overwrite",
@@ -181,6 +181,7 @@ def test_lammps_dump_to_extxyz(tmp_path: Path):
     assert xs.min() == pytest.approx(0.0)
     assert xs.max() == pytest.approx(1.0)
 
+
 def test_stdin_stdout_extxyz(tmp_path: Path):
     """extxyz -> extxyz via stdin/stdout: ensure streaming path works."""
     extxyz_text = (
@@ -208,6 +209,7 @@ def test_stdin_stdout_extxyz(tmp_path: Path):
 
     assert len(a_in) == len(a_out)
     assert a_in.get_chemical_symbols() == a_out.get_chemical_symbols()
+
 
 def test_espresso_in_to_extxyz(tmp_path: Path):
     """QE espresso-in -> extxyz: parse cell + positions + symbols."""
@@ -329,8 +331,8 @@ Atoms # atomic
             str(data_file),
             "--iformat",
             "lammps-data",
-            "--lammps-style",
-            "atomic",
+            "--iopts",
+            "lammps-data.style=atomic",
             "-o",
             str(out_xyz),
             "--oformat",
@@ -357,6 +359,7 @@ Atoms # atomic
     ])
 
     assert cell == pytest.approx(expected, rel=1e-12, abs=1e-12)
+
 
 def test_lammps_data_full_to_extxyz(tmp_path: Path):
     """lammps-data (Atoms # full) -> extxyz: verify we parse style=full correctly."""
@@ -396,8 +399,8 @@ Atoms # full
             str(data_file),
             "--iformat",
             "lammps-data",
-            "--lammps-style",
-            "full",
+            "--iopts",
+            "lammps-data.style=full",
             "-o",
             str(out_xyz),
             "--oformat",
@@ -428,6 +431,7 @@ Atoms # full
         [0.0, 0.0,10.0],
     ])
     assert cell == pytest.approx(expected, rel=1e-12, abs=1e-12)
+
 
 def test_lammps_dump_select_first_two_frames(tmp_path: Path):
     """lammps-dump-text with 3 frames -> select first 2 via --frames and check."""
@@ -507,9 +511,10 @@ def test_lammps_dump_select_first_two_frames(tmp_path: Path):
     # Frame 1: second atom at x = 2.0
     assert frames[1].get_positions()[1, 0] == pytest.approx(2.0)
 
+
 def test_lammps_data_small_skew_without_force_skew(tmp_path: Path):
     """
-    extxyz with a very small skew (1e-8) -> lammps-data without --lammps-force-skew.
+    extxyz with a very small skew (1e-8) -> lammps-data without force_skew.
 
     Expectation:
       The box is treated as orthorhombic (no triclinic tilt line "xy xz yz"),
@@ -532,7 +537,7 @@ def test_lammps_data_small_skew_without_force_skew(tmp_path: Path):
         encoding="utf-8",
     )
 
-    # extxyz -> lammps-data WITHOUT --lammps-force-skew
+    # extxyz -> lammps-data WITHOUT force_skew
     run_aseconv(
         tmp_path,
         [
@@ -544,8 +549,8 @@ def test_lammps_data_small_skew_without_force_skew(tmp_path: Path):
             str(out_data),
             "--oformat",
             "lammps-data",
-            "--lammps-style",
-            "atomic",
+            "--oopts",
+            "lammps-data.style=atomic",
             "--overwrite",
         ],
     )
@@ -559,9 +564,10 @@ def test_lammps_data_small_skew_without_force_skew(tmp_path: Path):
     # and NO extra "xy xz yz" tilt line.
     assert "xy xz yz" not in text
 
+
 def test_lammps_data_small_skew_with_force_skew(tmp_path: Path):
     """
-    extxyz with a very small skew (1e-8) -> lammps-data WITH --lammps-force-skew.
+    extxyz with a very small skew (1e-8) -> lammps-data WITH force_skew.
 
     Expectation:
       The box is written as triclinic (tilt line 'xy xz yz' present),
@@ -584,7 +590,7 @@ def test_lammps_data_small_skew_with_force_skew(tmp_path: Path):
         encoding="utf-8",
     )
 
-    # extxyz -> lammps-data WITH --lammps-force-skew
+    # extxyz -> lammps-data WITH force_skew
     run_aseconv(
         tmp_path,
         [
@@ -596,9 +602,8 @@ def test_lammps_data_small_skew_with_force_skew(tmp_path: Path):
             str(out_data),
             "--oformat",
             "lammps-data",
-            "--lammps-style",
-            "atomic",
-            "--lammps-force-skew",
+            "--oopts",
+            "lammps-data.style=atomic,lammps-data.force_skew=true",
             "--overwrite",
         ],
     )
@@ -618,7 +623,9 @@ def test_lammps_data_small_skew_with_force_skew(tmp_path: Path):
     assert xz == pytest.approx(0.0, abs=1e-12)
     assert yz == pytest.approx(0.0, abs=1e-12)
 
+
 from ase.io.lammpsdata import read_lammps_data
+
 
 def test_triclinic_extxyz_traj_lammps_traj_extxyz_cycle(tmp_path: Path):
     """
@@ -682,8 +689,8 @@ def test_triclinic_extxyz_traj_lammps_traj_extxyz_cycle(tmp_path: Path):
             str(data),
             "--oformat",
             "lammps-data",
-            "--lammps-style",
-            "atomic",
+            "--oopts",
+            "lammps-data.style=atomic",
             "--overwrite",
         ],
     )
@@ -696,8 +703,8 @@ def test_triclinic_extxyz_traj_lammps_traj_extxyz_cycle(tmp_path: Path):
             str(data),
             "--iformat",
             "lammps-data",
-            "--lammps-style",
-            "atomic",
+            "--iopts",
+            "lammps-data.style=atomic",
             "-o",
             str(traj2),
             "--oformat",
@@ -755,6 +762,7 @@ def test_triclinic_extxyz_traj_lammps_traj_extxyz_cycle(tmp_path: Path):
         a_in.get_positions(), rel=1e-8, abs=1e-8
     )
 
+
 from ase.io import read as ase_read
 
 
@@ -788,8 +796,8 @@ def test_aseconv_extxyz_lammpsdata_roundtrip_stdin_stdout(tmp_path: Path):
             "-",
             "--oformat",
             "lammps-data",
-            "--lammps-style",
-            "atomic",
+            "--oopts",
+            "lammps-data.style=atomic",
         ],
         stdin=extxyz_text,
     )
@@ -803,8 +811,8 @@ def test_aseconv_extxyz_lammpsdata_roundtrip_stdin_stdout(tmp_path: Path):
             "-",
             "--iformat",
             "lammps-data",
-            "--lammps-style",
-            "atomic",
+            "--iopts",
+            "lammps-data.style=atomic",
             "-o",
             "-",
             "--oformat",
