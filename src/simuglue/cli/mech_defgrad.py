@@ -2,7 +2,7 @@ from __future__ import annotations
 import argparse
 
 from simuglue.mechanics.kinematics import defgrad_from_strain
-from simuglue.io.matrix_3x3 import parse_3x3, ensure_symmetric, format_3x3, ensure_symmetric
+from simuglue.io.matrix_3x3 import parse_3x3, ensure_symmetric, format_3x3
 from simuglue.mechanics.voigt import parse_voigt6
 
 from pathlib import Path
@@ -46,15 +46,19 @@ def parse_strain(text: str, kind: StrainKind = "auto") -> np.ndarray:
         "Could not infer strain format in auto mode: expected 9 (3x3) or 6 (Voigt) numbers."
     )
 
+
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog=prog or "sgl mech defgrad",
         description=(
             "Convert a symmetric strain tensor E to a deformation gradient F.\n\n"
-            "Input (from -i/--input or stdin) is plain text:\n"
-            "  --kind full : 3x3 as 'exx exy exz; eyx eyy eyz; ezx ezy ezz'\n"
-            "  --kind voigt: 'exx eyy ezz gyz gxz gxy' (gij = 2eij, i!=j)\n"
-            "  --kind auto : guess 9 -> full, 6 -> voigt\n\n"
+            "Input sources:\n"
+            "  • --E \"...\"       direct tensor specification\n"
+            "  • --input <file>   path or '-' for stdin\n\n"
+            "Accepted formats for --E / --input:\n"
+            "  --kind full  : 3x3 matrix, e.g. 'exx exy exz; eyx eyy eyz; ...'\n"
+            "  --kind voigt : exx eyy ezz gyz gxz gxy (gij = 2eij)\n"
+            "  --kind auto  : detect 9 → full, 6 → voigt\n\n"
             "Measures:\n"
             "  engineering     : F = I + E (small-strain, rotation-free approximation)\n"
             "  green-lagrange  : E = 0.5(F^T F - I), inverted as pure stretch (R = I)\n"
@@ -68,7 +72,15 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
         "-i",
         "--input",
         default="-",
-        help="Input strain source: path or '-' for stdin (default: '-').",
+        help="Input strain source: path or '-' for stdin (ignored if --E is given).",
+    )
+
+    p.add_argument(
+        "--E",
+        help=(
+            "Direct strain tensor input: either 9 numbers (full symmetric 3x3) "
+            "or 6 Voigt components. Overrides --input."
+        ),
     )
 
     p.add_argument(
@@ -89,7 +101,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
         "-o",
         "--output",
         default="-",
-        help="Output target for F: path or '-' for stdout (default: '-').",
+        help="Output target for F: path or '-' for stdout.",
     )
 
     p.add_argument(
@@ -107,10 +119,13 @@ def main(argv=None, prog: str | None = None) -> int:
     args = parser.parse_args(argv)
 
     # read
-    if args.input == "-":
-        text = sys.stdin.read()
+    if args.E is not None:
+        text = args.E
     else:
-        text = Path(args.input).read_text(encoding="utf-8")
+        if args.input == "-":
+            text = sys.stdin.read()
+        else:
+            text = Path(args.input).read_text(encoding="utf-8")
 
     # parse strain
     E = parse_strain(text, kind=args.kind)
@@ -128,6 +143,8 @@ def main(argv=None, prog: str | None = None) -> int:
         sys.stdout.write(out)
     else:
         Path(args.output).write_text(out, encoding="utf-8")
+
+    return 0
 
 if __name__ == "__main__":
     raise SystemExit(main())
