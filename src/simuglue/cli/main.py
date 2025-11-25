@@ -15,7 +15,6 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
         {
             "aseconv": ("simuglue.cli.io_aseconv", "Convert file types using ASE modules", "sgl io aseconv"),
             "nepconv": ("simuglue.cli.io_nepconv", "Convert file extxyz between NEP and ASE", "sgl io nepconv"),
-            "geom2pwi":   ("simuglue.cli.io_geom2pwi",   "ASE compatible → QE input", "sgl io geom2pwi"),
         },
         'io operations / file converters',
     ],
