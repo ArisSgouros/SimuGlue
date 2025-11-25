@@ -27,17 +27,11 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
         },
         'quantum espresso helpers',
     ],
-    "xform": [
-        {
-            "xyz":    ("simuglue.cli.mech_xform-xyz",    "Transform XYZ",         "sgl xform xyz"),
-            "lammps": ("simuglue.cli.mech_xform-lammps", "Transform LAMMPS data", "sgl xform lammps"),
-        },
-        'deform configurations',
-    ],
     "mech": [
         {
             "defgrad": ("simuglue.cli.mech_defgrad", "Transform strain to deformation gradient", "sgl mech defgrad"),
             "strain": ("simuglue.cli.mech_strain", "Transform deformation gradient to strain", "sgl mech strain"),
+            "xform": ("simuglue.cli.mech_xform", "Transform XYZ", "sgl mech xform"),
         },
         'mechanics',
     ],

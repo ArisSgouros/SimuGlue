@@ -27,7 +27,7 @@ def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
 
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog=prog or "sgl mech deform-xyz",
+        prog=prog or "sgl mech xform",
         description=(
             "Apply a linear deformation gradient F to an extxyz structure "
             "(single or multi-frame). "
