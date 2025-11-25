@@ -25,7 +25,7 @@ def test_transf_xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     cfg = yaml.safe_load((case_dir / "case.yaml").read_text(encoding="utf-8"))
 
     exe = "sgl"
-    cli = [exe, "xform","xyz"]
+    cli = [exe, "mech", "xform"]
     check_cli_or_skip(cli)
 
     args = cli
