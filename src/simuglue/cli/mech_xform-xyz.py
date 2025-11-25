@@ -10,7 +10,6 @@ from ase import Atoms
 from ase.io import read, write
 
 from simuglue.transform.linear import apply_transform
-from simuglue.cli._xyz_io import _iter_frames
 from simuglue.io.matrix_3x3 import parse_3x3
 
 def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
@@ -64,6 +63,12 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
              "Default: first frame only.",
     )
 
+    p.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Allow overwriting an existing output file (only when output is not '-').",
+    )
+
     return p
 
 
@@ -105,54 +110,47 @@ def main(argv=None, prog: str | None = None) -> int:
 
     frames_sel = _parse_frames_arg(args.frames)
 
-    # -------- read input frames --------
-    out_frames: List[Atoms] = []
-
+    # -------- 1) read input frames (all) --------
+    # Decide source (stdin vs file)
     if args.input == "-":
-        # Read all frames from stdin as extxyz
-        try:
-            images = read(sys.stdin, format="extxyz", index=":")
-        except Exception as exc:
-            parser.exit(status=1, message=f"Failed to read extxyz from stdin: {exc}\n")
-
-        if isinstance(images, Atoms):
-            all_frames = [images]
-        else:
-            all_frames = list(images)
-
-        sel_frames = _select_frames_from_list(all_frames, frames_sel)
-
-        for atoms_ref in sel_frames:
-            atoms_def = apply_transform(atoms_ref, F)
-            out_frames.append(atoms_def)
-
+        src = sys.stdin
     else:
         in_path = Path(args.input)
         if not in_path.is_file():
             parser.exit(status=1, message=f"Input file not found: {in_path}\n")
+        src = in_path
 
-        # Use existing helper for file-based extxyz iteration
-        for _, atoms_ref in _iter_frames(in_path, frames_sel):
-            atoms_def = apply_transform(atoms_ref, F)
-            out_frames.append(atoms_def)
+    # ASE read call
+    try:
+        images = read(src, format="extxyz", index=":")
+    except Exception as exc:
+        parser.exit(status=1, message=f"Failed to read extxyz: {exc}\n")
 
-    if not out_frames:
+    # Normalize to list[Atoms]
+    if isinstance(images, Atoms):
+        all_frames: List[Atoms] = [images]
+    else:
+        all_frames = list(images)
+
+    # -------- 2) apply selection --------
+    in_frames = _select_frames_from_list(all_frames, frames_sel)
+
+    if not in_frames:
         parser.exit(status=1, message="No frames selected or read; nothing to do.\n")
 
-    # -------- write output --------
+    # -------- 3) deform atoms --------
+    out_frames: List[Atoms] = [apply_transform(atoms_ref, F) for atoms_ref in in_frames]
+
+    # -------- 4) write output --------
     if args.output == "-":
-        # Write to stdout as extxyz; no extra messages.
-        if len(out_frames) == 1:
-            write(sys.stdout, out_frames[0], format="extxyz")
-        else:
-            write(sys.stdout, out_frames, format="extxyz")
+        out_dst = sys.stdout
     else:
         out_path = Path(args.output)
-        # No overwrite guard here; mimic your other tools if needed
-        if len(out_frames) == 1:
-            write(out_path, out_frames[0], format="extxyz")
-        else:
-            write(out_path, out_frames, format="extxyz")
+        if out_path.exists() and not args.overwrite:
+            parser.exit(status=1, message=f"Refusing to overwrite existing file: {out_path}\n")
+        out_dst = out_path
+
+    write(out_dst, out_frames, format="extxyz")
 
     return 0
 
