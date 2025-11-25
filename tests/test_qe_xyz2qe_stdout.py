@@ -6,7 +6,7 @@ import pytest
 from ase import Atoms
 from ase.io import write
 
-from simuglue.cli.qe_xyz2qe import main  # adjust import to your actual CLI module
+from simuglue.cli.io_xyz2pwi import main  # adjust import to your actual CLI module
 
 
 PWI_TEMPLATE = dedent(

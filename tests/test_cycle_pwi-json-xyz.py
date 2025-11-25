@@ -33,7 +33,7 @@ def test_json2xyz_cli(case_dir: Path, tmp_path_cwd: Path, update_gold: bool):
     exe = "sgl"
     cli_pwi2json = [exe, "qe", "pwi2json"]
     cli_json2xyz = [exe, "qe", "json2xyz"]
-    cli_xyz2qe   = [exe, "qe", "xyz2qe"]
+    cli_xyz2qe   = [exe, "io", "xyz2pwi"]
  
     for cli in [cli_pwi2json, cli_json2xyz, cli_xyz2qe]:
         check_cli_or_skip(cli)
