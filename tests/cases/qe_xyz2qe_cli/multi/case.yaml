@@ -1,11 +1,9 @@
-output: pref_multi
+output: pref_multi.in
 frames: all
 inputs:
   - header.in
   - multi.xyz
 outputs:
-  - pref_multi_00000.in
-  - pref_multi_00001.in
+  - pref_multi.in
 gold: 
-  - pref_multi_00000.in
-  - pref_multi_00001.in
+  - pref_multi.in
