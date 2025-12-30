@@ -23,7 +23,7 @@ def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
 
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog=prog or "sgl io supercell",
+        prog=prog or "sgl build supercell",
         description=(
             "Construct a supercell by replicating an atomic structure along the cell "
             "vectors a, b, and c. Supports single- or multi-frame extxyz input and "

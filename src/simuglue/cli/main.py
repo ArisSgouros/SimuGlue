@@ -16,9 +16,14 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
             "aseconv": ("simuglue.cli.io_aseconv", "Convert file types using ASE modules", "sgl io aseconv"),
             "nepconv": ("simuglue.cli.io_nepconv", "Convert file extxyz between NEP and ASE", "sgl io nepconv"),
             "xyz2pwi": ("simuglue.cli.io_xyz2pwi", "EXTXYZ → QE input", "sgl io xyz2pwi"),
-            "supercell": ("simuglue.cli.io_supercell", "Replicate EXTXYZ along a, b and c cell vectors", "sgl io supercell"),
         },
         'io operations / file converters',
+    ],
+    "build": [
+        {
+            "supercell": ("simuglue.cli.build_supercell", "Replicate EXTXYZ along a, b and c cell vectors", "sgl build supercell"),
+        },
+        'build operations',
     ],
     "qe": [
         {

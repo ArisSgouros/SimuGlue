@@ -8,7 +8,7 @@ import numpy as np
 from ase import Atoms
 from ase.io import read, write
 
-from simuglue.cli.io_supercell import main  # noqa: F401
+from simuglue.cli.build_supercell import main  # noqa: F401
 
 
 def _make_two_frame_extxyz(path: Path) -> None:
