@@ -20,6 +20,20 @@ def _parse_frames_arg(frames_arg: str | None) -> str | int | None:
     s = frames_arg.strip().lower()
     return "all" if s == "all" else int(s)
 
+def _repl_ordered(atoms: Atoms, na: int, nb: int, nc: int, order: str = "abc") -> Atoms:
+    if sorted(order) != ["a", "b", "c"]:
+        raise ValueError(f"order must be a permutation of 'abc', got {order!r}")
+
+    reps = {"a": na, "b": nb, "c": nc}
+    axis = {"a": 0, "b": 1, "c": 2}
+
+    out = atoms
+    for ch in order:  # first = fastest varying
+        r = [1, 1, 1]
+        r[axis[ch]] = reps[ch]
+        out = out.repeat(tuple(r))
+    return out
+
 
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -54,6 +68,17 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
         help=(
             "Replicate along cell vectors a, b, c "
             "(NA NB NC; default: 1 1 1)."
+        ),
+    )
+
+    p.add_argument(
+        "--order",
+        default="abc",
+        choices=("abc", "acb", "bac", "bca", "cab", "cba"),
+        help=(
+            "Replication loop order for generating images. "
+            "Uses a,b,c for the three cell vectors. Default: abc. "
+            "Example: --order bac replicates b fastest, then a, then c."
         ),
     )
 
@@ -104,6 +129,8 @@ def main(argv=None, prog: str | None = None) -> int:
             message="Error: --repl values must be positive integers ≥ 1\n",
         )
 
+    order = args.order
+
     frames_sel = _parse_frames_arg(args.frames)
 
     # -------- 1) read input frames (all) --------
@@ -135,7 +162,7 @@ def main(argv=None, prog: str | None = None) -> int:
         parser.exit(status=1, message="No frames selected or read; nothing to do.\n")
 
     # -------- 3) replicate atoms --------
-    out_frames: List[Atoms] = [atoms_ref.repeat((na, nb, nc)) for atoms_ref in in_frames]
+    out_frames: List[Atoms] = [_repl_ordered(atoms_ref, na, nb, nc, order=order) for atoms_ref in in_frames]
 
     # -------- 4) write output --------
     if args.output == "-":
