@@ -1,0 +1,31 @@
+# LAMMPS data file
+
+8 atoms
+0 bonds
+0 angles
+0 dihedrals
+
+2 atom types
+0 bond types
+0 angle types
+0 dihedral types
+
+0.0 5.6402 xlo xhi
+0.0 5.6402 ylo yhi
+0.0 5.6402 zlo zhi
+
+Masses
+
+1      22.989769 # Na
+2      35.453000 # Cl
+
+Atoms
+
+1	1	1	1	0	0	0
+2	1	1	1	2.8201	2.8201	0
+3	1	1	1	0	2.8201	2.8201
+4	1	1	1	2.8201	0	2.8201
+5	1	2	-1	2.8201	0	0
+6	1	2	-1	0	2.8201	0
+7	1	2	-1	0	0	2.8201
+8	1	2	-1	2.8201	2.8201	2.8201
