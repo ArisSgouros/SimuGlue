@@ -101,11 +101,11 @@ def _read_atoms(
 
     # --- LAMMPS data ---
     if fmt == "lammps-data":
-        style = opts.get("style", "full")
+        atom_style = opts.get("style", "full")
         units = opts.get("units", "metal")
         if units not in ("metal", "real"):
             raise ValueError(f"Unsupported LAMMPS units for lammps-data: {units}")
-        atoms = read_lammps_data(source, style=style, units=units)
+        atoms = read_lammps_data(source, atom_style=atom_style, units=units)
         return [atoms]
 
     # --- LAMMPS dump (text) ---
