@@ -5,8 +5,8 @@ import sys
 
 from ase import Atoms
 from ase.io import read, write
-from ase.io.lammpsdata import read_lammps_data, write_lammps_data
 from io import StringIO
+from simuglue.ase_patches.lammpsdata import read_lammps_data, write_lammps_data
 
 SUPPORTED_INPUTS = {
     "extxyz",
