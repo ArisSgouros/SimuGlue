@@ -39,10 +39,16 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
         {
             "cij": ("simuglue.cli.wf_cij", "Elastic constants (Cij) workflow", "sgl wf cij init|run|parse|post|all"),
         },
-        'workflows'
-    ]
-}
+        'workflows',
+    ],    
 
+    "lmp": [
+        {
+            "update-geom": ("simuglue.cli.lmp_update_geom","Update LAMMPS data geometry from an ASE structure while preserving topology", "sgl lmp update-geom"),
+        },
+        'lammps file manipulatiof', # <-- ADD THIS LINE (or similar descriptive text)
+        ]
+}
 def _run_leaf(mod_path: str, prog: str, extra: list[str]) -> int:
     """Import the leaf CLI and run it. With no args, show its help."""
     inner = import_module(mod_path).main
