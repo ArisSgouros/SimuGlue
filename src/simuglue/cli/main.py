@@ -22,6 +22,7 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
     "build": [
         {
             "supercell": ("simuglue.cli.build_supercell", "Replicate EXTXYZ along a, b and c cell vectors", "sgl build supercell"),
+            "crystalbuilder": ("simuglue.cli.build_crystalbuilder", "Eval CrystalBuilder (hash: fa177b5)", "sgl build crystalbuilder"),
         },
         'build operations',
     ],
