@@ -394,6 +394,8 @@ def write_lammps_data(
     velocities: bool = False,
     units: str = 'metal',
     bonds: bool = True,
+    angles: bool = True,
+    dihedrals: bool = True,
     atom_style: str = 'atomic',
 ):
     """Write atomic structure data to a LAMMPS data file.
@@ -479,6 +481,47 @@ def write_lammps_data(
                         n_bond_types = bond_type
         fd.write(f'{n_bonds} bonds\n')
         fd.write(f'{n_bond_types} bond types\n\n')
+
+    angles_in = []
+    if (angles and (atom_style == 'full') and
+            (atoms.arrays.get('angles') is not None)):
+        n_angles = 0
+        n_angle_types = 1
+        for i, anglesi in enumerate(atoms.arrays['angles']):
+            if anglesi != '_':
+                for angle in anglesi.split(','):
+                    parts = re.split(r"[-()]+", angle) # at1, at3, type
+                    angle_type = int(parts[2])
+                    at1 = int(parts[0]) + 1
+                    at2 = int(i) + 1
+                    at3 = int(parts[1]) + 1
+                    angles_in.append((angle_type, at1, at2, at3))
+                    n_angles = n_angles + 1
+                    if angle_type > n_angle_types:
+                        n_angle_types = angle_type
+        fd.write(f'{n_angles} angles\n')
+        fd.write(f'{n_angle_types} angle types\n\n')
+
+    dihedrals_in = []
+    if (dihedrals and (atom_style == 'full') and
+            (atoms.arrays.get('dihedrals') is not None)):
+        n_dihedrals = 0
+        n_dihedral_types = 1
+        for i, dihedralsi in enumerate(atoms.arrays['dihedrals']):
+            if dihedralsi != '_':
+                for dihedral in dihedralsi.split(','):
+                    parts = re.split(r"[-()]+", dihedral) # at2, at3, at4, type
+                    dihedral_type = int(parts[3])
+                    at1 = int(i) + 1
+                    at2 = int(parts[0]) + 1
+                    at3 = int(parts[1]) + 1
+                    at4 = int(parts[2]) + 1
+                    dihedrals_in.append((dihedral_type, at1, at2, at3, at4))
+                    n_dihedrals = n_dihedrals + 1
+                    if dihedral_type > n_dihedral_types:
+                        n_dihedral_types = dihedral_type
+        fd.write(f'{n_dihedrals} dihedrals\n')
+        fd.write(f'{n_dihedral_types} dihedral types\n\n')
 
     if prismobj is None:
         prismobj = Prism(atoms.get_cell(), reduce_cell=reduce_cell)
@@ -598,6 +641,25 @@ def write_lammps_data(
                 at1 = bonds_in[i][1]
                 at2 = bonds_in[i][2]
                 fd.write(f'{i + 1:>3} {bond_type:>3} {at1:>3} {at2:>3}\n')
+        if angles and (atoms.arrays.get('angles') is not None):
+            fd.write('\nAngles\n\n')
+            for i in range(n_angles):
+                angle_type = angles_in[i][0]
+                at1 = angles_in[i][1]
+                at2 = angles_in[i][2]
+                at3 = angles_in[i][3]
+                fd.write(f'{i + 1:>3} {angle_type:>3} {at1:>3} {at2:>3} {at3:>3}\n')
+        if dihedrals and (atoms.arrays.get('dihedrals') is not None):
+            fd.write('\nDihedrals\n\n')
+            for i in range(n_dihedrals):
+                dihedral_type = dihedrals_in[i][0]
+                at1 = dihedrals_in[i][1]
+                at2 = dihedrals_in[i][2]
+                at3 = dihedrals_in[i][3]
+                at4 = dihedrals_in[i][4]
+                fd.write(f'{i + 1:>3} {dihedral_type:>3} {at1:>3} {at2:>3} {at3:>3} {at4:>3}\n')
+
+
     else:
         raise ValueError(atom_style)
 
