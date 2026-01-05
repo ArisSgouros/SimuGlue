@@ -1,0 +1,35 @@
+# SimuGlue Workflow Configuration for hBN Monolayer Elastic Constants (Cij)
+# Reference: PhysRevB.111.155443 (2025)
+
+workdir: o.hbn_res_2d   # Renamed for hBN output
+
+backend: lammps
+
+# which stiffness components to build (Voigt indices)
+# 2D hBN example: xx,yy,xy → 1,2,6
+components: [1, 2, 6]
+
+# strain magnitudes used for finite differences
+# Using small strains for MM calculation
+strains: [0.00001, -0.00001]
+
+# LAMMPS-specific settings
+lammps:
+  exe: lmp_mpi
+  units: metal
+  # CRITICAL CHANGE: Must be 'full' to process bonds/angles/dihedrals
+  atom_style: full
+  input_template: in.template
+  data_file: in.data
+  # CRITICAL ADDITION: This tells SimuGlue to preserve topology from in.data
+  topology_data_file: in.data 
+
+# Files to be copied to each temporary case directory
+common_files: [_hbn_potential.mod]
+common_path: '.'
+
+# output
+output:
+  cij_json: cij.json
+  units_cij: gpa 
+  symmetrize_cij: false
