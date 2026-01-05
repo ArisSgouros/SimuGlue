@@ -1,0 +1,18 @@
+
+1 bond types
+2 angle types
+2 dihedral types
+
+Bond Types
+
+1 1 2
+
+Angle Types
+
+1 1 2 1
+2 2 1 2
+
+Dihedral Types
+
+1 1 2 1 2 cis
+2 1 2 1 2 trans

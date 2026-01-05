@@ -1,0 +1,17 @@
+
+2 bond types
+6 angle types
+
+Bond Types
+
+1 1 2
+2 1 3
+
+Angle Types
+
+1 1 2 1 T
+2 1 3 1 T
+3 2 1 2 T
+4 2 1 3 A
+5 2 1 3 N
+6 3 1 3 T
