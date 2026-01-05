@@ -9,6 +9,7 @@ from io import StringIO
 from simuglue.ase_patches.lammpsdata import read_lammps_data, write_lammps_data
 
 SUPPORTED_INPUTS = {
+    "xyz",
     "extxyz",
     "traj",
     "espresso-in",
@@ -114,7 +115,7 @@ def _read_atoms(
         return _to_atoms_list(images)
 
     # --- extxyz ---
-    if fmt == "extxyz":
+    if fmt in ["xyz", "extxyz"]:
         # Let ASE infer from suffix for Path; for StringIO we must be explicit.
         if isinstance(source, Path):
             images = read(source, index=index)
@@ -163,7 +164,7 @@ def _write_atoms(
         if len(atoms) != 1:
             raise ValueError("lammps-data output supports a single frame.")
 
-        style = opts.get("style", "full")
+        atom_style = opts.get("style", "full")
         units = opts.get("units", "metal")
         # We don't pass units to write_lammps_data (ASE ignores), but we can
         # enforce a whitelist here to avoid nonsense configs.
@@ -181,7 +182,7 @@ def _write_atoms(
         write_lammps_data(
             dest,
             atoms[0],
-            atom_style=style,
+            atom_style=atom_style,
             specorder=specorder,
             masses=True,
             force_skew=force_skew,

@@ -96,6 +96,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
         default="auto",
         choices=[
             "auto",
+            "xyz",
             "extxyz",
             "traj",
             "espresso-in",
@@ -108,6 +109,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p.add_argument(
         "--oformat",
         choices=[
+            "xyz",
             "extxyz",
             "traj",
             "lammps-data",
