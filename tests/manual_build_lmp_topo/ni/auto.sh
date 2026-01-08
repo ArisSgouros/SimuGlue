@@ -7,5 +7,4 @@ sgl io aseconv -i o.supercell.xyz --oformat lammps-data -o o.supercell.dat --ove
 
 sgl build lmp-topo o.supercell.dat --file_pos="o.supercell_topo.dat" --rc="2.49" --bond=1 > o.log
 
-python ../compare.py deprec.o.supercell_topo.dat o.supercell_topo.dat --verbose
 python ../compare.py o.supercell_topo.dat ref.supercell_topo.dat --verbose
