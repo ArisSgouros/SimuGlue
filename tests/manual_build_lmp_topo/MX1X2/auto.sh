@@ -12,7 +12,7 @@ sgl build lmp-topo o.supercell.dat \
     --bond=1 \
     --angle=1 \
     --angle_symmetry 1 \
-    --type_delimeter=' ' \
+    --type_delimiter=' ' \
     --file_types="o.types" \
 
 python ../apply_type_tag.py  o.supercell_topo.dat o.types o.supercell_topo_tagged.dat
