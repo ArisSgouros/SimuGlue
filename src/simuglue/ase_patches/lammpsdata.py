@@ -335,7 +335,7 @@ def read_lammps_data(
                 mass_tbl[t] = 0.0
             tag_tbl[t] = str(mass_tag_in.get(t, '_'))
         lmp_type_table = {"n_types": n_types, "mass": mass_tbl, "tag": tag_tbl}
-        _set_lmp_type_table(atoms, lmp_type_table)
+        set_lmp_type_table(atoms, lmp_type_table)
 
     return atoms
 
@@ -479,7 +479,7 @@ def write_lammps_data(
 
     lmp_types = atoms.arrays.get('type', None)
     preserve_lmp_types = bool(preserve_atom_types) and (lmp_types is not None)
-    lmp_type_table = _get_lmp_type_table(atoms) if preserve_lmp_types else None
+    lmp_type_table = get_lmp_type_table(atoms) if preserve_lmp_types else None
 
     if specorder is None:
         # This way it is assured that LAMMPS atom types are always
@@ -765,13 +765,13 @@ def _write_masses_preserve_types(
     fd.write('\n')
     return
 
-def _set_lmp_type_table(atoms: Atoms, lmp_type_table):
+def set_lmp_type_table(atoms: Atoms, lmp_type_table):
     blob = base64.urlsafe_b64encode(
         json.dumps(lmp_type_table, separators=(',', ':'), sort_keys=True).encode('utf-8')
     ).decode('ascii')
     atoms.info['lmp_type_table'] = blob
 
-def _get_lmp_type_table(atoms: Atoms):
+def get_lmp_type_table(atoms: Atoms):
     """Return dict with int keys: {'n_types': int, 'mass': {t: mass_ase}, 'tag': {t: tag}} or None."""
     blob = atoms.info.get('lmp_type_table', None)
     if not blob:

@@ -11,7 +11,7 @@ import pytest
 from simuglue.ase_patches.lammpsdata import (
     read_lammps_data,
     write_lammps_data,
-    _get_lmp_type_table,  # internal helper in your patch
+    get_lmp_type_table,  # internal helper in your patch
 )
 
 
@@ -155,7 +155,7 @@ def test_read_stores_type_table_in_info_and_preserves_types_sorted_by_id():
     # types in id order: id1->1, id2->2, id3->4, id4->1, id5->1
     assert np.array_equal(atoms.arrays["type"], np.array([1, 2, 4, 1, 1]))
 
-    table = _get_lmp_type_table(atoms)
+    table = get_lmp_type_table(atoms)
     assert table is not None
     assert table["n_types"] == 4
 
@@ -239,7 +239,7 @@ def test_write_preserve_atom_types_false_does_not_use_type_table_by_default():
 def test_read_without_mass_tags_stores_underscore_tags_and_roundtrips():
     atoms = read_lammps_data(io.StringIO(_lammps_data_without_tags()))
 
-    table = _get_lmp_type_table(atoms)
+    table = get_lmp_type_table(atoms)
     assert table is not None
     assert table["n_types"] == 2
     assert table["tag"][1] == "_"
@@ -300,7 +300,7 @@ def test_extxyz_roundtrip_preserves_type_table_and_types(tmp_path):
     assert "type" in atoms2.arrays
     assert np.array_equal(atoms2.arrays["type"], atoms.arrays["type"])
 
-    table2 = _get_lmp_type_table(atoms2)
+    table2 = get_lmp_type_table(atoms2)
     assert table2 is not None
     assert table2["n_types"] == 4
     assert table2["tag"][1] == "BZX"
