@@ -4,6 +4,8 @@ import re
 import warnings
 
 import numpy as np
+import json
+import base64
 
 from ase.atoms import Atoms
 from ase.calculators.lammps import Prism, convert
@@ -58,13 +60,14 @@ def read_lammps_data(
     # default values (https://docs.lammps.org/read_data.html)
     # in most cases these will be updated below
     natoms = 0
-    # N_types = 0
+    n_atom_types_header = 0
     xlo, xhi = -0.5, 0.5
     ylo, yhi = -0.5, 0.5
     zlo, zhi = -0.5, 0.5
     xy, xz, yz = 0.0, 0.0, 0.0
 
     mass_in = {}
+    mass_tag_in = {}   # type -> string after '#'
     vel_in = {}
     bonds_in = []
     angles_in = []
@@ -159,6 +162,8 @@ def read_lammps_data(
             if field is not None and val is not None:
                 if field == 'atoms':
                     natoms = int(val)
+                elif field == 'atom types':
+                    n_atom_types_header = int(val)
                 elif field == 'xlo xhi':
                     (xlo, xhi) = (float(x) for x in val.split())
                 elif field == 'ylo yhi':
@@ -174,7 +179,10 @@ def read_lammps_data(
                 atom_id = int(fields[0])
                 vel_in[atom_id] = [float(fields[_]) for _ in (1, 2, 3)]
             elif section == 'Masses':
-                mass_in[int(fields[0])] = float(fields[1])
+                t = int(fields[0])
+                mass_in[t] = float(fields[1])
+                if line_comment != '':
+                    mass_tag_in[t] = line_comment
             elif section == 'Bonds':  # id type atom1 atom2
                 bonds_in.append([int(fields[_]) for _ in (1, 2, 3)])
             elif section == 'Angles':  # id type atom1 atom2 atom3
@@ -313,6 +321,25 @@ def read_lammps_data(
 
     atoms.info['comment'] = file_comment
 
+    # Preserve the full Masses table (including unused types) for stable roundtrips
+    # via formats like extxyz. Stored as JSON encoded with urlsafe base64.
+    if len(mass_in) > 0:
+        n_types = int(n_atom_types_header) if n_atom_types_header > 0 else int(max(mass_in.keys()))
+        mass_tbl = {}
+        tag_tbl = {}
+        for t in range(1, n_types + 1):
+            if t in mass_in:
+                # store in ASE mass units
+                mass_tbl[t] = float(convert(mass_in[t], 'mass', units, 'ASE'))
+            else:
+                mass_tbl[t] = 0.0
+            tag_tbl[t] = str(mass_tag_in.get(t, '_'))
+        payload = {"n_types": n_types, "mass": mass_tbl, "tag": tag_tbl}
+        blob = base64.urlsafe_b64encode(
+            json.dumps(payload, separators=(',', ':'), sort_keys=True).encode('utf-8')
+        ).decode('ascii')
+        atoms.info['lmp_type_table'] = blob
+
     return atoms
 
 
@@ -388,6 +415,7 @@ def write_lammps_data(
     specorder: list = None,
     reduce_cell: bool = False,
     force_skew: bool = False,
+    preserve_atom_types: bool = False,
     prismobj: Prism = None,
     write_image_flags: bool = False,
     masses: bool = False,
@@ -452,6 +480,10 @@ def write_lammps_data(
     n_atoms = len(symbols)
     fd.write(f'{n_atoms} atoms\n')
 
+    lmp_types = atoms.arrays.get('type', None)
+    preserve_lmp_types = bool(preserve_atom_types) and (lmp_types is not None)
+    lmp_type_table = _get_lmp_type_table(atoms) if preserve_lmp_types else None
+
     if specorder is None:
         # This way it is assured that LAMMPS atom types are always
         # assigned predictably according to the alphabetic order
@@ -461,6 +493,18 @@ def write_lammps_data(
         # (indices must correspond to order in the potential file)
         species = specorder
     n_atom_types = len(species)
+
+
+    # Override header count if we are preserving LAMMPS types / Masses table.
+    if preserve_lmp_types:
+        if lmp_type_table is not None:
+            n_atom_types = int(lmp_type_table.get('n_types', 0))
+        # Always ensure the header can represent the largest used type id.
+        max_type = int(np.max(lmp_types)) if len(atoms) else 0
+        if n_atom_types <= 0:
+            n_atom_types = max_type
+        else:
+            n_atom_types = max(n_atom_types, max_type)
     fd.write(f'{n_atom_types} atom types\n\n')
 
     bonds_in = []
@@ -538,8 +582,14 @@ def write_lammps_data(
         fd.write(f'{xy:23.17g} {xz:23.17g} {yz:23.17g}  xy xz yz\n')
     fd.write('\n')
 
-    if masses:
-        _write_masses(fd, atoms, species, units)
+    auto_masses = masses or (preserve_lmp_types and (lmp_type_table is not None))
+    if auto_masses:
+        _write_masses(
+            fd, atoms, species, units,
+            preserve_lmp_types=preserve_lmp_types,
+            lmp_type_table=lmp_type_table,
+            n_atom_types=n_atom_types,
+        )
 
     # Write (unwrapped) atomic positions.  If wrapping of atoms back into the
     # cell along periodic directions is desired, this should be done manually
@@ -561,7 +611,7 @@ def write_lammps_data(
         # Convert position from ASE units to LAMMPS units
         pos = convert(pos, 'distance', 'ASE', units)
         for i, r in enumerate(pos):
-            s = species.index(symbols[i]) + 1
+            s = int(lmp_types[i]) if preserve_lmp_types else (species.index(symbols[i]) + 1)
             line = (
                 f'{i + 1:>6} {s:>3}'
                 f' {r[0]:23.17g} {r[1]:23.17g} {r[2]:23.17g}'
@@ -577,7 +627,7 @@ def write_lammps_data(
         pos = convert(pos, 'distance', 'ASE', units)
         charges = convert(charges, 'charge', 'ASE', units)
         for i, (q, r) in enumerate(zip(charges, pos)):
-            s = species.index(symbols[i]) + 1
+            s = int(lmp_types[i]) if preserve_lmp_types else (species.index(symbols[i]) + 1)
             line = (
                 f'{i + 1:>6} {s:>3} {q:>5}'
                 f' {r[0]:23.17g} {r[1]:23.17g} {r[2]:23.17g}'
@@ -624,7 +674,7 @@ def write_lammps_data(
         pos = convert(pos, 'distance', 'ASE', units)
         charges = convert(charges, 'charge', 'ASE', units)
         for i, (m, q, r) in enumerate(zip(molecules, charges, pos)):
-            s = species.index(symbols[i]) + 1
+            s = int(lmp_types[i]) if preserve_lmp_types else (species.index(symbols[i]) + 1)
             line = (
                 f'{i + 1:>6} {m:>3} {s:>3} {q:>5}'
                 f' {r[0]:23.17g} {r[1]:23.17g} {r[2]:23.17g}'
@@ -674,7 +724,38 @@ def write_lammps_data(
     fd.flush()
 
 
-def _write_masses(fd, atoms: Atoms, species: list, units: str):
+def _write_masses(
+    fd, atoms: Atoms, species: list, units: str, *,
+    preserve_lmp_types: bool = False,
+    lmp_type_table: dict = None,
+    n_atom_types: int = None,
+):
+    if preserve_lmp_types:
+        lmp_types = atoms.arrays.get('type', None)
+        n_types = int(n_atom_types or 0)
+        if n_types <= 0 and lmp_type_table is not None:
+            n_types = int(lmp_type_table.get('n_types', 0))
+        if n_types <= 0 and lmp_types is not None and len(atoms):
+            n_types = int(np.max(lmp_types))
+
+        fd.write('Masses\n\n')
+        for t in range(1, n_types + 1):
+            if lmp_type_table is not None:
+                mass_ase = float(lmp_type_table.get('mass', {}).get(t, 0.0))
+                tag = str(lmp_type_table.get('tag', {}).get(t, '_'))
+            else:
+                mass_ase = 0.0
+                tag = '_'
+            # If table missing a used type, try to derive mass from atoms
+            if mass_ase == 0.0 and lmp_types is not None:
+                idxs = np.where(lmp_types == t)[0]
+                if len(idxs) > 0:
+                    mass_ase = float(atoms[int(idxs[0])].mass)
+            mass = convert(mass_ase, 'mass', 'ASE', units)
+            fd.write(f'{t:>6} {mass:23.17g} # {tag}\n')
+        fd.write('\n')
+        return
+
     symbols_indices = atoms.symbols.indices()
     fd.write('Masses\n\n')
     for i, s in enumerate(species):
@@ -690,3 +771,26 @@ def _write_masses(fd, atoms: Atoms, species: list, units: str):
         atom_type = i + 1
         fd.write(f'{atom_type:>6} {mass:23.17g} # {s}\n')
     fd.write('\n')
+
+
+def _get_lmp_type_table(atoms: Atoms):
+    """Return dict with int keys: {'n_types': int, 'mass': {t: mass_ase}, 'tag': {t: tag}} or None."""
+    blob = atoms.info.get('lmp_type_table', None)
+    if not blob:
+        return None
+    try:
+        s = str(blob)
+        # pad base64 if needed
+        s += '=' * (-len(s) % 4)
+        raw = base64.urlsafe_b64decode(s.encode('ascii'))
+        table = json.loads(raw.decode('utf-8'))
+        n_types = int(table.get('n_types', 0))
+        mass_in = table.get('mass', {})
+        tag_in = table.get('tag', {})
+        mass = {int(k): float(v) for k, v in mass_in.items()}
+        tag = {int(k): str(v) for k, v in tag_in.items()}
+        if n_types <= 0:
+            n_types = max(mass.keys(), default=0)
+        return {"n_types": n_types, "mass": mass, "tag": tag}
+    except Exception:
+        return None
