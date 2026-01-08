@@ -8,10 +8,34 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 from ase import Atoms
 
-from simuglue.topology.aux import SortTypes
 from simuglue.topology.topo import Topo
 from simuglue.topology import features as _feat
+from itertools import permutations
 
+def canonical_by_perms(chem_list, perms):
+    t = tuple(map(str, chem_list))
+    return list(min(tuple(t[i] for i in p) for p in perms))
+
+BOND_PERMS    = [(0,1), (1,0)]
+ANGLE_PERMS   = [(0,1,2), (2,1,0)]
+DIHED_PERMS   = [(0,1,2,3), (3,2,1,0)]
+
+def sort_bond(chem_list):    return canonical_by_perms(chem_list, BOND_PERMS)
+def sort_angle(chem_list):   return canonical_by_perms(chem_list, ANGLE_PERMS)
+def sort_dihedral(chem_list):return canonical_by_perms(chem_list, DIHED_PERMS)
+
+def sort_improper(chem_list, center=1):
+    # center fixed; permute outers
+    idx = [0,1,2,3]
+    outers = [i for i in idx if i != center]
+    perms = []
+    for p in permutations(outers):
+        seq = []
+        it = iter(p)
+        for i in idx:
+            seq.append(center if i == center else next(it))
+        perms.append(tuple(seq))
+    return canonical_by_perms(chem_list, perms)
 
 def _get_atom_types(atoms: Atoms) -> List[int]:
     """Return LAMMPS-style integer atom types for each atom.
@@ -88,7 +112,7 @@ def type_bonds(
     for (i, j), rlen in zip(topo.bonds, lens):
         # canonical pair
         parts = [atom_tags[atypes[i]], atom_tags[atypes[j]]]
-        parts = SortTypes(parts)
+        parts = sort_bond(parts)
         if opts.diff_bond_len:
             parts.append(str(opts.diff_bond_fmt % rlen))
         tags.append(opts.type_delimeter.join(parts))
@@ -121,7 +145,7 @@ def type_angles(
     tags: List[str] = []
     for n, (i, j, k) in enumerate(topo.angles):
         parts = [atom_tags[atypes[i]], atom_tags[atypes[j]], atom_tags[atypes[k]]]
-        parts = SortTypes(parts)
+        parts = sort_angle(parts)
         if opts.angle_symmetry:
             parts.append(syms[n])
         if opts.diff_angle_theta:
@@ -156,7 +180,7 @@ def type_dihedrals(
     tags: List[str] = []
     for n, (i, j, k, l) in enumerate(topo.dihedrals):
         parts = [atom_tags[atypes[i]], atom_tags[atypes[j]], atom_tags[atypes[k]], atom_tags[atypes[l]]]
-        parts = SortTypes(parts)
+        parts = sort_dihedral(parts)
         if opts.cis_trans:
             parts.append(orient[n])
         if opts.diff_dihed_theta:
