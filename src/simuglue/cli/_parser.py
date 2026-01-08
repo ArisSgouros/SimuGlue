@@ -17,9 +17,12 @@ def _parse_triplet_bools(s: str) -> Tuple[bool, bool, bool]:
 
 
 def _parse_float_list(s: str) -> list[float]:
-    if s is None:
-        return []
-    s = s.strip()
-    if not s:
-        return []
-    return [float(x.strip()) for x in s.split(",") if x.strip()]
+    xs = [x.strip() for x in s.split(",") if x.strip()]
+    if not xs:
+        raise argparse.ArgumentTypeError("Expected comma-separated floats, e.g. '1.23,4.56'")
+    try:
+        return [float(x) for x in xs]
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
+
+
