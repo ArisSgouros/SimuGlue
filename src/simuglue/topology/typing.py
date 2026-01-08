@@ -91,7 +91,7 @@ class TypingOptions:
     diff_dihed_theta_fmt: str = "%.2f"
 
     # joiner
-    type_delimeter: str = " "
+    type_delimiter: str = " "
 
 
 def type_bonds(
@@ -115,7 +115,7 @@ def type_bonds(
         parts = sort_bond(parts)
         if opts.diff_bond_len:
             parts.append(str(opts.diff_bond_fmt % rlen))
-        tags.append(opts.type_delimeter.join(parts))
+        tags.append(opts.type_delimiter.join(parts))
 
     types, reg = _assign_types_from_tags(tags)
     topo.bond_tags = tags
@@ -150,7 +150,7 @@ def type_angles(
             parts.append(syms[n])
         if opts.diff_angle_theta:
             parts.append(str(opts.diff_angle_theta_fmt % thetas[n]))
-        tags.append(opts.type_delimeter.join(parts))
+        tags.append(opts.type_delimiter.join(parts))
 
     types, reg = _assign_types_from_tags(tags)
     topo.angle_tags = tags
@@ -188,7 +188,7 @@ def type_dihedrals(
             if opts.diff_dihed_theta_abs:
                 phi_deg = abs(phi_deg)
             parts.append(str(opts.diff_dihed_theta_fmt % phi_deg))
-        tags.append(opts.type_delimeter.join(parts))
+        tags.append(opts.type_delimiter.join(parts))
 
     types, reg = _assign_types_from_tags(tags)
     topo.dihedral_tags = tags

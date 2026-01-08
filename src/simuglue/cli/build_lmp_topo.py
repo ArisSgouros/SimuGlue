@@ -76,8 +76,8 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p.add_argument("-diff_dihed_theta_fmt", "--diff_dihed_theta_fmt", default="%.2f", help="Format string for dihedral (deg).")
 
     p.add_argument(
-        "-type_delimeter",
-        "--type_delimeter",
+        "-type_delimiter",
+        "--type_delimiter",
         default=" ",
         help="String used to join the type tag parts.",
     )
@@ -145,7 +145,7 @@ def main(argv=None, prog: str | None = None) -> int:
             diff_dihed_theta=bool(args.diff_dihed_theta),
             diff_dihed_theta_abs=bool(args.diff_dihed_theta_abs),
             diff_dihed_theta_fmt=str(args.diff_dihed_theta_fmt),
-            type_delimeter=str(args.type_delimeter),
+            type_delimiter=str(args.type_delimiter),
         )
 
         lmp_type_table = get_lmp_type_table(atoms)
@@ -190,7 +190,7 @@ def main(argv=None, prog: str | None = None) -> int:
     write_lammps_data(
         str(out_path),
         atoms,
-        atom_style="full",          # keep existing behavior (hard-coded)
+        atom_style=args.atom_style,
         masses=True,
         force_skew=True,
         preserve_atom_types=True,
