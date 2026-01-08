@@ -5,15 +5,15 @@ sgl build supercell -i o.basis.xyz -o o.supercell.xyz --repl 3 3 1 --overwrite -
 
 sgl io aseconv -i o.supercell.xyz --oformat lammps-data -o o.supercell.dat --overwrite
 
-sgl build lmp-topo o.supercell.dat \
-    --file_pos="o.supercell_topo.dat" \
-    --rc="0.763762616" \
-    --drc=0.1 \
-    --bond=1 \
-    --angle=1 \
-    --angle_symmetry 1 \
-    --type_delimiter=' ' \
-    --file_types="o.types" \
+sgl build lmp-topo \
+    -i o.supercell.dat \
+    -o o.supercell_topo.dat \
+    --types-out o.types \
+    --rc "0.763762616" \
+    --drc 0.1 \
+    --bonds --angles \
+    --angle-symmetry \
+    --type-delimiter ' ' \
 
 python ../apply_type_tag.py  o.supercell_topo.dat o.types o.supercell_topo_tagged.dat
 python ../compare.py o.supercell_topo_tagged.dat ref.supercell_topo.dat --compare-tags all --verbose

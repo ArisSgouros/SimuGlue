@@ -5,6 +5,10 @@ sgl build supercell -i o.basis_ni.xyz -o o.supercell.xyz --repl 4 4 4 --overwrit
 
 sgl io aseconv -i o.supercell.xyz --oformat lammps-data -o o.supercell.dat --overwrite
 
-sgl build lmp-topo o.supercell.dat --file_pos="o.supercell_topo.dat" --rc="2.49" --bond=1 > o.log
+sgl build lmp-topo \
+    -i o.supercell.dat \
+    -o o.supercell_topo.dat \
+    --rc 2.49 \
+    --bonds > o.log
 
 python ../compare.py o.supercell_topo.dat ref.supercell_topo.dat --verbose
