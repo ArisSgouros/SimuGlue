@@ -80,6 +80,14 @@ def infer_dihedrals_from_bonds(
     return diheds
 
 
+import numpy as np
+from ase.geometry import find_mic
+from ase.neighborlist import neighbor_list
+
+import numpy as np
+from ase.geometry import find_mic
+from ase.neighborlist import neighbor_list
+
 def infer_bonds_by_distance(
     atoms: Atoms,
     rc_list: Sequence[float],
@@ -91,37 +99,50 @@ def infer_bonds_by_distance(
     n = len(atoms)
     topo = Topo()
     neighbors = [[] for _ in range(n)]
+
     if n == 0 or not rc_list:
         return topo, neighbors, [] if return_lengths else None
     if drc < 0:
         raise ValueError(f"drc must be non-negative, got {drc}")
 
-    pos, cell, pbc = atoms.positions, atoms.cell, atoms.pbc
-    ranges2 = [((rc - drc) ** 2, (rc + drc) ** 2) for rc in rc_list]
+    pos = atoms.positions
+    cell = np.asarray(atoms.cell)
+    pbc = atoms.pbc
 
-    bonds, seen = [], set()
-    for i in range(n - 1):
-        ri = pos[i]
-        for j in range(i + 1, n):
-            rij, _ = find_mic(pos[j] - ri, cell, pbc=pbc)
-            d2 = float(np.dot(rij, rij))
-            if not any(rmin2 < d2 < rmax2 for rmin2, rmax2 in ranges2):
-                continue
-            key = (i, j)  # canonical
-            if deduplicate and key in seen:
-                continue
-            seen.add(key)
-            bonds.append(key)
+    cutoff = float(max(rc_list) + drc)
+    if cutoff <= 0.0:
+        return topo, neighbors, [] if return_lengths else None
 
-    topo = Topo(bonds=bonds)
+    # windows (clamp lower bound to 0)
+    rmin2 = np.array([(max(0.0, rc - drc)) ** 2 for rc in rc_list], dtype=float)
+    rmax2 = np.array([(rc + drc) ** 2 for rc in rc_list], dtype=float)
+
+    i, j, S = neighbor_list("ijS", atoms, cutoff)  # candidate pairs + cell shifts
+
+    # Vector from i to the image of j defined by shift S
+    vec = pos[j] + (S @ cell) - pos[i]
+    d2 = np.einsum("ij,ij->i", vec, vec)
+
+    # keep candidates within ANY window
+    mask = ((d2[:, None] > rmin2[None, :]) & (d2[:, None] < rmax2[None, :])).any(axis=1)
+
+    ii, jj = i[mask], j[mask]
+    a = np.minimum(ii, jj)
+    b = np.maximum(ii, jj)
+    pairs = np.stack([a, b], axis=1)
+
+    if deduplicate and len(pairs):
+        pairs = np.unique(pairs, axis=0)
+
+    topo = Topo(bonds=[tuple(p) for p in pairs.tolist()])
     topo.canonicalize_bonds(deduplicate=deduplicate, sort=True)
     neighbors = topo.build_adjacency(n, sort_neighbors=True, unique_neighbors=True)
 
     lengths = None
     if return_lengths:
         lengths = []
-        for i, j in topo.bonds:
-            rij, _ = find_mic(pos[j] - pos[i], cell, pbc=pbc)
+        for i_, j_ in topo.bonds:
+            rij, _ = find_mic(pos[j_] - pos[i_], cell, pbc=pbc)
             lengths.append(float(np.linalg.norm(rij)))
 
     return topo, neighbors, lengths
