@@ -580,13 +580,10 @@ def write_lammps_data(
     fd.write('\n')
 
     auto_masses = masses or (preserve_lmp_types and (lmp_type_table is not None))
-    if auto_masses:
-        _write_masses(
-            fd, atoms, species, units,
-            preserve_lmp_types=preserve_lmp_types,
-            lmp_type_table=lmp_type_table,
-            n_atom_types=n_atom_types,
-        )
+    if auto_masses and preserve_lmp_types:
+        _write_masses_preserve_types(fd, atoms, units, lmp_type_table, n_atom_types)
+    if auto_masses and not preserve_lmp_types:
+        _write_masses(fd, atoms, species, units)
 
     # Write (unwrapped) atomic positions.  If wrapping of atoms back into the
     # cell along periodic directions is desired, this should be done manually
@@ -721,38 +718,7 @@ def write_lammps_data(
     fd.flush()
 
 
-def _write_masses(
-    fd, atoms: Atoms, species: list, units: str, *,
-    preserve_lmp_types: bool = False,
-    lmp_type_table: dict = None,
-    n_atom_types: int = None,
-):
-    if preserve_lmp_types:
-        lmp_types = atoms.arrays.get('type', None)
-        n_types = int(n_atom_types or 0)
-        if n_types <= 0 and lmp_type_table is not None:
-            n_types = int(lmp_type_table.get('n_types', 0))
-        if n_types <= 0 and lmp_types is not None and len(atoms):
-            n_types = int(np.max(lmp_types))
-
-        fd.write('Masses\n\n')
-        for t in range(1, n_types + 1):
-            if lmp_type_table is not None:
-                mass_ase = float(lmp_type_table.get('mass', {}).get(t, 0.0))
-                tag = str(lmp_type_table.get('tag', {}).get(t, '_'))
-            else:
-                mass_ase = 0.0
-                tag = '_'
-            # If table missing a used type, try to derive mass from atoms
-            if mass_ase == 0.0 and lmp_types is not None:
-                idxs = np.where(lmp_types == t)[0]
-                if len(idxs) > 0:
-                    mass_ase = float(atoms[int(idxs[0])].mass)
-            mass = convert(mass_ase, 'mass', 'ASE', units)
-            fd.write(f'{t:>6} {mass:23.17g} # {tag}\n')
-        fd.write('\n')
-        return
-
+def _write_masses(fd, atoms: Atoms, species: list, units: str):
     symbols_indices = atoms.symbols.indices()
     fd.write('Masses\n\n')
     for i, s in enumerate(species):
@@ -769,6 +735,35 @@ def _write_masses(
         fd.write(f'{atom_type:>6} {mass:23.17g} # {s}\n')
     fd.write('\n')
 
+def _write_masses_preserve_types(
+    fd, atoms: Atoms, units: str,
+    lmp_type_table: dict = None,
+    n_atom_types: int = None,
+):
+    lmp_types = atoms.arrays.get('type', None)
+    n_types = int(n_atom_types or 0)
+    if n_types <= 0 and lmp_type_table is not None:
+        n_types = int(lmp_type_table.get('n_types', 0))
+    if n_types <= 0 and lmp_types is not None and len(atoms):
+        n_types = int(np.max(lmp_types))
+
+    fd.write('Masses\n\n')
+    for t in range(1, n_types + 1):
+        if lmp_type_table is not None:
+            mass_ase = float(lmp_type_table.get('mass', {}).get(t, 0.0))
+            tag = str(lmp_type_table.get('tag', {}).get(t, '_'))
+        else:
+            mass_ase = 0.0
+            tag = '_'
+        # If table missing a used type, try to derive mass from atoms
+        if mass_ase == 0.0 and lmp_types is not None:
+            idxs = np.where(lmp_types == t)[0]
+            if len(idxs) > 0:
+                mass_ase = float(atoms[int(idxs[0])].mass)
+        mass = convert(mass_ase, 'mass', 'ASE', units)
+        fd.write(f'{t:>6} {mass:23.17g} # {tag}\n')
+    fd.write('\n')
+    return
 
 def _set_lmp_type_table(atoms: Atoms, lmp_type_table):
     blob = base64.urlsafe_b64encode(
