@@ -87,100 +87,42 @@ def infer_bonds_by_distance(
     *,
     deduplicate: bool = True,
     return_lengths: bool = False,
-) -> tuple[Topo, List[List[int]], Optional[List[float]]]:
-    """
-    Infer bonds using a distance window criterion: r in (rc-drc, rc+drc) for any rc in rc_list.
-
-    Parameters
-    ----------
-    atoms
-        ASE Atoms with positions and cell.
-    rc_list
-        List of reference distances (cutoff centers). A pair (i,j) is bonded if its
-        minimum-image distance falls within any of these windows.
-    drc
-        Half-width of the distance window around each rc.
-    deduplicate
-        If True, ensure each pair (i,j) appears at most once even if multiple rc windows match.
-    return_lengths
-        If True, also return a list of bond lengths aligned with topo.bonds.
-
-    Returns
-    -------
-    topo
-        Topo instance with topo.bonds populated (0-based ASE indices).
-    neighbors
-        Adjacency list: neighbors[i] contains all bonded neighbors of atom i.
-    lengths
-        List of bond lengths (same order as topo.bonds) if return_lengths=True, else None.
-
-    Notes
-    -----
-    - This is an O(N^2) implementation (like your current CrystalBuilder version).
-    - Later, you can replace the pair loop with an ASE NeighborList-based implementation
-      without changing the returned data structures (Topo + neighbors).
-    """
-    natoms = len(atoms)
-    if natoms == 0:
-        topo = Topo()
-        return topo, [], [] if return_lengths else None
-
-    if not rc_list:
-        topo = Topo()
-        neighbors = [[] for _ in range(natoms)]
+):
+    n = len(atoms)
+    topo = Topo()
+    neighbors = [[] for _ in range(n)]
+    if n == 0 or not rc_list:
         return topo, neighbors, [] if return_lengths else None
-
     if drc < 0:
         raise ValueError(f"drc must be non-negative, got {drc}")
 
-    cell = atoms.cell
-
-    # If any periodic dimension is True, ensure a valid cell exists
-    if any(atoms.pbc) and cell is None:
-        raise ValueError("Periodic bonding requested but atoms.cell is None")
-
-    pos = atoms.positions
+    pos, cell, pbc = atoms.positions, atoms.cell, atoms.pbc
     ranges2 = [((rc - drc) ** 2, (rc + drc) ** 2) for rc in rc_list]
 
-    bonds: List[Tuple[int, int]] = []
-    lengths: List[float] = []
-    neighbors: List[List[int]] = [[] for _ in range(natoms)]
-    seen: set[Tuple[int, int]] = set()
-
-    for i in range(natoms - 1):
+    bonds, seen = [], set()
+    for i in range(n - 1):
         ri = pos[i]
-        for j in range(i + 1, natoms):
-            rij = pos[j] - ri
-
-            # Minimum-image displacement for triclinic/orthorhombic cells
-            rij_mic, _ = find_mic(rij, cell, pbc=atoms.pbc)
-            rij2 = float(np.dot(rij_mic, rij_mic))
-
-            # Check against all windows; stop at first match
-            matched = False
-            for rmin2, rmax2 in ranges2:
-                if rmin2 < rij2 < rmax2:
-                    matched = True
-                    break
-            if not matched:
+        for j in range(i + 1, n):
+            rij, _ = find_mic(pos[j] - ri, cell, pbc=pbc)
+            d2 = float(np.dot(rij, rij))
+            if not any(rmin2 < d2 < rmax2 for rmin2, rmax2 in ranges2):
                 continue
-
-            key = (i, j)
+            key = (i, j)  # canonical
             if deduplicate and key in seen:
                 continue
             seen.add(key)
-
             bonds.append(key)
-            neighbors[i].append(j)
-            neighbors[j].append(i)
-            if return_lengths:
-                lengths.append(float(np.sqrt(rij2)))
 
     topo = Topo(bonds=bonds)
-    # Optional: canonicalize and sort neighbors for determinism
     topo.canonicalize_bonds(deduplicate=deduplicate, sort=True)
-    # Rebuild neighbors if you canonicalized/sorted bonds and want strict alignment:
-    neighbors = topo.build_adjacency(natoms, sort_neighbors=True, unique_neighbors=True)
+    neighbors = topo.build_adjacency(n, sort_neighbors=True, unique_neighbors=True)
 
-    return topo, neighbors, lengths if return_lengths else None
+    lengths = None
+    if return_lengths:
+        lengths = []
+        for i, j in topo.bonds:
+            rij, _ = find_mic(pos[j] - pos[i], cell, pbc=pbc)
+            lengths.append(float(np.linalg.norm(rij)))
+
+    return topo, neighbors, lengths
 
