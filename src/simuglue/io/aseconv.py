@@ -38,16 +38,6 @@ def _infer_format_from_suffix(path: Path) -> str | None:
     return None
 
 
-def _get_fmt_opts(fmt: str, options: Dict[str, Dict[str, Any]] | None) -> Dict[str, Any]:
-    """
-    Fetch per-format options. If you later want families, you can:
-      - also check a prefix key like 'lammps', etc.
-    For now: exact match only.
-    """
-    if not options:
-        return {}
-    return options.get(fmt, {})
-
 def _parse_index(frames: str | None):
     """Convert CLI --frames into an ASE index object."""
     if frames is None:
@@ -88,7 +78,7 @@ def _read_atoms(
     src: str,
     fmt: str,
     frames: str | None,
-    options: Dict[str, Dict[str, Any]] | None,
+    options: Dict[str, Any] | None,
 ) -> List[Atoms]:
     """
     Read input into a list[Atoms], handling:
@@ -97,7 +87,7 @@ def _read_atoms(
       - single-Atoms vs sequence-of-Atoms outputs from ASE.
     """
     index = _parse_index(frames)
-    opts = _get_fmt_opts(fmt, options)
+    opts = options or {}
     source = _make_source(src, fmt)
 
     # --- LAMMPS data ---
@@ -142,10 +132,10 @@ def _write_atoms(
     atoms: Iterable[Atoms],
     dst: str,
     fmt: str,
-    options: Dict[str, Dict[str, Any]] | None,
+    options: Dict[str, Any] | None,
 ) -> None:
     atoms_list: List[Atoms] = list(atoms)
-    opts = _get_fmt_opts(fmt, options)
+    opts = options or {}
     dest = _make_dest(dst, fmt)
     """Format-specific write logic to a Path or file-like."""
 
@@ -208,8 +198,8 @@ def convert(
     iformat: str = "auto",
     oformat: str | None = None,
     frames: str | None = None,
-    read_opts: Dict[str, Dict[str, Any]] | None = None,
-    write_opts: Dict[str, Dict[str, Any]] | None = None,
+    read_opts: Dict[str, Any] | None = None,
+    write_opts: Dict[str, Any] | None = None,
     overwrite: bool = False,
 ) -> None:
     # ---- resolve input format ----
