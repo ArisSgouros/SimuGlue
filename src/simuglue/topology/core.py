@@ -58,13 +58,7 @@ def build_topology_from_atoms(
 
 
 def ensure_atom_tags_from_lmp_type_table(lmp_type_table: dict) -> dict:
-    """
-    Matches existing CLI semantics:
-      - take lmp_type_table['tag']
-      - replace '_' with str(type_id)
-    Returns the mutated mapping (same object).
-    """
-    atom_tag = lmp_type_table.get("tag", None)
+    atom_tag = dict(lmp_type_table['tag'])
     if atom_tag is None:
         raise ValueError("lmp_type_table has no 'tag' field")
 
