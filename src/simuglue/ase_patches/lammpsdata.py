@@ -334,11 +334,8 @@ def read_lammps_data(
             else:
                 mass_tbl[t] = 0.0
             tag_tbl[t] = str(mass_tag_in.get(t, '_'))
-        payload = {"n_types": n_types, "mass": mass_tbl, "tag": tag_tbl}
-        blob = base64.urlsafe_b64encode(
-            json.dumps(payload, separators=(',', ':'), sort_keys=True).encode('utf-8')
-        ).decode('ascii')
-        atoms.info['lmp_type_table'] = blob
+        lmp_type_table = {"n_types": n_types, "mass": mass_tbl, "tag": tag_tbl}
+        _set_lmp_type_table(atoms, lmp_type_table)
 
     return atoms
 
@@ -772,6 +769,12 @@ def _write_masses(
         fd.write(f'{atom_type:>6} {mass:23.17g} # {s}\n')
     fd.write('\n')
 
+
+def _set_lmp_type_table(atoms: Atoms, lmp_type_table):
+    blob = base64.urlsafe_b64encode(
+        json.dumps(lmp_type_table, separators=(',', ':'), sort_keys=True).encode('utf-8')
+    ).decode('ascii')
+    atoms.info['lmp_type_table'] = blob
 
 def _get_lmp_type_table(atoms: Atoms):
     """Return dict with int keys: {'n_types': int, 'mass': {t: mass_ase}, 'tag': {t: tag}} or None."""
