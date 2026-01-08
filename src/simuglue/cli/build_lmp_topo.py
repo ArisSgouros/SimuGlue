@@ -15,7 +15,7 @@ from simuglue.topology.infer import (
 )
 from simuglue.topology.topo import Topo
 from simuglue.topology.typing import TypingOptions, type_angles, type_bonds, type_dihedrals
-from simuglue.topology.export import ExportLammpsDataFileTopo, ExportTypesTopo
+from simuglue.topology.export import ExportTypesTopo
 
 
 def _parse_triplet_bools(s: str) -> Tuple[bool, bool, bool]:
@@ -278,9 +278,6 @@ def main(argv=None, prog: str | None = None) -> int:
         if types_path.exists() and not args.overwrite:
             parser.exit(1, f"Refusing to overwrite existing file: {types_path}\n")
         ExportTypesTopo(str(types_path), topo, lmp_type_table)
-
-    # TODO: Deprecate
-    ExportLammpsDataFileTopo('deprec.'+args.file_pos, atoms, topo)
 
     return 0
 
