@@ -1,2 +1,2 @@
 #!/bin/bash
-rm o.* dump*
+rm o.* dump* deprec.*

@@ -15,5 +15,8 @@ sgl build lmp-topo o.supercell.dat \
     --type_delimeter=' ' \
     --file_types="o.types" \
 
-python ../compare.py o.supercell_topo.dat ref.supercell_topo_mod.dat --compare-tags all --verbose
-#python ../compare.py o.supercell_topo.dat ref.supercell_topo_mod.dat --verbose
+#python ../compare.py deprec.o.supercell_topo.dat ref.supercell_topo_mod.dat --compare-tags all --verbose
+python ../compare.py deprec.o.supercell_topo.dat o.supercell_topo.dat --verbose
+
+python ../apply_type_tag.py  o.supercell_topo.dat o.types o.supercell_topo_tagged.dat
+python ../compare.py o.supercell_topo_tagged.dat ref.supercell_topo.dat --compare-tags all --verbose
