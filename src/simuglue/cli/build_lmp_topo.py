@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import argparse
+import numpy as np
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, OrderedDict
 
-from ase.io.lammpsdata import read_lammps_data
+from simuglue.ase_patches.lammpsdata import read_lammps_data, write_lammps_data, get_lmp_type_table
 
 from simuglue.topology.infer import (
     infer_bonds_by_distance,
@@ -153,6 +154,7 @@ def main(argv=None, prog: str | None = None) -> int:
     calc_diheds = bool(args.dihed)
 
     topo = Topo()
+
     neighbors = [[] for _ in range(len(atoms))]
 
     if calc_bonds:
@@ -193,26 +195,92 @@ def main(argv=None, prog: str | None = None) -> int:
         type_delimeter=str(args.type_delimeter),
     )
 
+    # Fetch the atom tags
+    lmp_type_table = get_lmp_type_table(atoms)
+    if lmp_type_table == None:
+        parser.exit(1, "Error: could not parse lmp_type_table\n")
+
+    # Fetch atom tags; if null set them to lmp_types
+    atom_tag = lmp_type_table.get('tag', None)
+    for type_ in atom_tag:
+        if atom_tag[type_] == '_':
+            atom_tag[type_] = str(type_)
+
     if calc_bonds:
-        type_bonds(atoms, topo, opts=opts)
+        type_bonds(atoms, topo, atom_tag, opts=opts)
     if calc_angles:
-        type_angles(atoms, topo, opts=opts)
+        type_angles(atoms, topo, atom_tag, opts=opts)
     if calc_diheds:
-        type_dihedrals(atoms, topo, opts=opts)
+        type_dihedrals(atoms, topo, atom_tag, opts=opts)
 
     topo.validate(len(atoms), strict_types=False)
+
+    # Store topology to atoms
+    natoms = len(atoms)
+    bonds_in = topo.bonds
+    angles_in = topo.angles
+    dihedrals_in = topo.dihedrals
+    bond_types = topo.bond_types
+    angle_types = topo.angle_types
+    dihedral_types = topo.dihedral_types
+
+    bonds = [''] * natoms if len(bonds_in) > 0 else None
+    angles = [''] * natoms if len(angles_in) > 0 else None
+    dihedrals = [''] * natoms if len(dihedrals_in) > 0 else None
+
+    if bonds is not None:
+        for type_, (at1, at2) in zip(bond_types, bonds_in):
+            if len(bonds[at1]) > 0:
+                bonds[at1] += ','
+            bonds[at1] += f'{at2:d}({type_:d})'
+        for i, bond in enumerate(bonds):
+            if len(bond) == 0:
+                bonds[i] = '_'
+        atoms.arrays['bonds'] = np.array(bonds)
+
+    if angles is not None:
+        for type_, (at1, at2, at3) in zip(angle_types, angles_in):
+            if len(angles[at2]) > 0:
+                angles[at2] += ','
+            angles[at2] += f'{at1:d}-{at3:d}({type_:d})'
+        for i, angle in enumerate(angles):
+            if len(angle) == 0:
+                angles[i] = '_'
+        atoms.arrays['angles'] = np.array(angles)
+
+    if dihedrals is not None:
+        for type_, (at1, at2, at3, at4) in zip(dihedral_types, dihedrals_in):
+            if len(dihedrals[at1]) > 0:
+                dihedrals[at1] += ','
+            dihedrals[at1] += f'{at2:d}-{at3:d}-{at4:d}({type_:d})'
+        for i, dihedral in enumerate(dihedrals):
+            if len(dihedral) == 0:
+                dihedrals[i] = '_'
+        atoms.arrays['dihedrals'] = np.array(dihedrals)
 
     # Outputs
     out_path = Path(args.file_pos)
     if out_path.exists() and not args.overwrite:
         parser.exit(1, f"Refusing to overwrite existing file: {out_path}\n")
-    ExportLammpsDataFileTopo(str(out_path), atoms, topo)
+
+    write_lammps_data(
+            args.file_pos,
+            atoms,
+            atom_style='full',
+            masses=True,
+            force_skew=True,
+            preserve_atom_types=True,
+            #specorder=specorder,
+        )
 
     if args.file_types:
         types_path = Path(args.file_types)
         if types_path.exists() and not args.overwrite:
             parser.exit(1, f"Refusing to overwrite existing file: {types_path}\n")
-        ExportTypesTopo(str(types_path), topo)
+        ExportTypesTopo(str(types_path), topo, lmp_type_table)
+
+    # TODO: Deprecate
+    ExportLammpsDataFileTopo('deprec.'+args.file_pos, atoms, topo)
 
     return 0
 

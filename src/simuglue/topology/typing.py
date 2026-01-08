@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import sys
 from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
@@ -72,6 +73,7 @@ class TypingOptions:
 def type_bonds(
     atoms: Atoms,
     topo: Topo,
+    atom_tags,
     opts: TypingOptions = TypingOptions(),
 ) -> None:
     """Populate topo.bond_types and topo.bond_tags (in-place)."""
@@ -85,10 +87,8 @@ def type_bonds(
     tags: List[str] = []
     for (i, j), rlen in zip(topo.bonds, lens):
         # canonical pair
-        t1, t2 = atypes[i], atypes[j]
-        if t1 > t2:
-            t1, t2 = t2, t1
-        parts = [str(t1), str(t2)]
+        parts = [atom_tags[atypes[i]], atom_tags[atypes[j]]]
+        parts = SortTypes(parts)
         if opts.diff_bond_len:
             parts.append(str(opts.diff_bond_fmt % rlen))
         tags.append(opts.type_delimeter.join(parts))
@@ -103,6 +103,7 @@ def type_bonds(
 def type_angles(
     atoms: Atoms,
     topo: Topo,
+    atom_tags,
     opts: TypingOptions = TypingOptions(),
 ) -> None:
     """Populate topo.angle_types and topo.angle_tags (in-place)."""
@@ -119,11 +120,8 @@ def type_angles(
 
     tags: List[str] = []
     for n, (i, j, k) in enumerate(topo.angles):
-        ti, tj, tk = atypes[i], atypes[j], atypes[k]
-        # canonical i/k swap (j fixed)
-        if ti > tk:
-            ti, tk = tk, ti
-        parts = [str(ti), str(tj), str(tk)]
+        parts = [atom_tags[atypes[i]], atom_tags[atypes[j]], atom_tags[atypes[k]]]
+        parts = SortTypes(parts)
         if opts.angle_symmetry:
             parts.append(syms[n])
         if opts.diff_angle_theta:
@@ -140,6 +138,7 @@ def type_angles(
 def type_dihedrals(
     atoms: Atoms,
     topo: Topo,
+    atom_tags,
     opts: TypingOptions = TypingOptions(),
 ) -> None:
     """Populate topo.dihedral_types and topo.dihedral_tags (in-place)."""
@@ -156,10 +155,8 @@ def type_dihedrals(
 
     tags: List[str] = []
     for n, (i, j, k, l) in enumerate(topo.dihedrals):
-        ti, tj, tk, tl = atypes[i], atypes[j], atypes[k], atypes[l]
-        # reuse existing SortTypes logic (string-based) for stable symmetry handling
-        type_sort = SortTypes([ti, tj, tk, tl])
-        parts = [str(x) for x in type_sort]
+        parts = [atom_tags[atypes[i]], atom_tags[atypes[j]], atom_tags[atypes[k]], atom_tags[atypes[l]]]
+        parts = SortTypes(parts)
         if opts.cis_trans:
             parts.append(orient[n])
         if opts.diff_dihed_theta:
