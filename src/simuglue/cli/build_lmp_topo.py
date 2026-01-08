@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import numpy as np
 from pathlib import Path
-from typing import Optional, Tuple, OrderedDict
+from typing import Tuple
 
 from simuglue.ase_patches.lammpsdata import read_lammps_data, write_lammps_data, get_lmp_type_table
 
@@ -55,7 +55,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     # Keep a positional input to keep your existing dev/hbn/auto.sh usable.
     p.add_argument(
         "input",
-        help="Input structure file (LAMMPS data file or extxyz).",
+        help="Input LAMMPS data file.",
     )
 
     p.add_argument(
@@ -197,7 +197,7 @@ def main(argv=None, prog: str | None = None) -> int:
 
     # Fetch the atom tags
     lmp_type_table = get_lmp_type_table(atoms)
-    if lmp_type_table == None:
+    if lmp_type_table is None:
         parser.exit(1, "Error: could not parse lmp_type_table\n")
 
     # Fetch atom tags; if null set them to lmp_types
