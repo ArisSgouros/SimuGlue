@@ -166,6 +166,7 @@ def _write_atoms(
 
         atom_style = opts.get("style", "full")
         units = opts.get("units", "metal")
+        preserve_atom_types = bool(opts.get("preserve_atom_types", True))
         # We don't pass units to write_lammps_data (ASE ignores), but we can
         # enforce a whitelist here to avoid nonsense configs.
         if units not in ("metal", "real"):
@@ -183,6 +184,7 @@ def _write_atoms(
             dest,
             atoms[0],
             atom_style=atom_style,
+            preserve_atom_types=preserve_atom_types,
             specorder=specorder,
             masses=True,
             force_skew=force_skew,
