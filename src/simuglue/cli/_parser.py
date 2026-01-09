@@ -25,4 +25,12 @@ def _parse_float_list(s: str) -> list[float]:
     except ValueError as exc:
         raise argparse.ArgumentTypeError(str(exc)) from exc
 
+def _parse_bool01(s: str) -> bool:
+    v = s.strip().lower()
+    if v in ("1", "true", "t", "yes", "y", "on"):
+        return True
+    if v in ("0", "false", "f", "no", "n", "off"):
+        return False
+    raise ValueError(f"Expected bool (0/1/true/false/yes/no), got {s!r}")
+
 
