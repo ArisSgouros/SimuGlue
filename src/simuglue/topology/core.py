@@ -58,12 +58,13 @@ def build_topology_from_atoms(
 
 
 def ensure_atom_tags_from_lmp_type_table(lmp_type_table: dict) -> dict:
-    atom_tag = lmp_type_table.get('tag', None)
-    if atom_tag is None:
+    atom_tag_in = lmp_type_table.get('tag', None)
+    if atom_tag_in is None:
         raise ValueError("lmp_type_table has no 'tag' field")
 
-    for type_id in atom_tag:
-        if atom_tag[type_id] == "_":
+    atom_tag = dict(atom_tag_in)
+    for type_id, tag in atom_tag.items():
+        if tag == '_':
             atom_tag[type_id] = str(type_id)
     return atom_tag
 
