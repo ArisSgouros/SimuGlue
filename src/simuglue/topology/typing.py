@@ -24,6 +24,20 @@ def sort_bond(chem_list):    return canonical_by_perms(chem_list, BOND_PERMS)
 def sort_angle(chem_list):   return canonical_by_perms(chem_list, ANGLE_PERMS)
 def sort_dihedral(chem_list):return canonical_by_perms(chem_list, DIHED_PERMS)
 
+def sort_dihedral_with_flip(chem_list):
+    """Canonicalize a 4-atom chemical tag sequence and report whether it was reversed.
+
+    This keeps the behavior of sort_dihedral() (min of forward vs reversed sequence)
+    while enabling consistent signed-dihedral feature tagging when the canonical form is reversed.
+    """
+    t = tuple(map(str, chem_list))
+    fwd = t
+    rev = t[::-1]
+    if rev < fwd:
+        return list(rev), True
+    return list(fwd), False
+
+
 def sort_improper(chem_list, center=1):
     # center fixed; permute outers
     idx = [0,1,2,3]
@@ -189,10 +203,16 @@ def type_dihedrals(
             atom_tags.get(atypes[k], str(atypes[k])),
             atom_tags.get(atypes[l], str(atypes[l])),
         ]
+        parts, flipped = sort_dihedral_with_flip(raw)
+        # parts already canonicalized (and flip detected) above
         if opts.cis_trans:
             parts.append(orient[n])
         if opts.diff_dihed_theta:
             phi_deg = math.degrees(phis[n])
+            # If the chemical tag sequence was canonicalized by reversing (i,j,k,l)->(l,k,j,i),
+            # then a signed dihedral must flip sign to stay consistent with the canonical representation.
+            if (not opts.diff_dihed_theta_abs) and flipped:
+                phi_deg = -phi_deg
             if opts.diff_dihed_theta_abs:
                 phi_deg = abs(phi_deg)
             parts.append(str(opts.diff_dihed_theta_fmt % phi_deg))
