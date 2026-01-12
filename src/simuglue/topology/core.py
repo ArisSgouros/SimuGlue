@@ -39,12 +39,11 @@ def build_topology_from_atoms(
         topo = Topo(bonds=[])
         return topo, neighbors
 
-    topo_b, neighbors, _lens = infer_bonds_by_distance(
+    topo_b, neighbors = infer_bonds_by_distance(
         atoms,
         rc_list=rc_list,
         drc=float(drc),
         deduplicate=deduplicate,
-        return_lengths=False,
     )
     topo = topo_b
 

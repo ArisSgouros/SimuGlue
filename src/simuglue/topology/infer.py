@@ -87,14 +87,13 @@ def infer_bonds_by_distance(
     drc: float = 0.0,
     *,
     deduplicate: bool = True,
-    return_lengths: bool = False,
 ):
     n = len(atoms)
     topo = Topo()
     neighbors = [[] for _ in range(n)]
 
     if n == 0 or not rc_list:
-        return topo, neighbors, [] if return_lengths else None
+        return topo, neighbors
     if drc < 0:
         raise ValueError(f"drc must be non-negative, got {drc}")
 
@@ -105,7 +104,7 @@ def infer_bonds_by_distance(
     EPS = 1e-12
     cutoff = float(max(rc_list) + drc + EPS)
     if cutoff <= 0.0:
-        return topo, neighbors, [] if return_lengths else None
+        return topo, neighbors
 
     # windows (clamp lower bound to 0)
     rmin2 = np.array([(max(0.0, rc - drc)) ** 2 for rc in rc_list], dtype=float)
@@ -132,12 +131,5 @@ def infer_bonds_by_distance(
     topo.canonicalize_bonds(deduplicate=deduplicate, sort=True)
     neighbors = topo.build_adjacency(n, sort_neighbors=True, unique_neighbors=True)
 
-    lengths = None
-    if return_lengths:
-        lengths = []
-        for i_, j_ in topo.bonds:
-            rij, _ = find_mic(pos[j_] - pos[i_], cell, pbc=pbc)
-            lengths.append(float(np.linalg.norm(rij)))
-
-    return topo, neighbors, lengths
+    return topo, neighbors
 
