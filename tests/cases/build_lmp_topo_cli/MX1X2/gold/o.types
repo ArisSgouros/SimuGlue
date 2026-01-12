@@ -1,0 +1,24 @@
+
+2 bond types
+6 angle types
+3 atom types
+
+Masses
+
+1 2.000000000514488 # M_
+2 6.000000001543466 # X1
+3 10.00000000257244 # X2
+
+Bond Types
+
+1 M_ X1
+2 M_ X2
+
+Angle Types
+
+1 M_ X1 M_ T
+2 M_ X2 M_ T
+3 X1 M_ X1 T
+4 X1 M_ X2 A
+5 X1 M_ X2 N
+6 X2 M_ X2 T

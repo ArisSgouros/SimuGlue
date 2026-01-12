@@ -1,0 +1,14 @@
+inputs:
+  - i.supercell.dat
+outputs:
+  - o.supercell_topo.dat
+  - o.types
+gold:
+  - o.supercell_topo.dat
+  - o.types
+
+bonds: true
+angles: true
+angle-symmetry: true
+cis-trans: true
+rc: 0.763762616

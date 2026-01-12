@@ -1,0 +1,22 @@
+inputs:
+  - i.supercell.dat
+outputs:
+  - o.supercell_topo.dat
+  - o.types
+gold:
+  - o.supercell_topo.dat
+  - o.types
+
+bonds: true
+diff-bond-len: true
+rc: 0.763762616
+
+angles: true
+angle-symmetry: true
+diff-angle-theta: true
+angle-theta-fmt: "%.4f"
+
+dihedrals: true
+diff-dihed-theta: true
+dihed-theta-fmt: "%.5f"
+type-delimiter: "-"
