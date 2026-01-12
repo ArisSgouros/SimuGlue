@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple, Iterable
+from typing import Dict, List, Optional, Sequence, Tuple
 
 
 Index = int

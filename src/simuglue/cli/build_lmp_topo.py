@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Tuple
 
 from simuglue.ase_patches.lammpsdata import (
     read_lammps_data,
@@ -28,9 +27,7 @@ def _refuse_overwrite(path: Path, overwrite: bool) -> None:
 
 
 def _make_typing_options(args: argparse.Namespace) -> TypingOptions:
-    # Your repo may still use `type_delimeter` internally; allow both spellings safely.
-    fields = getattr(TypingOptions, "__dataclass_fields__", {}) or {}
-    kw = dict(
+    return TypingOptions(
         diff_bond_len=bool(args.diff_bond_len),
         diff_bond_fmt=str(args.bond_len_fmt),
         angle_symmetry=bool(args.angle_symmetry),
@@ -40,9 +37,8 @@ def _make_typing_options(args: argparse.Namespace) -> TypingOptions:
         diff_dihed_theta=bool(args.diff_dihed_theta),
         diff_dihed_theta_abs=bool(args.dihed_abs),
         diff_dihed_theta_fmt=str(args.dihed_theta_fmt),
-        type_delimiter=str(args.type_delimiter)
+        type_delimiter=str(args.type_delimiter),
     )
-    return TypingOptions(**kw)
 
 
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:

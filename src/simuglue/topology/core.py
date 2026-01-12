@@ -33,11 +33,9 @@ def build_topology_from_atoms(
       - returns (topo, neighbors)
     """
     n = len(atoms)
-    neighbors: List[List[int]] = [[] for _ in range(n)]
 
     if not calc_bonds:
-        topo = Topo(bonds=[])
-        return topo, neighbors
+        return Topo(bonds=[]), [[] for _ in range(len(atoms))]
 
     topo_b, neighbors = infer_bonds_by_distance(
         atoms,
@@ -125,10 +123,6 @@ def attach_topology_arrays_to_atoms(atoms: Atoms, topo: Topo) -> None:
     bonds_in = topo.bonds
     angles_in = topo.angles
     dihedrals_in = topo.dihedrals
-
-    bond_types = topo.bond_types or []
-    angle_types = topo.angle_types or []
-    dihedral_types = topo.dihedral_types or []
 
     bonds = [""] * natoms if len(bonds_in) > 0 else None
     angles = [""] * natoms if len(angles_in) > 0 else None

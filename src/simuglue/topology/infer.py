@@ -4,7 +4,6 @@ from typing import List, Sequence, Tuple
 
 import numpy as np
 from ase import Atoms
-from ase.geometry import find_mic
 from ase.neighborlist import neighbor_list
 
 from simuglue.topology.topo import Topo
