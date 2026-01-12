@@ -111,7 +111,7 @@ def type_bonds(
     tags: List[str] = []
     for (i, j), rlen in zip(topo.bonds, lens):
         # canonical pair
-        parts = [atom_tags[atypes[i]], atom_tags[atypes[j]]]
+        parts = [atom_tags.get(atypes[i], str(atypes[i])), atom_tags.get(atypes[j], str(atypes[j]))]
         parts = sort_bond(parts)
         if opts.diff_bond_len:
             parts.append(str(opts.diff_bond_fmt % rlen))
@@ -144,7 +144,11 @@ def type_angles(
 
     tags: List[str] = []
     for n, (i, j, k) in enumerate(topo.angles):
-        parts = [atom_tags[atypes[i]], atom_tags[atypes[j]], atom_tags[atypes[k]]]
+        parts = [
+            atom_tags.get(atypes[i], str(atypes[i])),
+            atom_tags.get(atypes[j], str(atypes[j])),
+            atom_tags.get(atypes[k], str(atypes[k])),
+        ]
         parts = sort_angle(parts)
         if opts.angle_symmetry:
             parts.append(syms[n])
@@ -179,8 +183,12 @@ def type_dihedrals(
 
     tags: List[str] = []
     for n, (i, j, k, l) in enumerate(topo.dihedrals):
-        parts = [atom_tags[atypes[i]], atom_tags[atypes[j]], atom_tags[atypes[k]], atom_tags[atypes[l]]]
-        parts = sort_dihedral(parts)
+        raw = [
+            atom_tags.get(atypes[i], str(atypes[i])),
+            atom_tags.get(atypes[j], str(atypes[j])),
+            atom_tags.get(atypes[k], str(atypes[k])),
+            atom_tags.get(atypes[l], str(atypes[l])),
+        ]
         if opts.cis_trans:
             parts.append(orient[n])
         if opts.diff_dihed_theta:
