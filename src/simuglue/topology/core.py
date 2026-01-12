@@ -146,6 +146,9 @@ def attach_topology_arrays_to_atoms(atoms: Atoms, topo: Topo) -> None:
                 bonds[i] = "_"
         atoms.arrays["bonds"] = np.array(bonds)
 
+    else:
+        atoms.arrays.pop("bonds", None)
+
     if angles is not None:
         angle_types = _require_types_for_terms(kind="angle", terms=angles_in, types=topo.angle_types)
         for type_, (at1, at2, at3) in zip(angle_types, angles_in):
@@ -157,6 +160,9 @@ def attach_topology_arrays_to_atoms(atoms: Atoms, topo: Topo) -> None:
                 angles[i] = "_"
         atoms.arrays["angles"] = np.array(angles)
 
+    else:
+        atoms.arrays.pop("angles", None)
+
     if dihedrals is not None:
         dihedral_types = _require_types_for_terms(kind="dihedral", terms=dihedrals_in, types=topo.dihedral_types)
         for type_, (at1, at2, at3, at4) in zip(dihedral_types, dihedrals_in):
@@ -167,4 +173,7 @@ def attach_topology_arrays_to_atoms(atoms: Atoms, topo: Topo) -> None:
             if not s:
                 dihedrals[i] = "_"
         atoms.arrays["dihedrals"] = np.array(dihedrals)
+
+    else:
+        atoms.arrays.pop("dihedrals", None)
 
