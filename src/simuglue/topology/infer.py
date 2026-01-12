@@ -109,7 +109,8 @@ def infer_bonds_by_distance(
     cell = np.asarray(atoms.cell)
     pbc = atoms.pbc
 
-    cutoff = float(max(rc_list) + drc)
+    EPS = 1e-12
+    cutoff = float(max(rc_list) + drc + EPS)
     if cutoff <= 0.0:
         return topo, neighbors, [] if return_lengths else None
 
@@ -124,7 +125,7 @@ def infer_bonds_by_distance(
     d2 = np.einsum("ij,ij->i", vec, vec)
 
     # keep candidates within ANY window
-    mask = ((d2[:, None] > rmin2[None, :]) & (d2[:, None] < rmax2[None, :])).any(axis=1)
+    mask = ((d2[:, None] >= (rmin2[None, :] - EPS)) & (d2[:, None] <= (rmax2[None, :] + EPS))).any(axis=1)
 
     ii, jj = i[mask], j[mask]
     a = np.minimum(ii, jj)
