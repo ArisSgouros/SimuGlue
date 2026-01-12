@@ -27,7 +27,7 @@ def test_infer_bonds_drc_zero_should_match_exact_rc():
     Expected behavior: drc=0 should allow matching exactly rc (within float tolerance).
     """
     atoms = _dimer(r=1.0)
-    topo, neighbors, _ = infer_bonds_by_distance(atoms, rc_list=[1.0], drc=0.0, return_lengths=False)
+    topo, neighbors = infer_bonds_by_distance(atoms, rc_list=[1.0], drc=0.0)
     assert topo.bonds == [(0, 1)]
     assert neighbors[0] == [1] and neighbors[1] == [0]
 
@@ -45,5 +45,5 @@ def test_infer_bonds_should_include_window_boundaries(r, rc, drc):
     If drc is a tolerance half-width, distances at rc±drc should be accepted.
     """
     atoms = _dimer(r=r)
-    topo, _, _ = infer_bonds_by_distance(atoms, rc_list=[rc], drc=drc, return_lengths=False)
+    topo, _ = infer_bonds_by_distance(atoms, rc_list=[rc], drc=drc)
     assert topo.bonds == [(0, 1)]

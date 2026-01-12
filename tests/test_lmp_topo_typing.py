@@ -58,7 +58,7 @@ def test_ensure_atom_tags_from_lmp_type_table_replaces_underscore():
 
 def test_type_bonds_canonicalizes_pair_and_assigns_single_type():
     atoms = _atoms_water_like()
-    topo, _, _ = infer_bonds_by_distance(atoms, rc_list=[0.96], drc=0.05)
+    topo, _ = infer_bonds_by_distance(atoms, rc_list=[0.96], drc=0.05)
 
     atom_tag = {1: "O", 2: "H"}
     type_bonds(atoms, topo, atom_tag, opts=TypingOptions(type_delimiter=" "))
@@ -76,7 +76,7 @@ def test_type_bonds_canonicalizes_pair_and_assigns_single_type():
 
 def test_type_angles_with_symmetry_and_theta_appends_to_tags():
     atoms = _atoms_water_like()
-    topo, neighbors, _ = infer_bonds_by_distance(atoms, rc_list=[0.96], drc=0.05)
+    topo, neighbors = infer_bonds_by_distance(atoms, rc_list=[0.96], drc=0.05)
     topo.angles = [(1, 0, 2)]
 
     atom_tag = {1: "O", 2: "H"}
@@ -99,7 +99,7 @@ def test_type_dihedrals_cis_trans_classification():
     atom_tag = {1: "C"}
 
     atoms_t = _atoms_chain_4(phi="trans")
-    topo_t, neighbors_t, _ = infer_bonds_by_distance(atoms_t, rc_list=[1.0], drc=0.05)
+    topo_t, neighbors_t = infer_bonds_by_distance(atoms_t, rc_list=[1.0], drc=0.05)
     topo_t.dihedrals = [(0, 1, 2, 3)]
 
     opts = TypingOptions(cis_trans=True)
@@ -114,7 +114,7 @@ def test_type_dihedrals_cis_trans_classification():
     assert orient == ["trans"]
 
     atoms_c = _atoms_chain_4(phi="cis")
-    topo_c, neighbors_c, _ = infer_bonds_by_distance(atoms_c, rc_list=[1.0], drc=0.05)
+    topo_c, neighbors_c = infer_bonds_by_distance(atoms_c, rc_list=[1.0], drc=0.05)
     topo_c.dihedrals = [(0, 1, 2, 3)]
 
     type_dihedrals(atoms_c, topo_c, atom_tag, opts=opts)
@@ -138,7 +138,7 @@ def test_type_dihedrals_theta_abs_vs_signed_changes_tag():
     )
     atoms.arrays["type"] = np.array([1, 1, 1, 1], dtype=int)
 
-    topo, _, _ = infer_bonds_by_distance(atoms, rc_list=[1.0], drc=0.05)
+    topo, _ = infer_bonds_by_distance(atoms, rc_list=[1.0], drc=0.05)
     topo.dihedrals = [(0, 1, 2, 3)]
 
     atom_tag = {1: "C"}

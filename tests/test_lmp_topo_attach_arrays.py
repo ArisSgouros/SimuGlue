@@ -25,7 +25,7 @@ def _atoms_water_like(*, cell=10.0, pbc=True) -> Atoms:
 def test_attach_arrays_bonds_and_angles_water_like():
     atoms = _atoms_water_like()
 
-    topo, neighbors, _ = infer_bonds_by_distance(atoms, rc_list=[0.96], drc=0.05)
+    topo, neighbors = infer_bonds_by_distance(atoms, rc_list=[0.96], drc=0.05)
     topo.angles = [(1, 0, 2)]
 
     atom_tag = {1: "O", 2: "H"}
@@ -47,7 +47,7 @@ def test_attach_arrays_bonds_and_angles_water_like():
 def test_attach_arrays_no_bonds_does_not_create_arrays():
     atoms = _atoms_water_like()
     # empty topo
-    topo, _neighbors, _ = infer_bonds_by_distance(atoms, rc_list=[], drc=0.05)
+    topo, _neighbors = infer_bonds_by_distance(atoms, rc_list=[], drc=0.05)
     assert topo.bonds == []
 
     attach_topology_arrays_to_atoms(atoms, topo)
