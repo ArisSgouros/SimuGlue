@@ -91,6 +91,28 @@ def type_topology_inplace(
     topo.validate(len(atoms), strict_types=False)
 
 
+def _require_types_for_terms(
+    *,
+    kind: str,
+    terms: Sequence[Sequence[int]],
+    types: Optional[Sequence[int]],
+) -> List[int]:
+    """
+    Fail-fast validation for attach_topology_arrays_to_atoms():
+    if terms exist, corresponding types must exist and match length.
+    """
+    if not terms:
+        return [] if types is None else list(types)
+    # Treat None or empty as "missing" when terms exist.
+    if types is None or len(types) == 0:
+        raise ValueError(f"missing {kind}_types")
+    if len(types) != len(terms):
+        raise ValueError(
+            f"mismatched {kind}_types (got {len(types)} for {len(terms)} {kind}s)"
+        )
+    return list(types)
+
+
 def attach_topology_arrays_to_atoms(atoms: Atoms, topo: Topo) -> None:
     """
     Preserve current on-Atoms encoding exactly:
@@ -113,6 +135,7 @@ def attach_topology_arrays_to_atoms(atoms: Atoms, topo: Topo) -> None:
     dihedrals = [""] * natoms if len(dihedrals_in) > 0 else None
 
     if bonds is not None:
+        bond_types = _require_types_for_terms(kind="bond", terms=bonds_in, types=topo.bond_types)
         for type_, (at1, at2) in zip(bond_types, bonds_in):
             if bonds[at1]:
                 bonds[at1] += ","
@@ -123,6 +146,7 @@ def attach_topology_arrays_to_atoms(atoms: Atoms, topo: Topo) -> None:
         atoms.arrays["bonds"] = np.array(bonds)
 
     if angles is not None:
+        angle_types = _require_types_for_terms(kind="angle", terms=angles_in, types=topo.angle_types)
         for type_, (at1, at2, at3) in zip(angle_types, angles_in):
             if angles[at2]:
                 angles[at2] += ","
@@ -133,6 +157,7 @@ def attach_topology_arrays_to_atoms(atoms: Atoms, topo: Topo) -> None:
         atoms.arrays["angles"] = np.array(angles)
 
     if dihedrals is not None:
+        dihedral_types = _require_types_for_terms(kind="dihedral", terms=dihedrals_in, types=topo.dihedral_types)
         for type_, (at1, at2, at3, at4) in zip(dihedral_types, dihedrals_in):
             if dihedrals[at1]:
                 dihedrals[at1] += ","
