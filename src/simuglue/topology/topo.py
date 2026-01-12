@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple, Iterable
 
 
 Index = int
@@ -52,8 +52,11 @@ class Topo:
         Validate index ranges and type array lengths.
         Raises ValueError on any issue.
         """
+        # Allow natoms == 0 only if the topology is empty.
         if natoms <= 0:
-            raise ValueError(f"natoms must be positive, got {natoms}")
+            if (not self.bonds) and (not self.angles) and (not self.dihedrals):
+                return
+            raise ValueError("natoms must be > 0 for non-empty topology")
 
         def _check_arity_and_range(items: Sequence[tuple], arity: int, name: str) -> None:
             for n, item in enumerate(items):
