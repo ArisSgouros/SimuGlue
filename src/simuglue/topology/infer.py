@@ -5,6 +5,7 @@ from typing import Iterable, List, Optional, Sequence, Tuple
 import numpy as np
 from ase import Atoms
 from ase.geometry import find_mic
+from ase.neighborlist import neighbor_list
 
 from simuglue.topology.topo import Topo
 
@@ -79,14 +80,6 @@ def infer_dihedrals_from_bonds(
         diheds.sort()
     return diheds
 
-
-import numpy as np
-from ase.geometry import find_mic
-from ase.neighborlist import neighbor_list
-
-import numpy as np
-from ase.geometry import find_mic
-from ase.neighborlist import neighbor_list
 
 def infer_bonds_by_distance(
     atoms: Atoms,
