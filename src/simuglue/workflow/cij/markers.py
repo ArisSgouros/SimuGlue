@@ -21,13 +21,25 @@ def prepare_run(case_dir: Path, *, verbose: bool = True) -> bool:
     Sets .running and clears any stale .failed.
     Returns False (and prints a short message) if .done or .running exist.
     """
-    # mark running and clear old failed
+    if is_done(case_dir):
+        if verbose:
+            print(f"[cij/markers] skip {case_dir.name} (.done)")
+        return False
+
+    if is_running(case_dir):
+        if verbose:
+            print(f"[cij/markers] skip {case_dir.name} (.running)")
+        return False
+
+    # mark running and clear stale failed
     m_running(case_dir).write_text("running\n", encoding="utf-8")
     m_failed(case_dir).unlink(missing_ok=True)
+    return True
 
 def finalize_success(case_dir: Path) -> None:
     m_done(case_dir).write_text("done\n", encoding="utf-8")
     m_running(case_dir).unlink(missing_ok=True)
+    m_failed(case_dir).unlink(missing_ok=True)
 
 def finalize_failure(case_dir: Path, msg: str) -> None:
     m_failed(case_dir).write_text(msg.rstrip() + "\n", encoding="utf-8")
