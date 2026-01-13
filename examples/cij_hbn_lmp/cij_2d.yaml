@@ -17,12 +17,9 @@ strains: [0.00001, -0.00001]
 lammps:
   exe: lmp_mpi
   units: metal
-  # CRITICAL CHANGE: Must be 'full' to process bonds/angles/dihedrals
   atom_style: full
   input_template: in.template
   data_file: in.data
-  # CRITICAL ADDITION: This tells SimuGlue to preserve topology from in.data
-  topology_data_file: in.data 
 
 # Files to be copied to each temporary case directory
 common_files: [_hbn_potential.mod]
