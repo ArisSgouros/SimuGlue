@@ -31,5 +31,5 @@ common_path: '.'
 # output
 output:
   cij_json: cij.json
-  units_cij: gpa 
+  units_cij: gpa
   symmetrize_cij: false
