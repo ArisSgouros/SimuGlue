@@ -1,0 +1,11 @@
+inputs:
+  - i.supercell.dat
+outputs:
+  - o.supercell_topo.dat
+  - o.types
+gold:
+  - o.supercell_topo.dat
+  - o.types
+
+bonds: true
+rc: 2.49

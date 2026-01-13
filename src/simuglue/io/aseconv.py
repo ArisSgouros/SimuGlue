@@ -5,10 +5,11 @@ import sys
 
 from ase import Atoms
 from ase.io import read, write
-from ase.io.lammpsdata import read_lammps_data, write_lammps_data
 from io import StringIO
+from simuglue.ase_patches.lammpsdata import read_lammps_data, write_lammps_data
 
 SUPPORTED_INPUTS = {
+    "xyz",
     "extxyz",
     "traj",
     "espresso-in",
@@ -36,16 +37,6 @@ def _infer_format_from_suffix(path: Path) -> str | None:
         return "lammps-dump-text"
     return None
 
-
-def _get_fmt_opts(fmt: str, options: Dict[str, Dict[str, Any]] | None) -> Dict[str, Any]:
-    """
-    Fetch per-format options. If you later want families, you can:
-      - also check a prefix key like 'lammps', etc.
-    For now: exact match only.
-    """
-    if not options:
-        return {}
-    return options.get(fmt, {})
 
 def _parse_index(frames: str | None):
     """Convert CLI --frames into an ASE index object."""
@@ -87,7 +78,7 @@ def _read_atoms(
     src: str,
     fmt: str,
     frames: str | None,
-    options: Dict[str, Dict[str, Any]] | None,
+    options: Dict[str, Any] | None,
 ) -> List[Atoms]:
     """
     Read input into a list[Atoms], handling:
@@ -96,16 +87,16 @@ def _read_atoms(
       - single-Atoms vs sequence-of-Atoms outputs from ASE.
     """
     index = _parse_index(frames)
-    opts = _get_fmt_opts(fmt, options)
+    opts = options or {}
     source = _make_source(src, fmt)
 
     # --- LAMMPS data ---
     if fmt == "lammps-data":
-        style = opts.get("style", "full")
+        atom_style = opts.get("style", "full")
         units = opts.get("units", "metal")
         if units not in ("metal", "real"):
             raise ValueError(f"Unsupported LAMMPS units for lammps-data: {units}")
-        atoms = read_lammps_data(source, style=style, units=units)
+        atoms = read_lammps_data(source, atom_style=atom_style, units=units)
         return [atoms]
 
     # --- LAMMPS dump (text) ---
@@ -114,7 +105,7 @@ def _read_atoms(
         return _to_atoms_list(images)
 
     # --- extxyz ---
-    if fmt == "extxyz":
+    if fmt in ["xyz", "extxyz"]:
         # Let ASE infer from suffix for Path; for StringIO we must be explicit.
         if isinstance(source, Path):
             images = read(source, index=index)
@@ -141,10 +132,10 @@ def _write_atoms(
     atoms: Iterable[Atoms],
     dst: str,
     fmt: str,
-    options: Dict[str, Dict[str, Any]] | None,
+    options: Dict[str, Any] | None,
 ) -> None:
     atoms_list: List[Atoms] = list(atoms)
-    opts = _get_fmt_opts(fmt, options)
+    opts = options or {}
     dest = _make_dest(dst, fmt)
     """Format-specific write logic to a Path or file-like."""
 
@@ -163,8 +154,9 @@ def _write_atoms(
         if len(atoms) != 1:
             raise ValueError("lammps-data output supports a single frame.")
 
-        style = opts.get("style", "full")
+        atom_style = opts.get("style", "full")
         units = opts.get("units", "metal")
+        preserve_atom_types = bool(opts.get("preserve_atom_types", True))
         # We don't pass units to write_lammps_data (ASE ignores), but we can
         # enforce a whitelist here to avoid nonsense configs.
         if units not in ("metal", "real"):
@@ -181,7 +173,8 @@ def _write_atoms(
         write_lammps_data(
             dest,
             atoms[0],
-            atom_style=style,
+            atom_style=atom_style,
+            preserve_atom_types=preserve_atom_types,
             specorder=specorder,
             masses=True,
             force_skew=force_skew,
@@ -205,8 +198,8 @@ def convert(
     iformat: str = "auto",
     oformat: str | None = None,
     frames: str | None = None,
-    read_opts: Dict[str, Dict[str, Any]] | None = None,
-    write_opts: Dict[str, Dict[str, Any]] | None = None,
+    read_opts: Dict[str, Any] | None = None,
+    write_opts: Dict[str, Any] | None = None,
     overwrite: bool = False,
 ) -> None:
     # ---- resolve input format ----

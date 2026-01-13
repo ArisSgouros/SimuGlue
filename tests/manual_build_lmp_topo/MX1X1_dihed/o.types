@@ -1,0 +1,30 @@
+
+1 bond types
+4 angle types
+5 dihedral types
+3 atom types
+
+Masses
+
+1 2.000000000514488 # M_
+2 6.000000001543466 # X1
+3 10.00000000257244 # X1
+
+Bond Types
+
+1 M_-X1-0.76
+
+Angle Types
+
+1 M_-X1-M_-T-81.7868
+2 X1-M_-X1-A-135.5847
+3 X1-M_-X1-N-81.7868
+4 X1-M_-X1-T-81.7868
+
+Dihedral Types
+
+1 M_-X1-M_-X1-110.70481
+2 M_-X1-M_-X1-180.00000
+3 M_-X1-M_-X1-27.88557
+4 M_-X1-M_-X1-41.40962
+5 M_-X1-M_-X1-97.18076

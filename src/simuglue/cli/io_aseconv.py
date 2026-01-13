@@ -1,32 +1,22 @@
 # simuglue/cli/io_aseconv.py
-from __future__ import annotations
 
+from __future__ import annotations
 import argparse
 from typing import Dict, Any
-
 from simuglue.io.aseconv import convert
 
 
-def _parse_fmt_opts(arg: str) -> Dict[str, Dict[str, Any]]:
+def _parse_kv_opts(arg: str) -> Dict[str, Any]:
     """
-    Parse an options string of the form:
+    Parse: "key=val,key2=val2,..." -> {"key": val, "key2": val2}
 
-        "fmt.key=val,otherfmt.otherkey=val2,..."
-
-    into:
-
-        {
-            "fmt": {"key": val},
-            "otherfmt": {"otherkey": val2},
-        }
-
-    Values are parsed as:
-        - 'true'/'false' (case-insensitive) -> bool
-        - int if possible
-        - float if possible
-        - otherwise left as string.
+    Value parsing:
+      - true/false -> bool
+      - int if possible
+      - float if possible
+      - else string
     """
-    opts: Dict[str, Dict[str, Any]] = {}
+    opts: Dict[str, Any] = {}
     if not arg:
         return opts
 
@@ -34,32 +24,18 @@ def _parse_fmt_opts(arg: str) -> Dict[str, Dict[str, Any]]:
         item = item.strip()
         if not item:
             continue
-
         if "=" not in item:
             raise ValueError(f"Invalid opts entry (missing '='): {item!r}")
 
-        lhs, val_str = item.split("=", 1)
-        lhs = lhs.strip()
-        val_str = val_str.strip()
-
-        if "." not in lhs:
-            raise ValueError(
-                f"Invalid opts entry (expected 'fmt.key=val'): {item!r}"
-            )
-
-        fmt, key = lhs.split(".", 1)
-        fmt = fmt.strip()
+        key, val_str = item.split("=", 1)
         key = key.strip()
-        if not fmt or not key:
-            raise ValueError(
-                f"Invalid opts entry (empty fmt/key): {item!r}"
-            )
+        val_str = val_str.strip()
+        if not key:
+            raise ValueError(f"Invalid opts entry (empty key): {item!r}")
 
-        # Parse value
-        v: Any
         low = val_str.lower()
         if low in {"true", "false"}:
-            v = (low == "true")
+            v: Any = (low == "true")
         else:
             try:
                 v = int(val_str)
@@ -67,9 +43,9 @@ def _parse_fmt_opts(arg: str) -> Dict[str, Dict[str, Any]]:
                 try:
                     v = float(val_str)
                 except ValueError:
-                    v = val_str  # keep as string
+                    v = val_str
 
-        opts.setdefault(fmt, {})[key] = v
+        opts[key] = v
 
     return opts
 
@@ -79,72 +55,33 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
         prog=prog,
         description="Convert between ASE-supported structure formats.",
     )
-    p.add_argument(
-        "-i",
-        "--input",
-        required=True,
-        help="Input file or '-' for stdin.",
-    )
-    p.add_argument(
-        "-o",
-        "--output",
-        default="-",
-        help="Output file or '-' for stdout.",
-    )
+    p.add_argument("-i", "--input", required=True, help="Input file or '-' for stdin.")
+    p.add_argument("-o", "--output", default="-", help="Output file or '-' for stdout.")
     p.add_argument(
         "--iformat",
         default="auto",
-        choices=[
-            "auto",
-            "extxyz",
-            "traj",
-            "espresso-in",
-            "espresso-out",
-            "lammps-data",
-            "lammps-dump-text",
-        ],
+        choices=["auto", "xyz", "extxyz", "traj", "espresso-in", "espresso-out", "lammps-data", "lammps-dump-text"],
         help="Input format (default: infer from extension when not stdin).",
     )
     p.add_argument(
         "--oformat",
-        choices=[
-            "extxyz",
-            "traj",
-            "lammps-data",
-        ],
+        choices=["xyz", "extxyz", "traj", "lammps-data"],
         help="Output format (default: infer from extension when not stdout).",
     )
-    p.add_argument(
-        "--frames",
-        default=None,
-        help="Frame selection (ASE index syntax, e.g. ':', '0', '0:10:2').",
-    )
+    p.add_argument("--frames", default=None, help="Frame selection (ASE index syntax, e.g. ':', '0', '0:10:2').")
 
-    # Generic per-format options for input (read)
     p.add_argument(
         "--iopts",
         metavar="OPTS",
-        help=(
-            "Format-specific READ options in 'fmt.key=val,...' form. "
-            "Example: 'lammps-data.style=full,lammps-data.units=metal'."
-        ),
+        help="READ options as 'key=val,...'. Example: 'style=full,units=metal'.",
     )
-
-    # Generic per-format options for output (write)
     p.add_argument(
         "--oopts",
         metavar="OPTS",
-        help=(
-            "Format-specific WRITE options in 'fmt.key=val,...' form. "
-            "Example: 'lammps-data.force_skew=true,lammps-data.style=full'."
-        ),
+        help="WRITE options as 'key=val,...'. Example: 'force_skew=true,style=full'.",
     )
 
-    p.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Allow overwriting existing output file.",
-    )
+    p.add_argument("--overwrite", action="store_true", help="Allow overwriting existing output file.")
     return p
 
 
@@ -152,18 +89,18 @@ def main(argv=None, prog: str | None = None) -> int:
     parser = build_parser(prog=prog)
     args = parser.parse_args(argv)
 
-    read_opts: dict[str, dict[str, object]] = {}
-    write_opts: dict[str, dict[str, object]] = {}
+    read_opts: Dict[str, Any] = {}
+    write_opts: Dict[str, Any] = {}
 
     if args.iopts:
         try:
-            read_opts = _parse_fmt_opts(args.iopts)
+            read_opts = _parse_kv_opts(args.iopts)
         except ValueError as e:
             parser.error(str(e))
 
     if args.oopts:
         try:
-            write_opts = _parse_fmt_opts(args.oopts)
+            write_opts = _parse_kv_opts(args.oopts)
         except ValueError as e:
             parser.error(str(e))
 
@@ -177,7 +114,6 @@ def main(argv=None, prog: str | None = None) -> int:
         write_opts=write_opts,
         overwrite=args.overwrite,
     )
-
     return 0
 
 

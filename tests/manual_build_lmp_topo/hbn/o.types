@@ -1,0 +1,24 @@
+
+1 bond types
+2 angle types
+2 dihedral types
+2 atom types
+
+Masses
+
+1 10.811000002781068 # B
+2 14.006700003603141 # N
+
+Bond Types
+
+1 B N
+
+Angle Types
+
+1 B N B
+2 N B N
+
+Dihedral Types
+
+1 B N B N cis
+2 B N B N trans

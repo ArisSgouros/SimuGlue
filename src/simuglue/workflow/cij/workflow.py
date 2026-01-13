@@ -180,7 +180,7 @@ def run_cij(config_path: str) -> None:
         print(f"[cij/run] (ref) skip run.ref (running)")
     else:
         print(f"[cij/run] (ref) run  run.ref")
-    backend.run_case(ref_dir, cfg)
+        backend.run_case(ref_dir, cfg)
 
     # deformed
     total = len(components) * len(strains)

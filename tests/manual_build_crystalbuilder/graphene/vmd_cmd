@@ -1,0 +1,13 @@
+mol modstyle 0 0 DynamicBonds 1.600000 0.200000 50.000000
+display depthcue off
+
+set sel [atomselect top "type 1"]
+$sel set radius 1.1
+$sel delete
+
+
+color Display Background white
+color Name 1 orange
+display shadows on
+display ambientocclusion on
+

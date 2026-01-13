@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 from ase import units
 from ase.calculators.lammps.unitconvert import convert
-from ase.io.lammpsdata import read_lammps_data, write_lammps_data
+from simuglue.ase_patches.lammpsdata import read_lammps_data, write_lammps_data
 from simuglue.io.lammps_cell import lammps_box_to_ase_cell
 
 from ..config import Config

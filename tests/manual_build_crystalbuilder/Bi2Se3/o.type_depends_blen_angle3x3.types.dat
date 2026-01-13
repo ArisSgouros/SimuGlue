@@ -1,0 +1,26 @@
+
+
+2 atom types
+2 bond types
+8 angle types
+
+Atom Types
+
+1 Se
+2 Bi
+
+Bond Types
+
+1 Bi Se 2.89
+2 Bi Se 3.11
+
+Angle Types
+
+1 Se Bi Se 93.15
+2 Se Bi Se 90.86
+3 Se Bi Se 174.16
+4 Bi Se Bi 93.15
+5 Bi Se Bi 84.84
+6 Bi Se Bi 95.16
+7 Bi Se Bi 180.00
+8 Se Bi Se 84.84
