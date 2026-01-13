@@ -101,7 +101,7 @@ class LAMMPSBackend(Backend):
         print_line = (
             "print '{\"pxx\":$(pxx), \"pyy\":$(pyy), \"pzz\":$(pzz), "
             "\"pyz\":$(pyz), \"pxz\":$(pxz), \"pxy\":$(pxy), \"pe\":$(pe),"
-            "\"lx\":$(lx), \"ly\":$(ly), \"lz\":$(lz), \"xy\":$(xy), \"xz\":$(xz), \"yz\":$(ly) }' "
+            "\"lx\":$(lx), \"ly\":$(ly), \"lz\":$(lz), \"xy\":$(xy), \"xz\":$(xz), \"yz\":$(yz) }' "
             "file thermo.json"
         )
         if "thermo.json" not in tpl:
