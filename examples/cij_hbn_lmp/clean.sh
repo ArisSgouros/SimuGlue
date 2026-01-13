@@ -1,2 +1,2 @@
 #!/bin/bash
-rm -r o.*
+rm -r o.* tmp.*

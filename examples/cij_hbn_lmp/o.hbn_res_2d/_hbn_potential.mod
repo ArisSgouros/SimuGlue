@@ -10,9 +10,9 @@ bond_coeff     1 5.35 1.897 1.4518
 angle_coeff    1 120.0 2.685 -1.78 0.0
 angle_coeff    2 120.0 2.685 -1.78 0.0
 
-# Dihedral (Harmonic)
-dihedral_coeff 1 0.109 -1 2
-dihedral_coeff 2 0.066 -1 2
+## Dihedral (Harmonic)
+#dihedral_coeff 1 0.109 -1 2
+#dihedral_coeff 2 0.066 -1 2
 
 # --- Setup Neighbor Style ---
 neighbor       1.0 nsq

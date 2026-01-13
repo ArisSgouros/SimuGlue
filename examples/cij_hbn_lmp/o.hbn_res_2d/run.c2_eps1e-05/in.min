@@ -6,7 +6,7 @@ atom_style      full
 pair_style      zero 10.0
 bond_style      morse
 angle_style     quartic
-dihedral_style harmonic
+#dihedral_style harmonic
 
 # Simulation variables
 variable etol equal 0.0
