@@ -20,7 +20,6 @@ from ..registry import (
 )
 
 from ..markers import prepare_run, finalize_success, finalize_failure
-from simuglue.io.lammps_topology import write_lammps_data_with_topology
 
 def _to_argv(x) -> list[str]:
     """Accept list/tuple/str/None and return a list of argv tokens."""
@@ -45,25 +44,16 @@ class LAMMPSBackend(Backend):
     def write_data(self, path: Path, atoms, cfg: Config) -> None:
         units_ = cfg.lammps.get("units", "metal")
         atom_style = cfg.lammps.get("atom_style", "atomic")
-        topo = cfg.lammps.get("topology_data_file")
 
-        if topo:
-            write_lammps_data_with_topology(
-                atoms=atoms,
-                topology_data=topo,
-                output_data=path,
-                units=units_,
-                atom_style=atom_style,
-                overwrite=True,
-            )
-        else:
-            write_lammps_data(
-                path,
-                atoms,
-                atom_style=atom_style,
-                units=units_,
-                force_skew=True,
-            )
+        write_lammps_data(
+            path,
+            atoms,
+            atom_style=atom_style,
+            units=units_,
+            preserve_atom_types=True,
+            masses=True,
+            force_skew=True,
+        )
 
     def prepare_case(self, case_dir: Path, atoms, cfg: Config) -> None:
         if is_done(case_dir):
@@ -71,29 +61,18 @@ class LAMMPSBackend(Backend):
 
         units_ = cfg.lammps.get("units", "metal")
         atom_style = cfg.lammps.get("atom_style", "atomic")
-        # Check for topology file
-        topo = cfg.lammps.get("topology_data_file")
 
         data_path = case_dir / "str.data"
 
-        if topo:
-            # USE YOUR NEW CODE
-            write_lammps_data_with_topology(
-                atoms=atoms,
-                topology_data=topo,
-                output_data=data_path,
-                units=units_,
-                atom_style=atom_style,
-                overwrite=True,
-           )
-        else:
-            write_lammps_data(
-                case_dir / "str.data",
-                atoms,
-                atom_style=atom_style,
-                units=units_,
-                force_skew=True,
-           )
+        write_lammps_data(
+            case_dir / "str.data",
+            atoms,
+            atom_style=atom_style,
+            units=units_,
+            preserve_atom_types=True,
+            masses=True,
+            force_skew=True,
+       )
 
         tpl = Path(cfg.lammps["input_template"]).read_text(encoding="utf-8")
         tpl = tpl.replace("${datafile}", "str.data")
