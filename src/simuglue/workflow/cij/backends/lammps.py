@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os, shlex, subprocess
 from pathlib import Path
+from typing import Any, Mapping
 
 import numpy as np
 from ase import units
@@ -30,6 +31,75 @@ def _to_argv(x) -> list[str]:
     if isinstance(x, str):
         return shlex.split(x)
     return [str(x)]
+
+THERMO_JSON_PRINT_LINE = (
+    "print '{\"pxx\":$(pxx), \"pyy\":$(pyy), \"pzz\":$(pzz), "
+    "\"pyz\":$(pyz), \"pxz\":$(pxz), \"pxy\":$(pxy), \"pe\":$(pe),"
+    "\"lx\":$(lx), \"ly\":$(ly), \"lz\":$(lz), \"xy\":$(xy), \"xz\":$(xz), \"yz\":$(yz) }' "
+    "file thermo.json"
+)
+
+def generate_min_template_from_cfg(cfg: Any) -> str:
+    """
+    Generate a LAMMPS minimization input template from cfg.lammps.
+
+    Expected keys under cfg.lammps (all optional):
+      - units: str                         (default: "metal")
+      - atom_style: str                    (default: "full")
+      - potential_file: str                (default: "../potential.mod")
+      - etol: float/str                    (default: 0.0)
+      - ftol: float/str                    (default: 1.0e-10)
+      - maxiter: int/str                   (default: 1000)
+      - maxeval: int/str                   (default: 10000)   # note: "maxeval"
+      - dmax: float/str                    (default: 1.0e-2)  # kept from your template
+      - box_tilt: str                      (default: "large")
+    """
+    lmp: Mapping[str, Any] = getattr(cfg, "lammps", {}) or {}
+
+    units = lmp.get("units", "metal")
+    atom_style = lmp.get("atom_style", "full")
+
+    potential_file = lmp.get("potential_file", "potential.mod")
+
+    etol = lmp.get("etol", 0.0)
+    ftol = lmp.get("ftol", 1.0e-10)
+    maxiter = lmp.get("maxiter", 1000)
+    maxeval = lmp.get("maxeval", 10000)
+    dmax = lmp.get("dmax", 1.0e-2)
+
+    box_tilt = lmp.get("box_tilt", "large")
+
+    # Format numerics robustly (accept numbers or strings)
+    def _fmt(v: Any) -> str:
+        return str(v)
+
+    tpl = "\n".join(
+        [
+            "# SimuGlue auto-generated template",
+            f"units           {units}",
+            f"atom_style      {atom_style}",
+            "",
+            "# Simulation variables",
+            f"variable etol equal {_fmt(etol)}",
+            f"variable ftol equal {_fmt(ftol)}",
+            f"variable maxiter equal {_fmt(maxiter)}",
+            f"variable maxeval equal {_fmt(maxeval)}",
+            f"variable dmax equal {_fmt(dmax)}",
+            "",
+            f"box tilt {box_tilt}",
+            f"read_data str.data",
+            "",
+            "# Include coefficients and potential parameters",
+            f"include ../{potential_file}",
+            "",
+            "# Energy minimization",
+            "minimize ${etol} ${ftol} ${maxiter} ${maxeval}",
+            "",
+            THERMO_JSON_PRINT_LINE,
+            "",
+        ]
+    )
+    return tpl
 
 # ---------- LAMMPS backend (skeleton) ----------
 @register_backend("lammps")
@@ -74,20 +144,9 @@ class LAMMPSBackend(Backend):
             force_skew=True,
        )
 
-        tpl = Path(cfg.lammps["input_template"]).read_text(encoding="utf-8")
-        tpl = tpl.replace("${datafile}", "str.data")
-
-        print_line = (
-            "print '{\"pxx\":$(pxx), \"pyy\":$(pyy), \"pzz\":$(pzz), "
-            "\"pyz\":$(pyz), \"pxz\":$(pxz), \"pxy\":$(pxy), \"pe\":$(pe),"
-            "\"lx\":$(lx), \"ly\":$(ly), \"lz\":$(lz), \"xy\":$(xy), \"xz\":$(xz), \"yz\":$(yz) }' "
-            "file thermo.json"
-        )
-        if "thermo.json" not in tpl:
-            tpl = tpl.rstrip() + "\n" + print_line + "\n"
-
         dst = case_dir / "in.min"
         if not dst.exists():
+            tpl = generate_min_template_from_cfg(cfg)
             dst.write_text(tpl, encoding="utf-8")
 
 
