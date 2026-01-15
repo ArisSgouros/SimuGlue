@@ -20,6 +20,7 @@ lammps:
   atom_style: full
   input_template: in.template
   data_file: tmp.supercell_topo.dat
+  potential_file: _hbn_potential.mod
 
 # Files to be copied to each temporary case directory
 common_files: [_hbn_potential.mod]

@@ -13,7 +13,11 @@ neigh_modify once no every 1 delay 0 check yes
 min_style	     cg
 min_modify	     dmax ${dmax} line quadratic
 
+# Mass
+mass 1 1.0e-20
+
 # Setup output
 thermo		1
 thermo_style custom step temp pe press pxx pyy pzz pxy pxz pyz lx ly lz vol
 thermo_modify norm no
+

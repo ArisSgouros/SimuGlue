@@ -1,13 +1,13 @@
-# SimuGlue hBN Template
+# SimuGlue auto-generated template
 units           metal
 atom_style      full
 
 # Simulation variables
 variable etol equal 0.0
-variable ftol equal 1.0e-10
+variable ftol equal 1e-10
 variable maxiter equal 1000
 variable maxeval equal 10000
-variable dmax equal 1.0e-2
+variable dmax equal 0.01
 
 box tilt large
 read_data str.data
@@ -17,4 +17,5 @@ include ../_hbn_potential.mod
 
 # Energy minimization
 minimize ${etol} ${ftol} ${maxiter} ${maxeval}
+
 print '{"pxx":$(pxx), "pyy":$(pyy), "pzz":$(pzz), "pyz":$(pyz), "pxz":$(pxz), "pxy":$(pxy), "pe":$(pe),"lx":$(lx), "ly":$(ly), "lz":$(lz), "xy":$(xy), "xz":$(xz), "yz":$(yz) }' file thermo.json

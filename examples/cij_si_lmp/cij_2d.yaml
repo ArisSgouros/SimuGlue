@@ -16,6 +16,7 @@ lammps:
   atom_style: atomic
   input_template: in.template
   data_file: in.data
+  potential_file: _potential.mod
 
 common_files: [_potential.mod, _Si.sw]
 common_path: '.'
