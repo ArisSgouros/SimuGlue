@@ -1,16 +1,20 @@
 # --- Coefficients (Type indices must match in.data) ---
 
 # Pair Interactions
+pair_style     zero 10.0
 pair_coeff     * *
 
 # Bond-stretching (Morse)
+bond_style      morse
 bond_coeff     1 5.35 1.897 1.4518
 
 # Angle-bending (Quartic)
+angle_style     quartic
 angle_coeff    1 120.0 2.685 -1.78 0.0
 angle_coeff    2 120.0 2.685 -1.78 0.0
 
 ## Dihedral (Harmonic)
+#dihedral_style harmonic
 #dihedral_coeff 1 0.109 -1 2
 #dihedral_coeff 2 0.066 -1 2
 
