@@ -8,6 +8,7 @@ sgl io aseconv -i o.supercell.xyz --oformat lammps-data -o o.supercell.dat --ove
 sgl build lmp-topo \
     -i o.supercell.dat \
     -o o.supercell_topo.dat \
+    --types-out o.types \
     --rc 2.49 \
     --bonds > o.log
 
