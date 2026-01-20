@@ -12,6 +12,7 @@ import yaml
 class Config:
     backend: str
     workdir: Path
+    overwrite: bool
     file_type: str
     common_files: List[Path]
     common_path: Path
@@ -37,6 +38,7 @@ def load_config(path: str | Path) -> Config:
     return Config(
         backend=str(cfg["backend"]),
         workdir=Path(cfg.get("workdir", ".")),
+        overwrite=cfg.get("overwrite", False),
         file_type=str(cfg.get("file_type","")),
         common_files=common_files,
         common_path=Path(cfg.get("common_path", ".")),

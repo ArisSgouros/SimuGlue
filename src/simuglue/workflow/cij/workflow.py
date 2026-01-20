@@ -5,6 +5,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
+from shutil import rmtree
 from typing import Dict, Iterable, Iterator, List, Tuple
 
 import numpy as np
@@ -124,6 +125,11 @@ def init_cij(config_path: str) -> None:
     strains = [float(eps) for eps in cfg.strains]
     _validate(cfg, components, strains)
 
+    # remove the folder if overwrite is specified
+    if cfg.overwrite and cfg.workdir.exists():
+        rmtree(cfg.workdir)
+
+    # copy common files to workdir
     _copy_common_files(cfg)
 
     backend = get_backend(cfg.backend)
