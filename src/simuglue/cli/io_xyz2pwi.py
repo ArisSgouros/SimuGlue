@@ -36,6 +36,10 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
         help="Override QE prefix in &control / input.",
     )
     p.add_argument(
+        "--pseudo_dir",
+        help="Override QE pseudo_dir in &control / input.",
+    )
+    p.add_argument(
         "--outdir",
         help="Override QE outdir in &control / input.",
     )
@@ -148,6 +152,7 @@ def main(argv=None, prog: str | None = None) -> int:
             positions=atoms.get_positions(),
             symbols=atoms.get_chemical_symbols(),
             prefix=args.prefix,
+            pseudo_dir=args.pseudo_dir,
             outdir=args.outdir,
         )
         qe_texts.append(qe_text)

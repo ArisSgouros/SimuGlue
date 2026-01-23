@@ -57,6 +57,12 @@ class QEBackend(Backend):
 
         warn_if_not_relax(input_text)
 
+        pseudo_dir = cfg.qe.get("pseudo_dir", None)
+        if pseudo_dir != None:
+            pseudo_dir = os.path.abspath(pseudo_dir)
+            if not os.path.exists(pseudo_dir):
+                print(f"Warning: nonexisting absolute path of pseudo_dir: {pseudo_dir}")
+
         prefix = cfg.qe.get("prefix", None)
         outdir_base = cfg.qe.get("outdir", None)
 
@@ -79,6 +85,7 @@ class QEBackend(Backend):
             positions=atoms.get_positions(),
             symbols=atoms.get_chemical_symbols(),
             prefix=prefix,
+            pseudo_dir=pseudo_dir,
             outdir=outdir_for_qe,
         )
 

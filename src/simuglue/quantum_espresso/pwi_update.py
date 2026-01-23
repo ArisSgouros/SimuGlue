@@ -121,6 +121,7 @@ def update_qe_input(
     positions: Sequence[Sequence[float]] | None = None,
     symbols: Sequence[str] | None = None,
     prefix: str | None = None,
+    pseudo_dir: str | None = None,
     outdir: str | None = None,
 ) -> str:
     """
@@ -141,6 +142,10 @@ def update_qe_input(
         If provided, replaces existing `prefix = '...'` line
         (first match, case-insensitive). If not found, tries to
         insert inside &control before the closing "/".
+    pseudo_dir : str, optional
+        If provided, replaces existing `pseudo_dir = '...'` line
+        (first match, case-insensitive). If not found, tries to
+        insert inside &control before the closing "/".
     outdir : str, optional
         If provided, replaces existing `outdir = '...'` line
         (first match, case-insensitive). If not found, tries to
@@ -157,6 +162,7 @@ def update_qe_input(
         and positions is None
         and symbols is None
         and prefix is None
+        and pseudo_dir is None
         and outdir is None
     ):
         return text
@@ -231,7 +237,32 @@ def update_qe_input(
                 result = result[:m.start()] + new_block + result[m.end():]
             # else: silently skip if no &control and no prefix line
 
-    # --- 3) outdir update ---
+    # --- 3) pseudo_dir update ---
+    if pseudo_dir is not None:
+        pattern = re.compile(
+            r'(?im)^(?P<i>\s*)pseudo_dir\s*=\s*([\'"]).*?\2(?P<t>\s*,?\s*)$'
+        )
+
+        if pattern.search(result):
+            def _repl(m):
+                return f"{m.group('i')}pseudo_dir='{pseudo_dir}'{m.group('t')}"
+            result = pattern.sub(_repl, result, count=1)
+        else:
+            # Try inserting into &control before '/'
+            ctrl_pat = re.compile(r'(?ims)^&control\b(.*?)/')
+            m = ctrl_pat.search(result)
+            if m:
+                block = m.group(0)
+                new_block = re.sub(
+                    r'(?m)^/\s*$',
+                    f"    pseudo_dir='{pseudo_dir}',\n/",
+                    block,
+                    count=1,
+                )
+                result = result[:m.start()] + new_block + result[m.end():]
+            # else: silently skip
+
+    # --- 4) outdir update ---
     if outdir is not None:
         pattern = re.compile(
             r'(?im)^(?P<i>\s*)outdir\s*=\s*([\'"]).*?\2(?P<t>\s*,?\s*)$'
