@@ -118,9 +118,6 @@ def main(argv=None, prog: str | None = None) -> int:
     if (calc_angles or calc_diheds) and not calc_bonds:
         calc_bonds = True
 
-    if not (calc_bonds or calc_angles or calc_diheds):
-        raise SystemExit("Select at least one: --bonds, --angles or --dihedrals")
-
     if calc_bonds and args.rc is None:
         raise SystemExit("--rc is required when inferring bonds (directly or via --angles/--dihedrals)")
 
