@@ -46,6 +46,7 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
     "wf": [
         {
             "cij": ("simuglue.cli.wf_cij", "Elastic constants (Cij) workflow", "sgl wf cij init|run|parse|post|all"),
+            "deform": ("simuglue.cli.wf_deform", "Uniaxial deformation / Stress-strain workflow", "sgl wf deform init|run|post|all"),
         },
         'workflows',
     ],    
