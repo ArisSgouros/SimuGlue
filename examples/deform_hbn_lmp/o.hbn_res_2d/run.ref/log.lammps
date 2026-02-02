@@ -1,0 +1,161 @@
+LAMMPS (10 Sep 2025)
+# SimuGlue hBN Template
+units           metal
+atom_style      full
+
+# Styles MUST be defined before read_data for molecular systems
+pair_style      zero 10.0
+bond_style      morse
+angle_style     quartic
+dihedral_style harmonic
+
+# Simulation variables
+variable etol equal 0.0
+variable ftol equal 1.0e-10
+variable maxiter equal 1000
+variable maxeval equal 10000
+variable dmax equal 1.0e-2
+
+box tilt large
+
+The 'box' command has been removed and will be ignored
+
+read_data str.data
+Reading data file ...
+  triclinic box = (0 0 0) to (12.572957 8.7108 6.661) with tilt (5.0291827 0 0)
+WARNING: Triclinic box skew is large. LAMMPS will run inefficiently. (../domain.cpp:221)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  40 atoms
+  scanning bonds ...
+  3 = max bonds/atom
+  scanning angles ...
+  3 = max angles/atom
+  triclinic box = (0 0 0) to (12.572957 8.7108 6.661) with tilt (5.0291827 0 0)
+WARNING: Triclinic box skew is large. LAMMPS will run inefficiently. (../domain.cpp:221)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  60 bonds
+  reading angles ...
+  120 angles
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0       
+  special bond factors coul:  0        0        0       
+     3 = max # of 1-2 neighbors
+     6 = max # of 1-3 neighbors
+    18 = max # of 1-4 neighbors
+    18 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.004 seconds
+
+# Atom type masses (B: 1, N: 2)
+mass 1 10.811
+mass 2 14.007
+
+# Include coefficients and potential parameters
+include ../_hbn_potential.mod
+# --- Coefficients (Type indices must match in.data) ---
+
+# Pair Interactions
+pair_coeff     * *
+
+# Bond-stretching (Morse)
+bond_coeff     1 5.35 1.897 1.4518
+
+# Angle-bending (Quartic)
+angle_coeff    1 120.0 2.685 -1.78 0.0
+angle_coeff    2 120.0 2.685 -1.78 0.0
+
+# Dihedral (Harmonic)
+#dihedral_coeff 1 0.109 -1 2
+#dihedral_coeff 2 0.066 -1 2
+
+# --- Setup Neighbor Style ---
+neighbor       1.0 nsq
+neigh_modify   once no every 1 delay 0 check yes
+
+# --- Setup Minimization Style ---
+min_style      cg
+min_modify     dmax ${dmax} line quadratic
+min_modify     dmax 0.01 line quadratic
+
+# --- Setup Output ---
+thermo         1
+thermo_style   custom step temp pe press pxx pyy pzz pxy pxz pyz lx ly lz vol
+thermo_modify  norm no
+
+# Relax the Y dimension to 0 pressure while keeping X fixed
+#fix 1 all box/relax y 0.0
+fix 1 all box/relax x 0.0 y 0.0
+
+# Energy minimization
+minimize ${etol} ${ftol} ${maxiter} ${maxeval}
+minimize 0 ${ftol} ${maxiter} ${maxeval}
+minimize 0 1e-10 ${maxiter} ${maxeval}
+minimize 0 1e-10 1000 ${maxeval}
+minimiz
+Minimization stats:
+  Stopping criterion = linesearch alpha is zero
+  Energy initial, next-to-last, final = 
+    1.10460342963418e-14 1.10460342963418e-14 1.10460341519624e-14
+  Force two-norm initial, final = 1.6078373e-06 1.6078373e-06
+  Force max component initial, final = 7.8522021e-07 7.8522021e-07
+  Final line search alpha, max atom move = 0.5 3.9261011e-07
+  Iterations, force evaluations = 1 2
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 1.8547e-05 | 1.8547e-05 | 1.8547e-05 |   0.0 | 14.32
+Bond    | 3.6103e-05 | 3.6103e-05 | 3.6103e-05 |   0.0 | 27.87
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 2.0912e-05 | 2.0912e-05 | 2.0912e-05 |   0.0 | 16.14
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 5.399e-05  |            |       | 41.67
+
+Nlocal:             40 ave          40 max          40 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           1760 ave        1760 max        1760 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           5860 ave        5860 max        5860 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 5860
+Ave neighs/atom = 146.5
+Ave special neighs/atom = 18
+Neighbor list builds = 0
+Dangerous builds = 0
+{"pxx":0.00077382742461826691492, "pyy":0.00013735976823641058678, "pzz":0, "pyz":0, "pxz":0, "pxy":0.0016657074406444655722, "pe":1.1046034151962381619e-14,"lx":12.572956810000000871, "ly":8.7108000000000007645, "lz":6.6609999999999995879, "xy":5.0291827239999999932, "xz":0, "yz":0 }
+Total wall time: 0:00:00
+.6078373e-06
+  Force max component initial, final = 7.8522021e-07 7.8522021e-07
+  Final line search alpha, max atom move = 0.5 3.9261011e-07
+  Iterations, force evaluations = 1 2
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 1.8547e-05 | 1.8547e-05 | 1.8547e-05 |   0.0 | 14.32
+Bond    | 3.6103e-05 | 3.6103e-05 | 3.6103e-05 |   0.0 | 27.87
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 2.0912e-05 | 2.0912e-05 | 2.0912e-05 |   0.0 | 16.14
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 5.399e-05  |            |       | 41.67
+
+Nlocal:             40 ave          40 max          40 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           1760 ave        1760 max        1760 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           5860 ave        5860 max        5860 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 5860
+Ave neighs/atom = 146.5
+Ave special neighs/atom = 18
+Neighbor list builds = 0
+Dangerous builds = 0
+print '{"pxx":$(pxx), "pyy":$(pyy), "pzz":$(pzz), "pyz":$(pyz), "pxz":$(pxz), "pxy":$(pxy), "pe":$(pe),"lx":$(lx), "ly":$(ly), "lz":$(lz), "xy":$(xy), "xz":$(xz), "yz":$(yz) }' file thermo.json
+{"pxx":0.00077382742461826691492, "pyy":0.00013735976823641058678, "pzz":0, "pyz":0, "pxz":0, "pxy":0.0016657074406444655722, "pe":1.1046034151962381619e-14,"lx":12.572956810000000871, "ly":8.7108000000000007645, "lz":6.6609999999999995879, "xy":5.0291827239999999932, "xz":0, "yz":0 }
+Total wall time: 0:00:00

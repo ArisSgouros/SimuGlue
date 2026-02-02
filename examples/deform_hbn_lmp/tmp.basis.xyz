@@ -1,0 +1,4 @@
+2
+Lattice="2.514591362 0.0 0.0 1.257295681 2.1777 0.0 0.0 0.0 6.661" Properties=species:S:1:pos:R:3:masses:R:1:id:I:1:type:I:1:mol-id:I:1:initial_charges:R:1:mmcharges:R:1 comment="# LAMMPS data file" lmp_type_table=eyJtYXNzIjp7IjEiOjEwLjgxMTAwMDAwMjc4MTA2OCwiMiI6MTQuMDA2NzAwMDAzNjAzMTQzfSwibl90eXBlcyI6MiwidGFnIjp7IjEiOiJCIiwiMiI6Ik4ifX0= pbc="T T T"
+B        0.00000000       0.00000000       0.00000000      10.81100000        1        1        1       0.00000000       0.00000000
+N        1.25729568       0.72590000       0.00000000      14.00670000        2        2        1       0.00000000       0.00000000
