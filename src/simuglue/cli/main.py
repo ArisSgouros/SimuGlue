@@ -51,9 +51,9 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
 
     "lmp": [
         {
-            "update-geom": ("simuglue.cli.lmp_update_geom","Update LAMMPS data geometry from an ASE structure while preserving topology", "sgl lmp update-geom"),
+            "phonon-dispersion": ("simuglue.cli.lmp_phonon_dispersion","Calculate phonon dispersion from LAMMPS dynamical matrix.", "sgl lmp phonon-dispersion"),
         },
-        'lammps file manipulatiof', # <-- ADD THIS LINE (or similar descriptive text)
+        'lammps calculations',
         ]
 }
 def _run_leaf(mod_path: str, prog: str, extra: list[str]) -> int:
