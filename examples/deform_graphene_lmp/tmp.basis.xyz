@@ -1,0 +1,6 @@
+4
+Lattice="2.459512147 0.0 0.0 0.0 4.26 0.0 0.0 0.0 3.35" Properties=species:S:1:pos:R:3:masses:R:1:id:I:1:type:I:1:mol-id:I:1:initial_charges:R:1:mmcharges:R:1 comment="# LAMMPS data file l_bond = 1.44568507405082 Angstrom, interlayer distance = 3.3305 Angstrom" lmp_type_table=eyJtYXNzIjp7IjEiOjEyLjAxMTAwMDAwMzA4OTc1OX0sIm5fdHlwZXMiOjEsInRhZyI6eyIxIjoiQyJ9fQ== pbc="T T T"
+C        1.22975607       0.00000000       0.00000000      12.01100000        1        1        1       1.00000000       1.00000000
+C        0.00000000       0.71000000       0.00000000      12.01100000        2        1        1       1.00000000       1.00000000
+C        0.00000000       2.13000000       0.00000000      12.01100000        3        1        1       1.00000000       1.00000000
+C        1.22975607       2.84000000       0.00000000      12.01100000        4        1        1       1.00000000       1.00000000

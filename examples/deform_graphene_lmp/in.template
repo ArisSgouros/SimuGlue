@@ -1,0 +1,32 @@
+# SimuGlue hBN Template
+units           metal
+atom_style      full
+
+# Styles MUST be defined before read_data for molecular systems
+pair_style      zero 10.0
+bond_style      morse
+angle_style     quartic
+dihedral_style harmonic
+
+# Simulation variables
+variable etol equal 0.0
+variable ftol equal 1.0e-10
+variable maxiter equal 1000
+variable maxeval equal 10000
+variable dmax equal 1.0e-2
+
+box tilt large
+read_data ${datafile}
+
+# Atom type masses (C:1)
+mass 1 12.011
+
+# Include coefficients and potential parameters
+include ../_graphene_potential.mod
+
+# Relax the Y dimension to 0 pressure while keeping X fixed
+#fix 1 all box/relax y 0.0
+fix 1 all box/relax ${relax_dir}
+
+# Energy minimization
+minimize ${etol} ${ftol} ${maxiter} ${maxeval}
