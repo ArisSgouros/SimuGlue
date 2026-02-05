@@ -14,6 +14,7 @@ except Exception:  # pragma: no cover
 
 KFormat = Literal["2pi_over_a", "reciprocal"]
 ImagPolicy = Literal["clip", "signed"]
+ReorderPolicy = Literal["auto", "none"]
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,57 @@ class DispersionResult:
     H_prim: NDArray[np.float64]                # (3,3) primitive cell vectors as columns (Å)
     a_lat: float                               # used for k_format="2pi_over_a"
     freq_units: str
+
+def validate_canonical_atom_order(
+    cell_lin: NDArray[np.int64],
+    types: NDArray[np.int64],
+    u: NDArray[np.float64],
+    *,
+    ncell: int,
+    nbasis: int,
+    order_decimals: int = 6,
+) -> None:
+    """
+    Validate that the *current* atom order is already canonical:
+      - atoms grouped by cell_lin = 0,0,...,1,1,...,ncell-1
+      - within each cell, basis ordering is consistent across all cells
+        (same 'type' sequence AND same fractional coords up to rounding)
+
+    This is required for reorder="none" because the tensor reshape assumes
+    [cell][basis][xyz] layout.
+    """
+    natom = cell_lin.size
+    if natom != ncell * nbasis:
+        raise RuntimeError(
+            f"Canonical-order check failed: natom={natom} but ncell*nbasis={ncell*nbasis}."
+        )
+
+    expected = np.repeat(np.arange(ncell, dtype=np.int64), nbasis)
+    if not np.array_equal(cell_lin, expected):
+        raise RuntimeError(
+            "reorder='none' requires atoms already grouped by cell in canonical order.\n"
+            "Expected cell_lin = [0..0, 1..1, ..., ncell-1..ncell-1] (each repeated nbasis)."
+        )
+
+    types_by_cell = types.reshape(ncell, nbasis)
+    u_by_cell = u.reshape(ncell, nbasis, 3)
+    u0 = np.round(u_by_cell[0], decimals=order_decimals)
+    t0 = types_by_cell[0].copy()
+
+    # basis must be consistent across all cells
+    if not np.all(types_by_cell == t0[None, :]):
+        raise RuntimeError(
+            "reorder='none' requires identical basis type ordering in every cell.\n"
+            "At least one cell has a different type sequence than cell 0."
+        )
+
+    u_round = np.round(u_by_cell, decimals=order_decimals)
+    if not np.all(u_round == u0[None, :, :]):
+        raise RuntimeError(
+            "reorder='none' requires identical basis fractional coordinates in every cell.\n"
+            "At least one cell differs from cell 0 (after rounding)."
+        )
+
 
 
 def wrap01(x: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -261,6 +313,7 @@ def compute_phonon_dispersion(
     hermitian_project: bool = True,
     return_eigenvectors: bool = False,
     order_decimals: int = 6,
+    reorder: ReorderPolicy = "auto",
 ) -> DispersionResult:
     """
     Pure computation:
@@ -278,27 +331,47 @@ def compute_phonon_dispersion(
     natom = types.size
     ncell = N_a * N_b * N_c
 
+
     cell, u, cell_lin = infer_cell_and_basis(positions, cell_H, N_a, N_b, N_c)
     nbasis, unique_types = validate_cell_occupancy(cell_lin, types, ncell)
 
     if natom != ncell * nbasis:
         raise RuntimeError(f"Inconsistent counts: natom={natom} but ncell*nbasis={ncell*nbasis}")
 
-    # reorder atoms to [cell][basis] order (basis sorted by type + position)
-    order = atom_order_cell_basis_type(types, u, cell_lin, decimals=order_decimals)
+    if reorder == "auto":
+        # canonicalize by (cell, type, u) to ensure consistent basis ordering
+        order = atom_order_cell_basis_type(types, u, cell_lin, decimals=order_decimals)
 
-    types_ord = types[order]
-    types_by_cell = types_ord.reshape(ncell, nbasis)
-    if not np.all(np.sort(types_by_cell, axis=1) == unique_types[None, :]):
-        raise RuntimeError(
-            "After ordering, at least one cell does not contain exactly one of each type.\n"
-            "This likely means the basis is not uniquely encoded by 'type' or the cell inference failed."
+    elif reorder == "none":
+        # trust user ordering but validate it is canonical for tensor reshape
+        # (no atom reorder, no dynmat permute)
+        validate_canonical_atom_order(
+            cell_lin=cell_lin,
+            types=types,
+            u=u,
+            ncell=ncell,
+            nbasis=nbasis,
+            order_decimals=order_decimals,
         )
+        order = np.arange(natom, dtype=np.int64)
 
-    # permute dynmat to match ordering
+    else:
+        raise ValueError(f"Unknown reorder policy: {reorder!r} (use 'auto' or 'none')")
+
+    # permute dynmat to match ordering (identity if reorder='none')
     dyn_real = permute_dynmat(np.asarray(dyn_mat, dtype=np.float64), order)
     dyn = dyn_real.astype(np.complex128, copy=False)
     dyn_tensor = dyn.reshape(ncell, nbasis, 3, ncell, nbasis, 3)
+
+    # Optional: extra sanity check for auto mode
+    if reorder == "auto":
+        types_ord = types[order]
+        types_by_cell = types_ord.reshape(ncell, nbasis)
+        if not np.all(np.sort(types_by_cell, axis=1) == unique_types[None, :]):
+            raise RuntimeError(
+                "After auto reordering, at least one cell does not contain exactly one of each type.\n"
+                "This suggests the basis is not uniquely encoded by 'type' or cell inference failed."
+            )
 
     # primitive cell vectors
     H_prim = cell_H @ np.diag([1.0 / N_a, 1.0 / N_b, 1.0 / N_c])

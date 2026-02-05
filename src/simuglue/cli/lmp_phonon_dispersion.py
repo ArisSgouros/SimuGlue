@@ -111,6 +111,17 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     p.add_argument("--eigenvectors-out", default="1.phonon_eigvecs.npz", help="Eigenvector output path (when enabled).")
 
     p.add_argument("--debug", action="store_true", help="Verbose logging.")
+    p.add_argument(
+        "--reorder",
+        choices=["auto", "none", "id"],
+        default="auto",
+        help=(
+            "Atom/dynmat ordering policy. "
+            "'auto': canonicalize atoms by (cell,type,pos) and permute dynmat accordingly (safest). "
+            "'none': assume atoms + dynmat already consistent and already in canonical [cell][basis] order (fast, validated). "
+            "'id': sort atoms by atoms.arrays['id'] then use 'none' (use if dynmat is written in LAMMPS id order)."
+        ),
+    )
     return p
 
 
@@ -132,6 +143,16 @@ def main(argv=None, prog: str | None = None) -> int:
     kpoints = load_kpoints(args.k_point)
     dynmat = load_dynmat(args.dyn_mat, expected_size=expected_size)
 
+    # Optional CLI-side ordering mode: sort atoms by LAMMPS 'id'
+    # This is useful when dynmat is known to be in id-sorted order.
+    core_reorder = args.reorder
+    if args.reorder == "id":
+        if "id" not in atoms.arrays:
+            raise ValueError("--reorder id requires atoms.arrays['id'] to exist in the structure.")
+        p = np.argsort(np.asarray(atoms.arrays["id"], dtype=np.int64))
+        atoms = atoms[p].copy()
+        core_reorder = "none"
+
     res = compute_phonon_dispersion(
         atoms,
         dynmat,
@@ -143,6 +164,7 @@ def main(argv=None, prog: str | None = None) -> int:
         imag_policy=args.imag,
         hermitian_project=(not args.no_hermitian_project),
         return_eigenvectors=bool(args.save_eigenvectors),
+        reorder=core_reorder,
     )
 
     write_dispersion(args.output, res.kpoints, res.frequencies, output_format=args.output_format)
