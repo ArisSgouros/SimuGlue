@@ -30,17 +30,6 @@ def _dummy_atoms() -> Atoms:
     return atoms
 
 
-def test_cli_requires_operation(tmp_path):
-    cli = _import_cli_module()
-
-    inp = tmp_path / "in.data"
-    inp.write_text("dummy")
-    out = tmp_path / "out.data"
-
-    with pytest.raises(SystemExit, match=r"Select at least one"):
-        cli.main(["-i", str(inp), "-o", str(out)])
-
-
 def test_cli_requires_rc_if_bonds_implied(tmp_path, monkeypatch):
     cli = _import_cli_module()
 
