@@ -105,11 +105,32 @@ def permute_dynmat(
     return dyn_mat[np.ix_(dof, dof)]
 
 
-def wrap_mi(d: NDArray[np.int64], N: int) -> NDArray[np.int64]:
-    """Minimum-image wrap of integer displacements (matches legacy behavior)."""
+def wrap_mi(d: np.ndarray, N: int) -> np.ndarray:
+    """
+    Minimum-image wrap of integer displacements.
+
+    Important: for even N, +/-N/2 are both minimum-image solutions.
+    We preserve the sign from the raw displacement so that:
+        d(l,L) = -d(L,l)
+    which guarantees phase antisymmetry and keeps D(k) Hermitian
+    when the real-space dynmat is symmetric.
+    """
     if N <= 0:
         raise ValueError("N must be positive")
-    return (d + N // 2) % N - N // 2
+
+    d = np.asarray(d, dtype=np.int64)
+    raw = d.copy()
+
+    half = N // 2
+    wrapped = (d + half) % N - half
+
+    if N % 2 == 0:
+        # Tie case: wrapped == -N/2 could have come from raw == +N/2.
+        # Flip those to +N/2 to preserve antisymmetry.
+        wrapped = np.where((wrapped == -half) & (raw > 0), half, wrapped)
+
+    return wrapped
+
 
 
 def build_cell_displacements(
