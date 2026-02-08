@@ -181,11 +181,14 @@ def run_cij(config_path: str) -> None:
 
     # reference
     if is_done(ref_dir):
-        print(f"[cij/run] (ref) skip run.ref (done)")
+        if cfg.verbose:
+            print(f"[cij/run] (ref) skip run.ref (done)")
     elif is_running(ref_dir):
-        print(f"[cij/run] (ref) skip run.ref (running)")
+        if cfg.verbose:
+            print(f"[cij/run] (ref) skip run.ref (running)")
     else:
-        print(f"[cij/run] (ref) run  run.ref")
+        if cfg.verbose:
+            print(f"[cij/run] (ref) run  run.ref")
         backend.run_case(ref_dir, cfg)
 
     # deformed
@@ -205,7 +208,8 @@ def run_cij(config_path: str) -> None:
             print(f"[cij/run] ({k}/{total}) skip {cid} (running)")
             continue
 
-        print(f"[cij/run] ({k}/{total}) run  {cid}")
+        if cfg.verbose:
+            print(f"[cij/run] ({k}/{total}) run  {cid}")
         backend.run_case(case_dir, cfg)
 
 
@@ -241,12 +245,14 @@ def parse_cij(config_path: str) -> None:
         else:
             _dump_result_json(ref_dir, kind="ref", i=None, eps=None, res=res_ref)
     else:
-        print("[cij/parse] skip ref (not done)", file=sys.stderr)
+        if cfg.verbose:
+            print("[cij/parse] skip ref (not done)", file=sys.stderr)
 
     # deformed
     for i, eps, cid, case_dir in _iter_cases(cfg, components, strains):
         if not is_done(case_dir):
-            print(f"[cij/parse] skip {cid} (not done)", file=sys.stderr)
+            if cfg.verbose:
+                print(f"[cij/parse] skip {cid} (not done)", file=sys.stderr)
             continue
 
         try:

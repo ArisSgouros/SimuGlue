@@ -67,7 +67,8 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
 
     for eps in strains:
         if abs(eps) < 1e-12:
-            print(f"[cij/post] skip near-zero strain eps={eps}", file=sys.stderr)
+            if cfg.verbose:
+                print(f"[cij/post] skip near-zero strain eps={eps}", file=sys.stderr)
             continue
 
         for i in components:
@@ -127,12 +128,13 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
             if (scale < ABS_TOL and diff > ABS_TOL) or (
                 scale >= ABS_TOL and diff > ABS_TOL and rel > REL_TOL
             ):
-                print(
-                    f"[cij/post] note: C[{i},{j}] != C[{j},{i}] "
-                    f"(diff={diff:.3e} eV/Å^3 ≈ {diff/units.GPa:.3e} GPa; "
-                    f"rel={rel:.2e})",
-                    file=sys.stderr,
-                )
+                if cfg.verbose:
+                    print(
+                        f"[cij/post] note: C[{i},{j}] != C[{j},{i}] "
+                        f"(diff={diff:.3e} eV/Å^3 ≈ {diff/units.GPa:.3e} GPa; "
+                        f"rel={rel:.2e})",
+                        file=sys.stderr,
+                    )
 
     # ------------------------------------------------------------------
     # 2) Optional symmetrization of C_ij (used everywhere downstream)
@@ -164,11 +166,12 @@ def post_cij(config_path: str, *, outfile: str | None = None) -> Dict[str, objec
     S6 = None
 
     if sorted(components) != [1, 2, 3, 4, 5, 6]:
-        print(
-            "Compliance calculation requires all Voigt components [1..6]. "
-            f"Got components={components!r}. Skipping compliance (Sij).",
-            file=sys.stderr,
-        )
+        if cfg.verbose:
+            print(
+                "Compliance calculation requires all Voigt components [1..6]. "
+                f"Got components={components!r}. Skipping compliance (Sij).",
+                file=sys.stderr,
+            )
     else:
         # Build 6x6 stiffness matrix C in Voigt (engineering) form
         C6 = np.zeros((6, 6), float)

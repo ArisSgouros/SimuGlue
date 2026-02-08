@@ -22,6 +22,7 @@ class Config:
     qe: Dict[str, Any]
     lammps: Dict[str, Any]
     output: Dict[str, Any]
+    verbose: bool
 
 
 def load_config(path: str | Path) -> Config:
@@ -48,5 +49,6 @@ def load_config(path: str | Path) -> Config:
         qe=dict(cfg.get("qe", {})),
         lammps=dict(cfg.get("lammps", {})),
         output=dict(cfg.get("output", {})),
+        verbose=cfg.get("verbose", True),
     )
 
