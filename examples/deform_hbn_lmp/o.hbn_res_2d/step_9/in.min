@@ -16,7 +16,7 @@ variable maxeval equal 10000
 variable dmax equal 1.0e-2
 
 box tilt large
-read_data ${datafile}
+read_data str.data
 
 # Atom type masses (B: 1, N: 2)
 mass 1 10.811
@@ -27,7 +27,9 @@ include ../_hbn_potential.mod
 
 # Relax the Y dimension to 0 pressure while keeping X fixed
 fix 1 all box/relax y 0.0
-#fix 1 all box/relax ${relax_dir}
+#fix 1 all box/relax x 0.0 y 0.0
 
 # Energy minimization
 minimize ${etol} ${ftol} ${maxiter} ${maxeval}
+print '{"pxx":$(pxx), "pyy":$(pyy), "pzz":$(pzz), "pyz":$(pyz), "pxz":$(pxz), "pxy":$(pxy), "pe":$(pe),"lx":$(lx), "ly":$(ly), "lz":$(lz), "xy":$(xy), "xz":$(xz), "yz":$(yz) }' file thermo.json
+write_data final_str.data nocoeff

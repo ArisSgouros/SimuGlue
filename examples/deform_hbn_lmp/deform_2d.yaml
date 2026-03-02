@@ -5,24 +5,19 @@ workdir: o.hbn_res_2d   # Renamed for hBN output
 
 backend: lammps
 
-# which stiffness components to build (Voigt indices)
-# 2D hBN example: xx,yy,xy → 1,2,6
-components: [1, 2]
-
-# strain magnitudes used for finite differences
-# Using small strains for MM calculation
-#strains: [0.00001, -0.00001]
-# From 0% to 30% strain in 0.5% increments
-strains: [
-  0.050,
-  0.100,
-  0.150,
-  0.200,
-  0.250
+# Final deformation gradient (e.g., pulling X-axis to 1.25 or 25% strain)
+target_matrix: [
+  [1.45, 0.0, 0.0],
+  [0.0,  1.0, 0.0],
+  [0.0,  0.0, 1.0]
 ]
+
+# Take 20 incremental steps to reach that 25% strain
+steps: 20
+
 # LAMMPS-specific settings
 lammps:
-  exe: lmp_mpi
+  exe: /cyclonas_users/asgouros/programs/lammps_git/src/lmp_mpi
   units: metal
   # CRITICAL CHANGE: Must be 'full' to process bonds/angles/dihedrals
   atom_style: full

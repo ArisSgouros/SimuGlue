@@ -1,0 +1,134 @@
+LAMMPS (10 Sep 2025)
+# SimuGlue hBN Template
+units           metal
+atom_style      full
+
+# Styles MUST be defined before read_data for molecular systems
+pair_style      zero 10.0
+bond_style      morse
+angle_style     quartic
+dihedral_style harmonic
+
+# Simulation variables
+variable etol equal 0.0
+variable ftol equal
+The 'box' command has been removed and will be ignored
+
+Reading data file ...
+  triclinic box = (0 0 0) to (14.055549 8.5370782 6.661) with tilt (5.5100943 0 0)
+WARNING: Triclinic box skew is large. LAMMPS will run inefficiently. (../domain.cpp:221)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  40 atoms
+  scanning bonds ...
+  3 = max bonds/atom
+  scanning angles ...
+  3 = max angles/atom
+  triclinic box = (0 0 0) to (14.055549 8.5370782 6.661) with tilt (5.5100943 0 0)
+WARNING: Triclinic box skew is large. LAMMPS will run inefficiently. (../domain.cpp:221)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  60 bonds
+  reading angles ...
+  120 angles
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0       
+  special bond factors coul:  0        0        0       
+     3 = max # of 1-2 neighbors
+     6 = max # of 1-3 neighbors
+    18 = max # of 1-4 neighbors
+    18 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.006 seconds
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 11
+  ghost atom cutoff = 11
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair zero, perpetual
+      attributes: half, newton on
+      pair build: half/nsq/newton/tri
+      stencil: none
+      bin: none
+Setting up cg style minimization ...
+  Unit style    : metal
+  Current step  : 0
+WARNING: Energy due to 3 extra global DOFs will be included in minimizer energies
+ (../min.cpp:222)
+WARNING: Inconsistent image flags
+For more information see https://docs.lammps.org/err0027 (../domain.cpp:1052)
+WARNING: Bond/angle/dihedral extent > half of periodic box length (../domain.cpp:1174)
+Per MPI rank memory allocation (min/avg/max) = 9.39 | 9.39 | 9.39 Mbytes
+   Step          Temp          PotEng         Press           Pxx            Pyy            Pzz            Pxy            Pxz            Pyz             Lx             Ly             Lz           Volume    
+         0   0              10.880656     -129655.85     -383813.33     -5154.2151      0              15857.141      0              0              14.055549      8.5370782      6.661          799.27553    
+         1   0              10.880656     -129655.85     -383813.33     -5154.2151      0              15857.141      0              0              14.055549      8.5370782      6.661          799.27553    
+WARNING: Bond/angle/dihedral extent > half of periodic box length (../domain.cpp:1174)
+Loop time of 0.00107248 on 1 procs for 1 steps with 40 atoms
+
+100.0% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = linesearch alpha is zero
+  Energy initial, next-to-last, final = 
+      10.8806564540745   10.8806564540745   10.8806564540744
+  Force two-norm initial, final = 3.3563921 3.3563921
+  Force max component initial, final = 2.571276 2.571276
+  Final line search alpha, max atom move = 5.9343256e-10 1.5258789e-09
+  Iterations, force evaluations = 1 17
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.00014903 | 0.00014903 | 0.00014903 |   0.0 | 13.90
+Bond    | 0.00029711 | 0.00029711 | 0.00029711 |   0.0 | 27.70
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00014832 | 0.00014832 | 0.00014832 |   0.0 | 13.83
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.000478   |            |       | 44.57
+
+Nlocal:             40 ave          40 max          40 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           1584 ave        1584 max        1584 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           5300 ave        5300 max        5300 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 5300
+Ave neighs/atom = 132.5
+Ave special neighs/atom = 18
+Neighbor list builds = 0
+Dangerous builds = 0
+{"pxx":-383813.3295550046023, "pyy":-5154.215076551436141, "pzz":0, "pyz":0, "pxz":0, "pxy":15857.140532595947661, "pe":10.880656454074445705,"lx":14.055549350939163133, "ly":8.5370781992713791198, "lz":6.6609999999999995879, "xy":5.5100943170632197265, "xz":0, "yz":0 }
+System init for write_data ...
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+Total wall time: 0:00:00
+-----------
+Pair    | 0.00014903 | 0.00014903 | 0.00014903 |   0.0 | 13.90
+Bond    | 0.00029711 | 0.00029711 | 0.00029711 |   0.0 | 27.70
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00014832 | 0.00014832 | 0.00014832 |   0.0 | 13.83
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.000478   |            |       | 44.57
+
+Nlocal:             40 ave          40 max          40 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           1584 ave        1584 max        1584 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           5300 ave        5300 max        5300 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 5300
+Ave neighs/atom = 132.5
+Ave special neighs/atom = 18
+Neighbor list builds = 0
+Dangerous builds = 0
+print '{"pxx":$(pxx), "pyy":$(pyy), "pzz":$(pzz), "pyz":$(pyz), "pxz":$(pxz), "pxy":$(pxy), "pe":$(pe),"lx":$(lx), "ly":$(ly), "lz":$(lz), "xy":$(xy), "xz":$(xz), "yz":$(yz) }' file thermo.json
+{"pxx":-383813.3295550046023, "pyy":-5154.215076551436141, "pzz":0, "pyz":0, "pxz":0, "pxy":15857.140532595947661, "pe":10.880656454074445705,"lx":14.055549350939163133, "ly":8.5370781992713791198, "lz":6.6609999999999995879, "xy":5.5100943170632197265, "xz":0, "yz":0 }
+write_data final_str.data nocoeff
+System init for write_data ...
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+Total wall time: 0:00:00
