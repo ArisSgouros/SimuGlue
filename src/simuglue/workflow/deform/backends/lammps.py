@@ -4,6 +4,7 @@ import json
 import os
 import shlex
 import subprocess
+import copy
 from pathlib import Path
 
 import numpy as np
@@ -106,6 +107,8 @@ class LAMMPSBackend(Backend):
         if "thermo.json" not in tpl:
             tpl = tpl.rstrip() + "\n" + print_line + "\n"
 
+        tpl = tpl.rstrip() + "\nwrite_data final_str.data nocoeff\n"
+
         dst = case_dir / "in.min"
         if not dst.exists():
             dst.write_text(tpl, encoding="utf-8")
@@ -170,4 +173,22 @@ class LAMMPSBackend(Backend):
 
         cell = lammps_box_to_ase_cell(data['lx'], data['ly'], data['lz'], data['xy'], data['xz'], data['yz'])
 
+        # NEW: Read the final positions and save to atoms.json
+        final_data_path = case_dir / "final_str.data"
+        if final_data_path.exists():
+            # Reuse existing reader
+            # FIXED: Safely duplicate the config and update the path
+            temp_cfg = copy.deepcopy(cfg)
+            temp_cfg.lammps["data_file"] = str(final_data_path)
+            final_atoms = self.read_data(temp_cfg)
+            
+            atoms_payload = {
+                "positions": final_atoms.get_positions().tolist(),
+                "cell": final_atoms.get_cell().tolist(),
+                "atomic_numbers": final_atoms.get_atomic_numbers().tolist()
+            }
+            (case_dir / "atoms.json").write_text(json.dumps(atoms_payload, indent=2))
+
         return RelaxResult(energy=pe, stress=S, cell=cell)
+
+

@@ -15,8 +15,8 @@ class Config:
     file_type: str
     common_files: List[Path]
     common_path: Path
-    components: List[int]
-    strains: List[float]
+    target_matrix: List[List[float]]
+    steps: int 
     relax: Dict[str, Any]
     qe: Dict[str, Any]
     lammps: Dict[str, Any]
@@ -41,12 +41,13 @@ def load_config(path: str | Path) -> Config:
         file_type=str(cfg.get("file_type","")),
         common_files=common_files,
         common_path=Path(cfg.get("common_path", ".")),
-        components=[int(i) for i in cfg["components"]],
-        strains=[float(eps) for eps in cfg["strains"]],
+        target_matrix=list(cfg.get("target_matrix", [])),
+        steps=int(cfg.get("steps", 0)),
         relax=dict(cfg.get("relax", {})),
         qe=dict(cfg.get("qe", {})),
         lammps=dict(cfg.get("lammps", {})),
         output=dict(cfg.get("output", {})),
         active_component=None,
     )
+
 

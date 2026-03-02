@@ -2,150 +2,118 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
-from typing import Dict
-
 import numpy as np
-
-from simuglue.mechanics.voigt import normalize_components_to_voigt1
+from pathlib import Path
 from ase import units
+from scipy.linalg import logm
 
 from .config import load_config
-from .registry import make_case_id
-
-
-
-def _vpos(j_1based: int) -> int:
-    """Map Voigt index 1..6 → 0..5."""
-    return j_1based - 1
 
 def _load_s6(path: Path) -> np.ndarray:
     if not path.is_file():
         raise FileNotFoundError(f"Path not found: {path}")
     data = json.loads(path.read_text(encoding="utf-8"))
-    if "stress6" not in data:
-        raise KeyError(f"'stress6' missing in {path}")
     s6 = np.array(data["stress6"], float)
-    if s6.shape != (6,):
-        raise ValueError(f"Invalid stress6 shape in {path}: {s6.shape}")
-    if not np.isfinite(s6).all():
-        raise ValueError(f"Non-finite stress6 values in {path}")
     return s6
 
-def _load_cell(path: Path) -> np.ndarray:
-    cell = np.asarray(json.loads(Path(path).read_text(encoding="utf-8"))["cell"], float)
-    if cell.shape != (3, 3): raise ValueError(f"cell shape {cell.shape}, expected 3x3")
-    return cell
-
-def post_deformation(config_path: str, *, outfile: str | None = None) -> Dict[str, object]:
-
+def post_deformation(config_path: str, *, outfile: str | None = None) -> dict:
     """
-    Scans all results.json in the workdir.
-    Aggregates raw stress values into arrays for each pulling direction.
-    Saves a JSON file containing the full curve data.
+    Scans step_1, step_2... folders.
+    Aggregates True Stress vs True Strain for XX, YY, and XY directions.
     """
     cfg = load_config(config_path)
-    # Get components (e.g., 1 for XX, 2 for YY) and sort strains for a smooth curve
-    components = normalize_components_to_voigt1(cfg.components)
-    strains = sorted([float(eps) for eps in cfg.strains])
 
-    # 1. Get thickness from the reference state for 2D conversion
-    ref_path = cfg.workdir / "run.ref" / "result.json"
-    cell_ref = _load_cell(ref_path)
-    
-    # For 2D Pa·m conversion
-    thickness_angstrom = float(np.linalg.norm(cell_ref[2]))
-    out = {}
-    for i in components:
-        strain_axis = []
-        stress_gpa_axis = []
+    # 1. Setup True Strain Tensor
+    target_F = np.array(cfg.target_matrix, dtype=float)
+    E_total = logm(target_F)  # Full 3x3 Logarithmic Strain Tensor
 
+    steps = int(cfg.steps)
 
-        # Voigt index for the pulling direction
-        idx = _vpos(i)
+    # 2. Get thickness for 2D units
+    from .registry import get_backend
+    backend = get_backend(cfg.backend)
+    atoms_ref = backend.read_data(cfg)
+    thickness_angstrom = np.linalg.norm(atoms_ref.cell[2])
 
-        for eps in strains:
-        # Skip the zero-strain reference in the loop if handled separately
-            if abs(eps) < 1e-12:
-               continue
+    # Data lists to store all 2D in-plane components
+    # Voigt indices: XX = 0, YY = 1, XY = 5
+    results = {
+        "strain_xx": [], "strain_yy": [], "strain_xy": [],
+        "stress_xx": [], "stress_yy": [], "stress_xy": []
+    }
 
-            cid = make_case_id(i, eps)
-            case_path = cfg.workdir / cid / "result.json"
+    print(f"[post] Processing {steps} steps for multi-directional analysis...")
 
-            if not case_path.exists():
-                print(f"[deformation/post] Warning: Missing {cid}", file=sys.stderr)
-                continue
+    # 3. Loop through steps 1..N
+    for i in range(1, steps + 1):
+        cid = f"step_{i}"
+        case_path = cfg.workdir / cid / "result.json"
 
-            try:
-                # Load deformed stress (eV/Å^3)
-                s6_def = _load_s6(case_path)
-                val_evA3 = s6_def[idx]
+        if not case_path.exists():
+            print(f"[post] Warning: Missing {cid}", file=sys.stderr)
+            continue
 
-                # Convert to 3D GPa
-                # val_gpa = val_evA3 / units.GPa
-
-                  # --- FAILURE HANDLING ---
-                # If stress becomes negative or drops by more than 80% suddenly,
-                # we stop recording this curve as the material has failed.
-                #if len(stress_gpa_axis) > 0:
-                #    prev_stress = stress_gpa_axis[-1]
-                #    if val_gpa < 0 or val_gpa < (0.2 * prev_stress):
-                #        print(f"[deformation] Failure detected at strain {eps}. Stopping curve {i}.")
-                #        break
-                # -------------------------
-
-                strain_axis.append(eps)
-                stress_gpa_axis.append(float(val_evA3))
-    
-
-            except (KeyError, ValueError) as exc:
-                print(f"[deformation/post] Error parsing {cid}: {exc}", file=sys.stderr)
-                continue
-
-        stress_results = np.array(stress_gpa_axis, float)
-     
-
-        # ------------------------------------------------------------------
-        # Unit conversion for export
-        # ------------------------------------------------------------------
-        units_deform = cfg.output.get("units_deform", "GPa")
-
-        converters = {
-            "gpa":  1.0 / units.GPa,
-            "pa":   1.0 / units.Pascal,
-            "kbar": 1.0 / (1000.0 * units.bar),
-            "pa m": (1.0 / units.Pascal) * thickness_angstrom * 1e-10,
-        }
-
-        key = units_deform.lower()
         try:
-            conv = converters[key]
-        except KeyError:
-            raise ValueError(
-                f"Unsupported units_deform={units_deform!r}; supported: GPa, Pa, kbar, pa m."
-            )
+            # Current True Strain Tensor
+            E_current = (i / steps) * E_total
+            
+            # Load Stress (eV/A^3)
+            s6 = _load_s6(case_path)
 
-        # ------------------------------------------------------------------
-        # ------------------------------------------------------------------
+            # Store Strains (XX=0,0 | YY=1,1 | XY=0,1)
+            results["strain_xx"].append(E_current[0, 0])
+            results["strain_yy"].append(E_current[1, 1])
+            # For engineering shear strain, you might multiply by 2. We keep true tensor shear here.
+            results["strain_xy"].append(E_current[0, 1]) 
+
+            # Store Stresses
+            results["stress_xx"].append(s6[0])
+            results["stress_yy"].append(s6[1])
+            results["stress_xy"].append(s6[5])
+
+        except Exception as exc:
+            print(f"[post] Error parsing {cid}: {exc}", file=sys.stderr)
+            continue
+
+    # 4. Handle YAML Custom Units
+    req_unit = cfg.output.get("units_cij", "gpa").lower()
+    
+    converters = {
+        "gpa":  1.0 / units.GPa,
+        "pa":   1.0 / units.Pascal,
+        "kbar": 1.0 / (1000.0 * units.bar),
+        "pa m": (1.0 / units.Pascal) * thickness_angstrom * 1e-10,
+    }
+    
+    if req_unit not in converters:
+        print(f"[post] Warning: Unknown unit '{req_unit}'. Defaulting to GPa.")
+        req_unit = "gpa"
         
-        stress_array = stress_results * conv
-        stress_custom_list = stress_array.tolist()
+    conv_factor = converters[req_unit]
 
-        out[f"direction_{i}"] = {
-            "strain": strain_axis,
-            "stress_3d_gpa": stress_results.tolist(),
-            "stress_custom_units": stress_custom_list,
-            "units": {"strain": "-", "stress": "GPa", "stress_custom": units_deform},
-            "meta": {
-                "workdir": str(cfg.workdir),
-                "backend": cfg.backend,
-                "base_units": "eV/Å^3",
-            },
+    # Convert stress arrays
+    s_xx_final = (np.array(results["stress_xx"]) * conv_factor).tolist()
+    s_yy_final = (np.array(results["stress_yy"]) * conv_factor).tolist()
+    s_xy_final = (np.array(results["stress_xy"]) * conv_factor).tolist()
+
+    # 5. Build Final Payload
+    out = {
+        "Strain_XX": results["strain_xx"],
+        "Strain_YY": results["strain_yy"],
+        "Strain_XY": results["strain_xy"],
+        f"Stress_XX_{req_unit}": s_xx_final,
+        f"Stress_YY_{req_unit}": s_yy_final,
+        f"Stress_XY_{req_unit}": s_xy_final,
+        "meta": {
+             "workdir": str(cfg.workdir),
+             "thickness_angstrom": thickness_angstrom,
+             "target_matrix": target_F.tolist()
         }
+    }
 
+    # 6. Save File
     out_name = outfile or cfg.output.get("deform_json", "deform.json")
     (cfg.workdir / out_name).write_text(json.dumps(out, indent=2), encoding="utf-8")
 
+    print(f"[post] Saved multi-axial curve to {out_name}")
     return out
-
-
