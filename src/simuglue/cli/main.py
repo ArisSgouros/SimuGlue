@@ -52,6 +52,7 @@ COMMANDS: Dict[str, Dict[str, Tuple[str, str, str]]] = {
     "lmp": [
         {
             "phonon-dispersion": ("simuglue.cli.lmp_phonon_dispersion","Calculate phonon dispersion from LAMMPS dynamical matrix.", "sgl lmp phonon-dispersion"),
+            "merge-data": ("simuglue.cli.lmp_merge_data","Merge lammps datafiles.", "sgl lmp merge-data"),
         },
         'lammps calculations',
         ]
