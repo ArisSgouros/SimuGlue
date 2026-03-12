@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import re
 import numpy as np
 from pathlib import Path
 from ase import units
@@ -19,7 +20,7 @@ def _load_s6(path: Path) -> np.ndarray:
 def post_deformation(config_path: str, *, outfile: str | None = None) -> dict:
     """
     Scans step_1, step_2... folders.
-    Aggregates True Stress vs True Strain for XX, YY, and XY directions.
+    Aggregates True Stress vs True Strain into N x 3 matrices.
     """
     cfg = load_config(config_path)
 
@@ -42,7 +43,7 @@ def post_deformation(config_path: str, *, outfile: str | None = None) -> dict:
         "stress_xx": [], "stress_yy": [], "stress_xy": []
     }
 
-    print(f"[post] Processing {steps} steps for multi-directional analysis...")
+    print(f"[post] Processing {steps} steps for matrix analysis...")
 
     # 3. Loop through steps 1..N
     for i in range(1, steps + 1):
@@ -63,7 +64,6 @@ def post_deformation(config_path: str, *, outfile: str | None = None) -> dict:
             # Store Strains (XX=0,0 | YY=1,1 | XY=0,1)
             results["strain_xx"].append(E_current[0, 0])
             results["strain_yy"].append(E_current[1, 1])
-            # For engineering shear strain, you might multiply by 2. We keep true tensor shear here.
             results["strain_xy"].append(E_current[0, 1]) 
 
             # Store Stresses
@@ -96,24 +96,43 @@ def post_deformation(config_path: str, *, outfile: str | None = None) -> dict:
     s_yy_final = (np.array(results["stress_yy"]) * conv_factor).tolist()
     s_xy_final = (np.array(results["stress_xy"]) * conv_factor).tolist()
 
+    # --- THIS IS THE NEW MATRIX LOGIC ---
+    # Zip the separate lists into N-row by 3-column matrices
+    strains_matrix = [
+        [xx, yy, xy] for xx, yy, xy in zip(results["strain_xx"], results["strain_yy"], results["strain_xy"])
+    ]
+    
+    stresses_matrix = [
+        [xx, yy, xy] for xx, yy, xy in zip(s_xx_final, s_yy_final, s_xy_final)
+    ]
+
     # 5. Build Final Payload
     out = {
-        "Strain_XX": results["strain_xx"],
-        "Strain_YY": results["strain_yy"],
-        "Strain_XY": results["strain_xy"],
-        f"Stress_XX_{req_unit}": s_xx_final,
-        f"Stress_YY_{req_unit}": s_yy_final,
-        f"Stress_XY_{req_unit}": s_xy_final,
+        "Strains": strains_matrix,
+        f"Stresses_{req_unit}": stresses_matrix,
         "meta": {
              "workdir": str(cfg.workdir),
              "thickness_angstrom": thickness_angstrom,
-             "target_matrix": target_F.tolist()
+             "target_matrix": target_F.tolist(),
+             "components_order": ["XX", "YY", "XY"]
         }
     }
 
-    # 6. Save File
+    # 6. Save File with Matrix Formatting
     out_name = outfile or cfg.output.get("deform_json", "deform.json")
-    (cfg.workdir / out_name).write_text(json.dumps(out, indent=2), encoding="utf-8")
 
-    print(f"[post] Saved multi-axial curve to {out_name}")
+    # Create the standard stretched-out JSON string
+    json_str = json.dumps(out, indent=2)
+
+    # MAGIC: Find any stretched 3-number list and collapse it to a single line
+    num = r'[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?' # Regex to match any decimal or scientific number
+    pattern = rf'\[\s*({num}),\s*({num}),\s*({num})\s*\]'
+
+    # Replace the stretched list with a clean [val1, val2, val3] format
+    json_str = re.sub(pattern, r'[\1, \2, \3]', json_str)
+
+    # Write the beautifully formatted JSON to the file
+    (cfg.workdir / out_name).write_text(json_str, encoding="utf-8")
+
+    print(f"[post] Saved formatted JSON matrix to {out_name}")
     return out

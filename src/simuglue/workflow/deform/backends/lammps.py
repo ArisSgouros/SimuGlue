@@ -175,19 +175,19 @@ class LAMMPSBackend(Backend):
 
         # NEW: Read the final positions and save to atoms.json
         final_data_path = case_dir / "final_str.data"
-        if final_data_path.exists():
-            # Reuse existing reader
-            # FIXED: Safely duplicate the config and update the path
-            temp_cfg = copy.deepcopy(cfg)
-            temp_cfg.lammps["data_file"] = str(final_data_path)
-            final_atoms = self.read_data(temp_cfg)
-            
-            atoms_payload = {
-                "positions": final_atoms.get_positions().tolist(),
-                "cell": final_atoms.get_cell().tolist(),
-                "atomic_numbers": final_atoms.get_atomic_numbers().tolist()
-            }
-            (case_dir / "atoms.json").write_text(json.dumps(atoms_payload, indent=2))
+        #if final_data_path.exists():
+        #    # Reuse existing reader
+        #    # FIXED: Safely duplicate the config and update the path
+        #    temp_cfg = copy.deepcopy(cfg)
+        #    temp_cfg.lammps["data_file"] = str(final_data_path)
+        #    final_atoms = self.read_data(temp_cfg)
+        #    
+        #    atoms_payload = {
+        #        "positions": final_atoms.get_positions().tolist(),
+        #        "cell": final_atoms.get_cell().tolist(),
+        #        "atomic_numbers": final_atoms.get_atomic_numbers().tolist()
+        #    }
+        #    (case_dir / "atoms.json").write_text(json.dumps(atoms_payload, indent=2))
 
         return RelaxResult(energy=pe, stress=S, cell=cell)
 

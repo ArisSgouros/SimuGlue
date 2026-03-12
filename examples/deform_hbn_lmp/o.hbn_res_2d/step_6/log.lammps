@@ -65,9 +65,9 @@ Per MPI rank memory allocation (min/avg/max) = 9.39 | 9.39 | 9.39 Mbytes
          0   0              10.880656     -129655.85     -383813.33     -5154.2151      0              15857.141      0              0              14.055549      8.5370782      6.661          799.27553    
          1   0              10.880656     -129655.85     -383813.33     -5154.2151      0              15857.141      0              0              14.055549      8.5370782      6.661          799.27553    
 WARNING: Bond/angle/dihedral extent > half of periodic box length (../domain.cpp:1174)
-Loop time of 0.00107248 on 1 procs for 1 steps with 40 atoms
+Loop time of 0.00129333 on 1 procs for 1 steps with 40 atoms
 
-100.0% CPU use with 1 MPI tasks x no OpenMP threads
+59.1% CPU use with 1 MPI tasks x no OpenMP threads
 
 Minimization stats:
   Stopping criterion = linesearch alpha is zero
@@ -81,13 +81,13 @@ Minimization stats:
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 0.00014903 | 0.00014903 | 0.00014903 |   0.0 | 13.90
-Bond    | 0.00029711 | 0.00029711 | 0.00029711 |   0.0 | 27.70
+Pair    | 0.00018061 | 0.00018061 | 0.00018061 |   0.0 | 13.96
+Bond    | 0.00036572 | 0.00036572 | 0.00036572 |   0.0 | 28.28
 Neigh   | 0          | 0          | 0          |   0.0 |  0.00
-Comm    | 0.00014832 | 0.00014832 | 0.00014832 |   0.0 | 13.83
+Comm    | 0.00018031 | 0.00018031 | 0.00018031 |   0.0 | 13.94
 Output  | 0          | 0          | 0          |   0.0 |  0.00
 Modify  | 0          | 0          | 0          |   0.0 |  0.00
-Other   |            | 0.000478   |            |       | 44.57
+Other   |            | 0.0005667  |            |       | 43.82
 
 Nlocal:             40 ave          40 max          40 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
@@ -106,13 +106,13 @@ System init for write_data ...
 Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
 Total wall time: 0:00:00
 -----------
-Pair    | 0.00014903 | 0.00014903 | 0.00014903 |   0.0 | 13.90
-Bond    | 0.00029711 | 0.00029711 | 0.00029711 |   0.0 | 27.70
+Pair    | 0.00018061 | 0.00018061 | 0.00018061 |   0.0 | 13.96
+Bond    | 0.00036572 | 0.00036572 | 0.00036572 |   0.0 | 28.28
 Neigh   | 0          | 0          | 0          |   0.0 |  0.00
-Comm    | 0.00014832 | 0.00014832 | 0.00014832 |   0.0 | 13.83
+Comm    | 0.00018031 | 0.00018031 | 0.00018031 |   0.0 | 13.94
 Output  | 0          | 0          | 0          |   0.0 |  0.00
 Modify  | 0          | 0          | 0          |   0.0 |  0.00
-Other   |            | 0.000478   |            |       | 44.57
+Other   |            | 0.0005667  |            |       | 43.82
 
 Nlocal:             40 ave          40 max          40 min
 Histogram: 1 0 0 0 0 0 0 0 0 0

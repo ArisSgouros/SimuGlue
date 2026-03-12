@@ -39,7 +39,7 @@ Finding 1-2 1-3 1-4 neighbors ...
     18 = max # of 1-4 neighbors
     18 = max # of special neighbors
   special bonds CPU = 0.000 seconds
-  read_data CPU = 0.006 seconds
+  read_data CPU = 0.008 seconds
 Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
 Neighbor list info ...
   update: every = 1 steps, delay = 0 steps, check = yes
@@ -65,9 +65,9 @@ Per MPI rank memory allocation (min/avg/max) = 9.39 | 9.39 | 9.39 Mbytes
          0   0              14.702384     -146816.49     -432032.44     -8417.0242      0              15105.748      0              0              14.319117      8.5370782      6.661          814.26341    
          1   0              14.702384     -146816.49     -432032.44     -8417.0242      0              15105.748      0              0              14.319117      8.5370782      6.661          814.26341    
 WARNING: Bond/angle/dihedral extent > half of periodic box length (../domain.cpp:1174)
-Loop time of 0.00107631 on 1 procs for 1 steps with 40 atoms
+Loop time of 0.00164809 on 1 procs for 1 steps with 40 atoms
 
-100.1% CPU use with 1 MPI tasks x no OpenMP threads
+100.0% CPU use with 1 MPI tasks x no OpenMP threads
 
 Minimization stats:
   Stopping criterion = linesearch alpha is zero
@@ -81,13 +81,13 @@ Minimization stats:
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 0.00015039 | 0.00015039 | 0.00015039 |   0.0 | 13.97
-Bond    | 0.00029808 | 0.00029808 | 0.00029808 |   0.0 | 27.69
+Pair    | 0.00022854 | 0.00022854 | 0.00022854 |   0.0 | 13.87
+Bond    | 0.00047269 | 0.00047269 | 0.00047269 |   0.0 | 28.68
 Neigh   | 0          | 0          | 0          |   0.0 |  0.00
-Comm    | 0.00014926 | 0.00014926 | 0.00014926 |   0.0 | 13.87
+Comm    | 0.00022987 | 0.00022987 | 0.00022987 |   0.0 | 13.95
 Output  | 0          | 0          | 0          |   0.0 |  0.00
 Modify  | 0          | 0          | 0          |   0.0 |  0.00
-Other   |            | 0.0004786  |            |       | 44.46
+Other   |            | 0.000717   |            |       | 43.50
 
 Nlocal:             40 ave          40 max          40 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
@@ -106,13 +106,13 @@ System init for write_data ...
 Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
 Total wall time: 0:00:00
 ---------
-Pair    | 0.00015039 | 0.00015039 | 0.00015039 |   0.0 | 13.97
-Bond    | 0.00029808 | 0.00029808 | 0.00029808 |   0.0 | 27.69
+Pair    | 0.00022854 | 0.00022854 | 0.00022854 |   0.0 | 13.87
+Bond    | 0.00047269 | 0.00047269 | 0.00047269 |   0.0 | 28.68
 Neigh   | 0          | 0          | 0          |   0.0 |  0.00
-Comm    | 0.00014926 | 0.00014926 | 0.00014926 |   0.0 | 13.87
+Comm    | 0.00022987 | 0.00022987 | 0.00022987 |   0.0 | 13.95
 Output  | 0          | 0          | 0          |   0.0 |  0.00
 Modify  | 0          | 0          | 0          |   0.0 |  0.00
-Other   |            | 0.0004786  |            |       | 44.46
+Other   |            | 0.000717   |            |       | 43.50
 
 Nlocal:             40 ave          40 max          40 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
