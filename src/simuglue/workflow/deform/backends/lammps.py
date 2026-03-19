@@ -173,8 +173,23 @@ class LAMMPSBackend(Backend):
 
         cell = lammps_box_to_ase_cell(data['lx'], data['ly'], data['lz'], data['xy'], data['xz'], data['yz'])
 
+        return RelaxResult(energy=pe, stress=S, cell=cell)
+
+    def get_final_atoms(self, case_dir: Path, cfg: Config):
+        """Reads the final relaxed structure from the LAMMPS output."""
+        final_str_path = case_dir / "final_str.data"
+
+        if not final_str_path.is_file():
+            raise FileNotFoundError(f"LAMMPS output not found: {final_str_path}")
+
+        # Safely duplicate the config so we don't overwrite the base template path
+        temp_cfg = copy.deepcopy(cfg)
+        temp_cfg.lammps["data_file"] = str(final_str_path)
+
+        # Reuse the backend's own read functionality
+        return self.read_data(temp_cfg)
         # NEW: Read the final positions and save to atoms.json
-        final_data_path = case_dir / "final_str.data"
+       # final_data_path = case_dir / "final_str.data"
         #if final_data_path.exists():
         #    # Reuse existing reader
         #    # FIXED: Safely duplicate the config and update the path
@@ -189,6 +204,6 @@ class LAMMPSBackend(Backend):
         #    }
         #    (case_dir / "atoms.json").write_text(json.dumps(atoms_payload, indent=2))
 
-        return RelaxResult(energy=pe, stress=S, cell=cell)
+        #return RelaxResult(energy=pe, stress=S, cell=cell)
 
 

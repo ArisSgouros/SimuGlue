@@ -87,6 +87,16 @@ def run_deformation(config_path: str) -> None:
     for i in range(1, steps + 1):
         cid = f"step_{i}"
         case_dir = cfg.workdir / cid
+
+
+        # --- ADD THIS RESUME LOGIC ---
+        if (case_dir / "result.json").exists():
+            print(f"Skipping Step {i} - Already completed.")
+            # We still need to load these atoms so the NEXT step has the right starting point!
+            current_atoms = backend.get_final_atoms(case_dir, cfg)
+            continue
+        # -----------------------------
+
         case_dir.mkdir(parents=True, exist_ok=True)
         
         print(f"\n[deformation] --- Starting Step {i}/{steps} ---")
@@ -118,23 +128,32 @@ def run_deformation(config_path: str) -> None:
         except Exception as e:
             print(f"Failed to parse results at step {i}: {e}")
             break
-
         # E. UPDATE STATE: The Most Important Part
-        # We read the 'final_str.data' created by LAMMPS to capture the RELAXED state.
-        final_str_path = case_dir / "final_str.data"
-        
-        if final_str_path.exists():
-            # We create a temporary config to tell backend where to look
-            cfg.lammps["data_file"] = str(final_str_path)
-            current_atoms = backend.read_data(cfg)
-            
-            # This updates 'current_atoms' to the relaxed structure
-            # ready for the next iteration.
-            current_atoms = backend.read_data(cfg)
-            print(f"Step {i} complete. Updated reference structure from {final_str_path.name}")
-        else:
-            print(f"Critical Error: {final_str_path} not found. Cannot proceed to next step.")
+        # We ask the backend to retrieve its own relaxed structure.
+        try:
+            current_atoms = backend.get_final_atoms(case_dir, cfg)
+            print(f"Step {i} complete. Updated reference structure for the next iteration.")
+        except Exception as e:
+            print(f"Critical Error: The backend failed to return the relaxed atoms. {e}")
             break
 
     print("\n[deformation] Sequence finished.")
+        # E. UPDATE STATE: The Most Important Part
+        # We read the 'final_str.data' created by LAMMPS to capture the RELAXED state.
+    #    final_str_path = case_dir / "final_str.data"
+    #    
+    #    if final_str_path.exists():
+    #        # We create a temporary config to tell backend where to look
+    #       cfg.lammps["data_file"] = str(final_str_path)
+    #        current_atoms = backend.read_data(cfg)
+    #        
+    #        # This updates 'current_atoms' to the relaxed structure
+    #        # ready for the next iteration.
+    #        current_atoms = backend.read_data(cfg)
+    #        print(f"Step {i} complete. Updated reference structure from {final_str_path.name}")
+    #    else:
+    #        print(f"Critical Error: {final_str_path} not found. Cannot proceed to next step.")
+    #       break
+    #
+    #print("\n[deformation] Sequence finished.")
 

@@ -25,8 +25,8 @@ mass 1 12.011
 include ../_graphene_potential.mod
 
 # Relax the Y dimension to 0 pressure while keeping X fixed
-#fix 1 all box/relax y 0.0
-fix 1 all box/relax ${relax_dir}
+fix 1 all box/relax y 0.0
+#fix 1 all box/relax ${relax_dir}
 
 # Energy minimization
 minimize ${etol} ${ftol} ${maxiter} ${maxeval}

@@ -160,3 +160,13 @@ class QEBackend(Backend):
         S = 0.5 * (S + S.T)
 
         return RelaxResult(energy=pe, stress=S, cell=atoms.cell.array)
+    
+    def get_final_atoms(self, case_dir: Path, cfg: Config):
+        """Reads the final relaxed structure from the Quantum Espresso output."""
+        out_path = case_dir / cfg.qe.get("outfile", "qe.out")
+
+        if not out_path.is_file():
+            raise FileNotFoundError(f"QE output not found: {out_path}")
+
+        # ASE automatically scrolls to the end of the log and grabs the last geometry
+        return read(out_path, format="espresso-out", index=-1)

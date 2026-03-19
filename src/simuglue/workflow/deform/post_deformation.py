@@ -76,7 +76,7 @@ def post_deformation(config_path: str, *, outfile: str | None = None) -> dict:
             continue
 
     # 4. Handle YAML Custom Units
-    req_unit = cfg.output.get("units_cij", "gpa").lower()
+    req_unit = cfg.output.get("units", "gpa").lower()
     
     converters = {
         "gpa":  1.0 / units.GPa,

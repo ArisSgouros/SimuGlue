@@ -32,5 +32,4 @@ common_path: '.'
 # output
 output:
   deform_json: deform.json
-  units_cij: gpa 
-  symmetrize_cij: false
+  units: pa m 
